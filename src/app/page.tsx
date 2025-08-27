@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { lessons } from "@/data/lessons";
 
 export default function HomePage() {
   return (
@@ -27,32 +28,28 @@ export default function HomePage() {
         Here you will find all weekly lesson materials, notes, and resources to help you succeed. Check the lessons below!
       </motion.p>
 
-      {/* Sample Lessons Preview */}
+      {/* Lessons Preview */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.5, duration: 1 }}
         className="grid md:grid-cols-2 gap-6 w-full max-w-4xl"
       >
-        <Link href="/lessons/week-1" className="group p-6 bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
-          <h3 className="text-2xl font-bold mb-2 group-hover:text-purple-600 transition-colors duration-300">
-            Week 1 – Introduction
-          </h3>
-          <p className="text-gray-600 group-hover:text-gray-800 transition-colors duration-300">
-            Start your journey with the fundamentals of algorithms and programming.
-          </p>
-        </Link>
-
-        <Link href="/lessons/week-2" className="group p-6 bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
-          <h3 className="text-2xl font-bold mb-2 group-hover:text-purple-600 transition-colors duration-300">
-            Week 2 – Sorting & Searching
-          </h3>
-          <p className="text-gray-600 group-hover:text-gray-800 transition-colors duration-300">
-            Learn essential sorting and searching algorithms with visual examples.
-          </p>
-        </Link>
+        {lessons.map((lesson) => (
+          <Link
+            key={lesson.week}
+            href={`/lessons/${lesson.week}`}
+            className="group p-6 bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
+          >
+            <h3 className="text-2xl font-bold mb-2 group-hover:text-purple-600 transition-colors duration-300">
+              Week {lesson.week} – {lesson.title}
+            </h3>
+            <p className="text-gray-600 group-hover:text-gray-800 transition-colors duration-300">
+              {lesson.description}
+            </p>
+          </Link>
+        ))}
       </motion.div>
-
     </div>
   );
 }
