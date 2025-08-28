@@ -23,14 +23,19 @@ jobs:
 
       - name: Install dependencies and build
         run: |
-          npm ci
-          npm run build
+          npm install
+          npm run build --if-present
+          npm run test --if-present
 
       - name: Prepare deployment package
         run: |
           mkdir deploy
-          cp -R package.json package-lock.json next.config.js public pages styles deploy/
-      
+          cp package.json package-lock.json deploy/
+          [ -f next.config.js ] && cp next.config.js deploy/ || true
+          [ -d pages ] && cp -R pages deploy/ || true
+          [ -d public ] && cp -R public deploy/ || true
+          [ -d styles ] && cp -R styles deploy/ || true
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -49,7 +54,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-          path: .
+          path: deploy/
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -63,4 +68,4 @@ jobs:
         with:
           app-name: 'josia'
           slot-name: 'Production'
-          package: .
+          package: deploy/
