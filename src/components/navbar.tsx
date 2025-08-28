@@ -9,9 +9,9 @@ export default function Navbar() {
   const pathname = usePathname();
   const navItems = [
     { name: "Weekly Material", href: "/" },
-    { name: "Exam Information", href: "/exam" },
-    { name: "Resources", href: "/resources" },
-    { name: "Contact", href: "/contact" },
+    { name: "Exam & Bonus Information", href: "/exam" },
+    { name: "Useful Resources", href: "/resources" },
+    { name: "Contact & Questions", href: "/contact" },
   ];
 
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });

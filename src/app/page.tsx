@@ -16,7 +16,7 @@ export default function HomePage() {
         className="text-5xl md:text-6xl font-extrabold text-center 
              bg-gradient-to-b from-orange-400 via-pink-500 to-purple-700 
              bg-clip-text text-transparent drop-shadow-sm 
-             leading-tight pb-2 mb-2 mt-20" // <-- added mt-20
+             leading-tight pb-2 mb-2 mt-15"
       >
         Welcome to my classes!
       </motion.h1>

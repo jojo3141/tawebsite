@@ -5,11 +5,36 @@ import { LinkIcon } from "@heroicons/react/24/outline";
 
 export default function ResourcesPage() {
   const resources = [
-    { name: "Lecture Recordings", link: "https://video.ethz.ch" },
-    { name: "Moodle Course", link: "https://moodle-app2.let.ethz.ch/course/view.php?id=23362" },
-    { name: "CodeExpert", link: "https://expert.ethz.ch/" },
-    { name: "Old Exams", link: "https://exams.vis.ethz.ch/" },
-    { name: "D-INFK Discord", link: "https://discord.com/invite/eth-dinfk" },
+    { 
+      name: "Lecture Recordings", 
+      link: "https://video.ethz.ch",
+      desc: "– perfect if you want to rewatch a lecture or catch up after oversleeping 😅"
+    },
+    { 
+      name: "Moodle Course", 
+      link: "https://moodle-app2.let.ethz.ch/course/view.php?id=23362",
+      desc: "– the central hub for exercises, quizzes, and announcements 📚"
+    },
+    { 
+      name: "CodeExpert", 
+      link: "https://expert.ethz.ch/",
+      desc: "– where you’ll practice your programming skills 💻"
+    },
+    { 
+      name: "Old Exams", 
+      link: "https://exams.vis.ethz.ch/",
+      desc: "– useful for exam preparation and getting a feel for question styles ✍️"
+    },
+    { 
+      name: "D-INFK Polybox", 
+      link: "https://polybox.ethz.ch/index.php/s/WXf1p3ODpDdpnRH?path=%2F",
+      desc: "– shared files and additional study materials 📂"
+    },
+    { 
+      name: "D-INFK Discord", 
+      link: "https://discord.com/invite/eth-dinfk",
+      desc: "– chat with fellow students, ask questions, and share memes 💬"
+    },
   ];
 
   return (
@@ -17,21 +42,24 @@ export default function ResourcesPage() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "tween", duration: 0.4 }}
-      className="bg-white shadow-lg rounded-2xl p-8 max-w-4xl mx-auto"
+      className="bg-white shadow-lg rounded-2xl p-8 max-w-4xl mx-auto mt-20"
     >
-      <h2 className="text-3xl font-bold mb-6 text-purple-700">Resources</h2>
+      <h2 className="text-3xl font-bold mb-6 text-purple-700">Useful Resources</h2>
       <ul className="space-y-4">
         {resources.map((res) => (
-          <li key={res.name} className="flex items-center space-x-2">
-            <LinkIcon className="w-5 h-5 text-purple-600" />
-            <a
-              href={res.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline text-lg"
-            >
-              {res.name}
-            </a>
+          <li key={res.name} className="flex items-start space-x-2">
+            <LinkIcon className="w-5 h-5 text-purple-600 mt-1" />
+            <span>
+              <a
+                href={res.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline text-lg"
+              >
+                {res.name}
+              </a>{" "}
+              <span className="text-gray-600">{res.desc}</span>
+            </span>
           </li>
         ))}
       </ul>
