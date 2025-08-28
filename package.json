@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "npx next start",
-    "lint": "eslint"
+    "start": "next start",
+    "lint": "eslint",
+    "postinstall": "next build"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
