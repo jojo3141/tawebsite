@@ -30,7 +30,7 @@ export default function Navbar() {
   }, [activeIndex]);
 
   return (
-    <nav className="bg-white shadow-md relative">
+    <nav className="fixed top-0 left-0 right-0 bg-white/70 backdrop-blur-md shadow-md z-50">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center h-16 relative">
           {navItems.map((item, index) => (

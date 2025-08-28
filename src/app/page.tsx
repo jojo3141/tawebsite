@@ -3,20 +3,40 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { lessons } from "@/data/lessons";
+import { ClockIcon, MapPinIcon } from "@heroicons/react/24/outline";
 
 export default function HomePage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-purple-100 to-indigo-50 p-6">
-      
       {/* Hero Section */}
       <motion.h1
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1 }}
-        className="text-5xl md:text-6xl font-extrabold text-center text-purple-700 mb-10"
+        className="text-5xl md:text-6xl font-extrabold text-center 
+             bg-gradient-to-b from-orange-400 via-pink-500 to-purple-700 
+             bg-clip-text text-transparent drop-shadow-sm 
+             leading-tight pb-2 mb-2 mt-20" // <-- added mt-20
       >
-        Welcome to my classes! 📚
+        Welcome to my classes!
       </motion.h1>
+
+      {/* Info Line: Time + Location */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5, duration: 1 }}
+        className="flex items-center space-x-6 text-gray-700 mb-8 text-lg"
+      >
+        <div className="flex items-center space-x-1">
+          <ClockIcon className="w-6 h-6 text-purple-600" />
+          <span>Monday, 9:15am</span>
+        </div>
+        <div className="flex items-center space-x-1">
+          <MapPinIcon className="w-6 h-6 text-purple-600" />
+          <span>HG XX</span>
+        </div>
+      </motion.div>
 
       {/* Introduction */}
       <motion.p
@@ -25,7 +45,8 @@ export default function HomePage() {
         transition={{ delay: 1, duration: 1 }}
         className="text-center text-lg md:text-xl text-gray-700 max-w-2xl mb-12"
       >
-        Here you will find all weekly lesson materials, notes, and resources to help you succeed. Check the lessons below!
+        Here you will find all weekly lesson materials, notes, and resources to
+        help you succeed. Check the lessons below!
       </motion.p>
 
       {/* Lessons Preview */}

@@ -24,5 +24,17 @@ export const lessons: Lesson[] = [
     description: "Learn how to use ArrayLists effectively in programming.",
     pdf: "/lessons/week-3.pdf",
   },
+  {
+    week: 4,
+    title: "ArrayLists",
+    description: "Learn how to use ArrayLists effectively in programming.",
+    pdf: "/lessons/week-3.pdf",
+  },
+  {
+    week: 5,
+    title: "ArrayLists",
+    description: "Learn how to use ArrayLists effectively in programming.",
+    pdf: "/lessons/week-3.pdf",
+  },
   // Add new lessons here each week
 ];

@@ -1,8 +1,14 @@
 import "./globals.css";
 import Navbar from "@/components/navbar"; // client component
+import { Poppins } from "next/font/google";
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["700", "900"], // bold weights
+});
 
 export const metadata = {
-  title: "My Course",
+  title: "A&D Exercise Classes",
   description: "Weekly lesson materials",
 };
 

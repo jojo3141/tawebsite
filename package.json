@@ -9,10 +9,15 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@react-pdf-viewer/core": "^3.12.0",
+    "@react-pdf-viewer/default-layout": "^3.12.0",
     "framer-motion": "^12.23.12",
     "next": "15.5.2",
+    "pdfjs-dist": "^3.11.174",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "react-pdf": "^10.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
