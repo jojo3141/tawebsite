@@ -23,17 +23,22 @@ jobs:
         with:
           node-version: '22.x'
 
-      - name: npm install, build, and test
+      - name: Install dependencies and build
         run: |
-          npm install
-          npm run build --if-present
-          npm run test --if-present
+          npm ci
+          npm run build
+
+      - name: Prepare deployment package
+        run: |
+          mkdir deploy
+          cp -R .next public package.json package-lock.json deploy/
+          cp -R node_modules deploy/
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: deploy/
 
   deploy:
     runs-on: ubuntu-latest
@@ -55,11 +60,9 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2DA8D161E3D84D628A956A1CEEF84F20 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_5DDBA390B8F248FEBE4329D3FFE6AF3E }}
 
-      - name: 'Deploy to Azure Web App'
-        id: deploy-to-webapp
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'josia'
           slot-name: 'Production'
-          package: .
-          
+          package: deploy/
