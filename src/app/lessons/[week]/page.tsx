@@ -5,13 +5,6 @@ import { lessons } from "@/data/lessons";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-// Required for static export of dynamic routes
-export function generateStaticParams() {
-  return Array.from({ length: 16 }, (_, i) => ({
-    week: String(i + 1), // Weeks 1–16
-  }));
-}
-
 export default function LessonDetailPage() {
   const { week } = useParams();
   const lesson = lessons.find((l) => l.week === Number(week));

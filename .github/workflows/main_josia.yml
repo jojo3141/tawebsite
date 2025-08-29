@@ -13,20 +13,25 @@ jobs:
       contents: read
 
     steps:
+      # Checkout the repository
       - uses: actions/checkout@v4
 
+      # Set up Node.js
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
           node-version: '22.x'
 
+      # Install dependencies
       - name: Install dependencies
         run: npm ci
 
-      - name: Build and export Next.js app
+      # Build the Next.js static site (Next.js 15+ uses output: 'export')
+      - name: Build Next.js static site
         run: npm run build
 
-      - name: Upload artifact for deployment
+      # Upload the build artifact (out/ folder)
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: static-site
@@ -40,11 +45,13 @@ jobs:
       contents: read
 
     steps:
+      # Download the artifact from the build job
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
           name: static-site
 
+      # Login to Azure
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -52,9 +59,10 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_BFE9A2F5E5D54BACAD47296E7927FE7E }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_505957615C7644959144155AED1BDE5D }}
 
+      # Deploy the static files to Azure Web App
       - name: Deploy static files to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'josia'
           slot-name: 'Production'
-          package: .
+          package: out

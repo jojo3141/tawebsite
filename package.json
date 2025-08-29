@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "next dev",
-  "build": "next build",
-  "start": "serve -s out -l $PORT",
-  "lint": "eslint"
-},
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start -p $PORT",
+    "lint": "eslint"
+  },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@react-pdf-viewer/core": "^3.12.0",
@@ -17,8 +17,7 @@
     "pdfjs-dist": "^3.11.174",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-pdf": "^10.1.0",
-    "serve": "^14.2.3"
+    "react-pdf": "^10.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
