@@ -44,9 +44,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
       id-token: write # required for requesting the JWT
       contents: read
@@ -74,3 +71,4 @@ jobs:
           app-name: 'josia'
           slot-name: 'Production'
           package: .
+
