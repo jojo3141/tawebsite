@@ -1,4 +1,4 @@
-name: Build and deploy Node.js app to Azure Web App - josia
+name: Build and deploy static Next.js app to Azure Web App - josia
 
 on:
   push:
@@ -23,24 +23,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Next.js app
+      - name: Build and export Next.js app
         run: npm run build
 
-      - name: Export Next.js (optional, only if using static export)
-        if: ${{ hashFiles('next.config.js') != '' }}
-        run: npm run export || echo "Skipping export (not configured)"
-
-      - name: Upload artifact for deployment job
+      - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
-          path: |
-            .next
-            public
-            package.json
-            package-lock.json
-            next.config.js
-            node_modules
+          name: static-site
+          path: out
 
   deploy:
     runs-on: ubuntu-latest
@@ -50,10 +40,10 @@ jobs:
       contents: read
 
     steps:
-      - name: Download artifact from build job
+      - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
-          name: node-app
+          name: static-site
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -62,7 +52,7 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_BFE9A2F5E5D54BACAD47296E7927FE7E }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_505957615C7644959144155AED1BDE5D }}
 
-      - name: Deploy to Azure Web App
+      - name: Deploy static files to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'josia'
