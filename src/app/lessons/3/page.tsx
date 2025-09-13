@@ -1,13 +1,11 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import { lessons } from "@/data/lessons";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-export default function LessonDetailPage() {
-  const { week } = useParams();
-  const lesson = lessons.find((l) => l.week === Number(week));
+export default function Lesson1Page() {
+  const lesson = lessons.find(l => l.week === 3);
 
   if (!lesson) {
     return <p className="text-center mt-20 text-gray-600">Lesson not found</p>;
@@ -24,6 +22,9 @@ export default function LessonDetailPage() {
       <h2 className="text-3xl font-bold mb-6 text-purple-700">
         Week {lesson.week} – {lesson.title}
       </h2>
+
+      {/* Description */}
+      <p className="mb-6">{lesson.description}</p>
 
       {/* PDF Viewer */}
       {lesson.pdf && (
