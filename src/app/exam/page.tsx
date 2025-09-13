@@ -113,10 +113,42 @@ export default function ExamPage() {
         <strong>two weeks</strong>. The first sheet will be published a few
         weeks into the semester, and then every two weeks thereafter.
       </p>
-      <p className="text-gray-700">
+      <p className="text-gray-700 mb-10">
         Specific programming exercise-related questions must be submitted
         through the Code Expert messaging system. This will also be the only way
         to ask questions during the programming exam.
+      </p>
+      
+      {/* Bonus Points */}
+      <h3 className="text-xl font-semibold text-purple-600 mb-2">Bonus Points</h3>
+      <p className="text-gray-700 mb-6">
+        During the semester, you can earn bonus points for:
+      </p>
+      <ul className="list-disc list-inside text-gray-700 mb-6 space-y-2">
+        <li>Solving the designated parts of the theoretical exercise sheets (in working groups); <strong>3 points per exercise sheet</strong></li>
+        <li>Peer grading the specified part of the theory sheets (in working groups); <strong>1 point per exercise sheet</strong></li>
+        <li>Solving the multiple choice quizzes in the beginning of the exercise class (individually); <strong>1 point per week</strong></li>
+        <li>Solving the programming problems (individually); <strong>6 points per exercise sheet</strong></li>
+      </ul>
+      <p className="text-gray-700 mb-6">
+        At the end of the term, the bonus points are translated into a bonus grade between 0 and 0.25. 
+        The final grade is the sum of the exam grade and the bonus grade (rounded and capped at 6.0). 
+        You already receive the maximal bonus grade (0.25) for achieving 80% of the bonus points. 
+        This compensates for possible absences (e.g. illness or military service).
+      </p>
+      <p className="text-gray-700 mb-6">
+        The formula is:{" "}
+        <code className="bg-gray-100 px-2 py-1 rounded text-sm">
+          min(0.25, 0.25 * n_points / (0.8 * max_points))
+        </code>
+        , where <em>n_points</em> is your number of bonus points, and <em>max_points</em> is the maximal possible bonus points.
+      </p>
+      <p className="text-gray-700 mb-6">
+        Participation in the bonus system is voluntary. It is possible to get a 6.0 without participating.
+      </p>
+      <p className="text-gray-700">
+        Solutions must be submitted by <strong>Sunday, 23:59</strong> and peer graded solutions by{" "}
+        <strong>Monday, 23:59</strong>. The exact submission deadlines are visible in the Moodle upload sections.
       </p>
     </motion.div>
   );

@@ -7,10 +7,10 @@ export interface Lesson {
 
 export const lessons: Lesson[] = [
   {
-    week: 2,
+    week: 1,
     title: "Introduction",
     description: "Administration basics and introduction to induction and O-notation",
-    pdf: "/lessons/week-2.pdf",
+    pdf: "/lessons/week-1.pdf",
   }
   // Add new lessons here each week
 ];
