@@ -25,7 +25,7 @@ export default function ContactPage() {
         <img 
           src="/~jheger/whatsapp-qr.png" 
           alt="WhatsApp Group QR Code" 
-          className="w-40 h-40 rounded-lg shadow-md"
+          className="w-110 h-110 rounded-lg shadow-md"
         />
       </div>
 

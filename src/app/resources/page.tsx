@@ -34,7 +34,26 @@ export default function ResourcesPage() {
       name: "D-INFK Discord", 
       link: "https://discord.com/invite/eth-dinfk",
       desc: "– chat with fellow students, ask questions, and share memes 💬"
+    },{ 
+      name: "AVL Tree Visualization",
+      link: "https://www.cs.usfca.edu/~galles/visualization/AVLtree.html",
+      desc: "– interactive visualization of AVL trees 🌳"
     },
+    { 
+      name: "LeetCode Dynamic Programming Plan",
+      link: "https://leetcode.com/studyplan/dynamic-programming/",
+      desc: "– practice dynamic programming problems step by step 🔢"
+    },
+    { 
+      name: "CSES Problem Set",
+      link: "https://cses.fi/problemset/",
+      desc: "– a classic collection of competitive programming problems 🏆"
+    },
+    { 
+      name: "XYQuadrat GitHub Repository",
+      link: "https://github.com/XYQuadrat/and-algorithms/tree/main",
+      desc: "– contains implementations of many algorithms 📘"
+    }
   ];
 
   return (

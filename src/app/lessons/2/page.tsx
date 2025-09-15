@@ -4,7 +4,9 @@ import { lessons } from "@/data/lessons";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-export default function Lesson1Page() {
+// When Copying this file, update LessonsXPage and l.week === X
+
+export default function Lesson2Page() {
   const lesson = lessons.find(l => l.week === 2);
 
   if (!lesson) {
