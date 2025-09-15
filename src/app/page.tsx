@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { lessons } from "@/data/lessons";
 import { ClockIcon, MapPinIcon } from "@heroicons/react/24/outline";
-
+export const dynamic = "force-static";
 export default function HomePage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-purple-100 to-indigo-50 p-6">
@@ -34,7 +34,7 @@ export default function HomePage() {
         </div>
         <div className="flex items-center space-x-1">
           <MapPinIcon className="w-6 h-6 text-purple-600" />
-          <span>HG XX</span>
+          <span>HG D 5.1</span>
         </div>
       </motion.div>
 
