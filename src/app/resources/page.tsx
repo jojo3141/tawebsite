@@ -7,7 +7,7 @@ export default function ResourcesPage() {
   const resources = [
     { 
       name: "Lecture Recordings", 
-      link: "https://video.ethz.ch",
+      link: "https://video.ethz.ch/lectures/d-infk/2025/autumn",
       desc: "– perfect if you want to rewatch a lecture or catch up after oversleeping 😅"
     },
     { 

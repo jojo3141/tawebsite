@@ -16,16 +16,10 @@ export interface Lesson {
 
 export const lessons: Lesson[] = [
   {
-    week: 2,
-    title: "Introduction",
-    description: "Administration basics and introduction to induction and O-notation",
-    pdf: "/~jheger/lessons/week-2.pdf",
-  }, 
-  {
-    week: 3,
-    title: "O Notation",
-    description: "Exercises on O-Notation and basic algorithm analysis",
-    pdf: "/~jheger/lessons/week-2.pdf",
+    week: 1,
+    title: "Asymtotic Growth",
+    description: "Administration basics and introduction to induction and asymptotic growth",
+    pdf: "/~jheger/lessons/week-1.pdf",
   }
   // Add new lessons here each week
 ];
