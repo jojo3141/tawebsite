@@ -38,6 +38,12 @@ export const lessons: Lesson[] = [
     title: "Sorting Algorithms",
     description: "Bubble Sort, Selection Sort, Insertion Sort, Merge Sort",
     pdf: "/~jheger/lessons/week-4.pdf",
+  },
+  {
+    week: 5,
+    title: "Sorting Algorithms II",
+    description: "Quick Sort, Heap Sort and Max-Heaps in general",
+    pdf: "/~jheger/lessons/week-5.pdf",
   }
   // Add new lessons here each week
 ];
