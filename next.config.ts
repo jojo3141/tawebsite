@@ -5,8 +5,8 @@ const nextConfig: NextConfig = {
   // optional: weitere Konfigurationsoptionen hier
   // basePath: "/~jheger",
   // assetPrefix: "/~jheger/",
-  basePath: "/tawebsite",
-  assetPrefix: "/tawebsite/",
+  // basePath: "/tawebsite",
+  // assetPrefix: "/tawebsite/",
   
 };
 

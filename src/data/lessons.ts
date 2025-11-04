@@ -19,43 +19,43 @@ export const lessons: Lesson[] = [
     week: 1,
     title: "Asymptotic Growth",
     description: "Administration basics and introduction to induction and asymptotic growth",
-    pdf: "/lessons/week-1.pdf",
+    pdf: "/tawebsite/lessons/week-1.pdf",
   }, 
   {
     week: 2,
     title: "O-Notation",
     description: "Some more Induction and O-Notation",
-    pdf: "/lessons/week-2.pdf",
+    pdf: "/tawebsite/lessons/week-2.pdf",
   },
   {
     week: 3,
     title: "Maximum Subarray Sum",
     description: "And Omeaga/Theta Notation and some more induction",
-    pdf: "/lessons/week-3.pdf",
+    pdf: "/tawebsite/lessons/week-3.pdf",
   },
   {
     week: 4,
     title: "Sorting Algorithms",
     description: "Bubble Sort, Selection Sort, Insertion Sort, Merge Sort",
-    pdf: "/lessons/week-4.pdf",
+    pdf: "/tawebsite/lessons/week-4.pdf",
   },
   {
     week: 5,
     title: "Sorting Algorithms II",
     description: "Quick Sort, Heap Sort and Max-Heaps in general",
-    pdf: "/lessons/week-5.pdf",
+    pdf: "/tawebsite/lessons/week-5.pdf",
   },
   {
     week: 6,
     title: "2-3-Trees and DP",
     description: "MSS, Jump Game, LGT, Edit Distance, Climbing Staris, Burglar",
-    pdf: "/lessons/week-6.pdf",
+    pdf: "/tawebsite/lessons/week-6.pdf",
   },
   {
     week: 7,
     title: "More DP",
     description: "Subset Sum, Knapsack, LAT, Summy Array, Museum Tour, Positional Sum",
-    pdf: "/lessons/week-7.pdf",
+    pdf: "/tawebsite/lessons/week-7.pdf",
   }
   // Add new lessons here each week
 ];
