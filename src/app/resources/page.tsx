@@ -35,9 +35,9 @@ export default function ResourcesPage() {
       link: "https://discord.com/invite/eth-dinfk",
       desc: "– chat with fellow students, ask questions, and share memes 💬"
     },{ 
-      name: "AVL Tree Visualization",
-      link: "https://www.cs.usfca.edu/~galles/visualization/AVLtree.html",
-      desc: "– interactive visualization of AVL trees 🌳"
+      name: "Binary Search Trees",
+      link: "https://www.cs.usfca.edu/~galles/visualization/BST.html",
+      desc: "– interactive visualization of binary search trees 🌳"
     },
     { 
       name: "LeetCode Dynamic Programming Plan",

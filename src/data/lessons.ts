@@ -44,6 +44,18 @@ export const lessons: Lesson[] = [
     title: "Sorting Algorithms II",
     description: "Quick Sort, Heap Sort and Max-Heaps in general",
     pdf: "/~jheger/lessons/week-5.pdf",
+  },
+  {
+    week: 6,
+    title: "2-3-Trees and DP",
+    description: "MSS, Jump Game, LGT, Edit Distance, Climbing Staris, Burglar",
+    pdf: "/~jheger/lessons/week-6.pdf",
+  },
+  {
+    week: 7,
+    title: "More DP",
+    description: "Subset Sum, Knapsack, LAT, Summy Array, Museum Tour, Positional Sum",
+    pdf: "/~jheger/lessons/week-7.pdf",
   }
   // Add new lessons here each week
 ];
