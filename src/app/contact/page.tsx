@@ -23,7 +23,7 @@ export default function ContactPage() {
       <div className="flex flex-col items-center mt-4">
         <p className="text-gray-600 mb-2 font-medium">Scan the QR code to join:</p>
         <img 
-          src="/tawebsite/whatsapp-qr.png" 
+          src="/whatsapp-qr.png" 
           alt="WhatsApp Group QR Code" 
           className="w-110 h-110 rounded-lg shadow-md"
         />
