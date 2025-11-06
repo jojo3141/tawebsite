@@ -31,7 +31,7 @@ export const lessons: Lesson[] = [
     week: 3,
     title: "Maximum Subarray Sum",
     description: "And Omeaga/Theta Notation and some more induction",
-    pdf: "/tawebsite/lessons/week-3.pdf",
+    pdf: "/lessons/week-3.pdf",
   },
   {
     week: 4,
