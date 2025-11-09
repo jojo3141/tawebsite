@@ -56,7 +56,7 @@ export default function HomePage() {
         transition={{ delay: 1.5, duration: 1 }}
         className="grid md:grid-cols-2 gap-6 w-full max-w-4xl"
       >
-        {lessons.map((lesson) => (
+        {lessons.slice().reverse().map((lesson) => (
           <Link
             key={lesson.week}
             href={`/lessons/${lesson.week}`}

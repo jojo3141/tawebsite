@@ -56,6 +56,12 @@ export const lessons: Lesson[] = [
     title: "More DP",
     description: "Subset Sum, Knapsack, LAT, Summy Array, Museum Tour, Positional Sum",
     pdf: "/lessons/week-7.pdf",
+  },
+  {
+    week: 8,
+    title: "Graphs",
+    description: "Graph Basics, Eulerian walks, Hamiltonian paths, General proof patterns",
+    pdf: "/lessons/week-8.pdf",
   }
   // Add new lessons here each week
 ];
