@@ -53,6 +53,11 @@ export default function ResourcesPage() {
       name: "XYQuadrat GitHub Repository",
       link: "https://github.com/XYQuadrat/and-algorithms/tree/main",
       desc: "– contains implementations of many algorithms 📘"
+    },
+    { 
+      name: "Kahoots",
+      link: "https://create.kahoot.it/profiles/dfe80786-1eb7-4048-afed-9cf7f2e048a1",
+      desc: "– all the Kahoots we did in class"
     }
   ];
 
