@@ -67,7 +67,7 @@ export const lessons: Lesson[] = [
   {
     week: 9,
     title: "DFS",
-    description: "DFS Baum, Pre/Post order, Topological Sorting",
+    description: "DFS Tree, Pre/Post order, Topological Sorting, Counting connected components",
     pdf: "/lessons/week-9.pdf",
   }
   // Add new lessons here each week
