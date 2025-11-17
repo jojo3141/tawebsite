@@ -65,7 +65,7 @@ export const lessons: Lesson[] = [
   }
   ,
   {
-    week: 8,
+    week: 9,
     title: "DFS",
     description: "DFS Baum, Pre/Post order, Topological Sorting",
     pdf: "/lessons/week-9.pdf",
