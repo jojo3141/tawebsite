@@ -63,5 +63,12 @@ export const lessons: Lesson[] = [
     description: "Graph Basics, Eulerian walks, Hamiltonian paths, General proof patterns",
     pdf: "/lessons/week-8.pdf",
   }
+  ,
+  {
+    week: 8,
+    title: "DFS",
+    description: "DFS Baum, Pre/Post order, Topological Sorting",
+    pdf: "/lessons/week-9.pdf",
+  }
   // Add new lessons here each week
 ];
