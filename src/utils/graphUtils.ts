@@ -1,3 +1,4 @@
+
 import { Graph, Node, Edge, AlgorithmStep, PriorityQueueItem, EdgeType } from '@/types/graph';
 
 // Helper to detect negative cycles using Bellman-Ford logic
@@ -202,7 +203,7 @@ export const calculateDijkstraSteps = (graph: Graph, startNodeId: string): Algor
   
   const distances: Record<string, number> = {};
   const parents: Record<string, string | null> = {};
-  let queue: PriorityQueueItem[] = []; // Represents Priority Queue
+  const queue: PriorityQueueItem[] = []; // Represents Priority Queue
   const processedSet: string[] = []; 
 
   let stepCounter = 0;
@@ -253,7 +254,7 @@ export const calculateDijkstraSteps = (graph: Graph, startNodeId: string): Algor
     pushStep(7, `Extract Min: Node ${u.nodeId} (Dist: ${u.distance})`, u.nodeId);
 
     // --- NEIGHBOR EXTRACTION (Directed vs Undirected Logic) ---
-    let neighbors: { id: string, weight: number, edge: Edge }[] = [];
+    const neighbors: { id: string, weight: number, edge: Edge }[] = [];
     
     graph.edges.forEach(e => {
        if (e.source === u.nodeId) {
@@ -380,7 +381,7 @@ export const calculateBFSSteps = (graph: Graph, startNodeId: string): AlgorithmS
     pushStep(7, `Dequeue node ${u}`, u);
 
     // --- NEIGHBOR EXTRACTION & SORTING ---
-    let neighbors: { id: string, edge: Edge }[] = [];
+    const neighbors: { id: string, edge: Edge }[] = [];
     graph.edges.forEach(e => {
         if (e.source === u) neighbors.push({ id: e.target, edge: e });
         else if (graph.isDirected === false && e.target === u) neighbors.push({ id: e.source, edge: e });
@@ -473,7 +474,7 @@ export const calculateDFSSteps = (graph: Graph, startNodeId: string): AlgorithmS
     pushStep(7, `DFS-VISIT(${u}): Mark ${u} as visited. Start Time: ${time}`, u);
 
     // Line 8: Iterate neighbors - SORTED ALPHABETICALLY
-    let neighbors: { id: string, edge: Edge }[] = [];
+    const neighbors: { id: string, edge: Edge }[] = [];
     graph.edges.forEach(e => {
         if (e.source === u) neighbors.push({ id: e.target, edge: e });
         else if (graph.isDirected === false && e.target === u) neighbors.push({ id: e.source, edge: e });
@@ -571,7 +572,7 @@ export const calculateBellmanFordSteps = (graph: Graph, startNodeId: string): Al
   const steps: AlgorithmStep[] = [];
   const distances: Record<string, number> = {};
   const parents: Record<string, string | null> = {};
-  const queue: PriorityQueueItem[] = []; // Not used, but keeps interface happy
+  // queue unused
 
   let stepCounter = 0;
   const pushStep = (line: number, desc: string, u: string | null = null, v: string | null = null, edge: {source: string, target: string} | null = null) => {
@@ -811,7 +812,7 @@ class UnionFind {
     }
 }
 
-export const calculateKruskalSteps = (graph: Graph, startNodeId: string): AlgorithmStep[] => {
+export const calculateKruskalSteps = (graph: Graph, _startNodeId: string): AlgorithmStep[] => {
     const steps: AlgorithmStep[] = [];
     const mstEdges: {source: string, target: string}[] = []; // Set F
     
@@ -884,7 +885,7 @@ export const calculateKruskalSteps = (graph: Graph, startNodeId: string): Algori
 };
 
 // --- BORUVKA SOLVER ---
-export const calculateBoruvkaSteps = (graph: Graph, startNodeId: string): AlgorithmStep[] => {
+export const calculateBoruvkaSteps = (graph: Graph, _startNodeId: string): AlgorithmStep[] => {
     const steps: AlgorithmStep[] = [];
     const mstEdges: {source: string, target: string}[] = []; // Set F
     

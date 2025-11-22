@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { generateRandomGraph, calculateDijkstraSteps, calculateBFSSteps, calculateDFSSteps, calculateBellmanFordSteps, calculatePrimSteps, calculateKruskalSteps, calculateBoruvkaSteps } from '@/utils/graphUtils';
 import GraphCanvas from '@/components/visualizer/GraphCanvas';
 import PseudocodeViewer from '@/components/visualizer/PseudocodeViewer';
@@ -36,72 +36,34 @@ const VisualizerApp: React.FC = () => {
     AlgorithmType.BORUVKA
   ];
 
-  // Init
-  useEffect(() => {
-    generateNewGraph();
+  // Memoized solver to be stable for useEffect deps
+  const solveGraph = useCallback((g: Graph, algo: AlgorithmType) => {
+    setIsAutoPlaying(false);
+    const startNode = g.nodes[0].id;
+    
+    let solutionSteps: AlgorithmStep[] = [];
+    if (algo === AlgorithmType.DIJKSTRA) {
+      solutionSteps = calculateDijkstraSteps(g, startNode);
+    } else if (algo === AlgorithmType.BFS) {
+      solutionSteps = calculateBFSSteps(g, startNode);
+    } else if (algo === AlgorithmType.DFS) {
+      solutionSteps = calculateDFSSteps(g, startNode);
+    } else if (algo === AlgorithmType.BELLMAN_FORD) {
+      solutionSteps = calculateBellmanFordSteps(g, startNode);
+    } else if (algo === AlgorithmType.PRIM) {
+      solutionSteps = calculatePrimSteps(g, startNode);
+    } else if (algo === AlgorithmType.KRUSKAL) {
+      solutionSteps = calculateKruskalSteps(g, startNode);
+    } else if (algo === AlgorithmType.BORUVKA) {
+      solutionSteps = calculateBoruvkaSteps(g, startNode);
+    }
+    
+    setSteps(solutionSteps);
+    setCurrentStepIndex(0);
   }, []);
 
-  // Recalculate steps when algorithm changes, graph type changes, or direction preference changes
-  useEffect(() => {
-    if (graph) {
-       const isBoruvka = algorithm === AlgorithmType.BORUVKA;
-       const graphHasUniqueWeights = graph.hasUniqueWeights === true;
-       
-       // Determine what the direction SHOULD be based on algorithm and user preference
-       // MST -> Undirected
-       // Bellman-Ford -> Directed
-       // Others -> User Preference
-       const shouldBeDirected = isMstAlgo(algorithm) ? false : (algorithm === AlgorithmType.BELLMAN_FORD ? true : userPreferredDirected);
-       const graphIsDirected = graph.isDirected !== false; // Default to true if undefined
-
-       const isBellmanFord = algorithm === AlgorithmType.BELLMAN_FORD;
-       
-       // Allow negative weights for Bellman-Ford AND MST Algorithms
-       const shouldHaveNegative = isBellmanFord || isMstAlgo(algorithm); 
-       const graphHasNegative = graph.edges.some(e => e.weight < 0);
-
-       // Check edge count constraints for Undirected DFS/BFS
-       const isUndirectedPathfinding = !shouldBeDirected && (algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.BFS);
-       // We approximate checking edge count compliance by assuming if we switch modes we might need regen
-       // But detecting edge count changes strictly is hard without context, so we mostly rely on direction changes here.
-
-       if (isBoruvka && !graphHasUniqueWeights) {
-           // Force generation for Boruvka to ensure unique weights
-           generateNewGraph();
-       } else if (!isBoruvka && graphHasUniqueWeights) {
-           // Force generation if switching FROM Boruvka (Unique) TO something else
-           generateNewGraph();
-       } else if (shouldBeDirected !== graphIsDirected) {
-           // Force generation if direction mismatch (e.g. switching DFS Directed -> DFS Undirected)
-           // This also naturally catches the edge count adjustment since generateNewGraph handles the params
-           generateNewGraph(); 
-       } else if (shouldHaveNegative && !graphHasNegative) {
-           // Switch TO algorithm needing negative weights (Bellman-Ford or MST)
-           generateNewGraph();
-       } else if (!shouldHaveNegative && graphHasNegative) {
-           // Switch FROM algorithm with negative weights to one without (e.g. Dijkstra)
-           generateNewGraph();
-       } else {
-           // Graph is compatible, just re-solve
-           solveGraph(graph, algorithm);
-       }
-    }
-  }, [algorithm, userPreferredDirected]);
-
-  // Auto Play Logic
-  useEffect(() => {
-    let interval: any;
-    if (isAutoPlaying && currentStepIndex < steps.length - 1) {
-      interval = setInterval(() => {
-        setCurrentStepIndex(prev => prev + 1);
-      }, 1000);
-    } else {
-      setIsAutoPlaying(false);
-    }
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, currentStepIndex, steps.length]);
-
-  const generateNewGraph = () => {
+  // Memoize graph generation
+  const generateNewGraph = useCallback(() => {
     setIsAutoPlaying(false);
     const width = 600;
     const height = 450; 
@@ -125,32 +87,71 @@ const VisualizerApp: React.FC = () => {
     const newGraph = generateRandomGraph(9, width, height, isDirected, uniqueWeights, hasNegativeWeights, minEdges, maxEdges);
     setGraph(newGraph);
     solveGraph(newGraph, algorithm);
-  };
+  }, [algorithm, userPreferredDirected, solveGraph]);
 
-  const solveGraph = (g: Graph, algo: AlgorithmType) => {
-    setIsAutoPlaying(false);
-    const startNode = g.nodes[0].id;
-    
-    let solutionSteps: AlgorithmStep[] = [];
-    if (algo === AlgorithmType.DIJKSTRA) {
-      solutionSteps = calculateDijkstraSteps(g, startNode);
-    } else if (algo === AlgorithmType.BFS) {
-      solutionSteps = calculateBFSSteps(g, startNode);
-    } else if (algo === AlgorithmType.DFS) {
-      solutionSteps = calculateDFSSteps(g, startNode);
-    } else if (algo === AlgorithmType.BELLMAN_FORD) {
-      solutionSteps = calculateBellmanFordSteps(g, startNode);
-    } else if (algo === AlgorithmType.PRIM) {
-      solutionSteps = calculatePrimSteps(g, startNode);
-    } else if (algo === AlgorithmType.KRUSKAL) {
-      solutionSteps = calculateKruskalSteps(g, startNode);
-    } else if (algo === AlgorithmType.BORUVKA) {
-      solutionSteps = calculateBoruvkaSteps(g, startNode);
+  // Init
+  useEffect(() => {
+    // Only generate if no graph exists to prevent double-init effects, though state setters are stable
+    // Using a check here to be safe, or rely on the dependency array being empty initially if we want strict "Mount" logic.
+    // However, generateNewGraph depends on 'algorithm' which changes. 
+    // Ideally we just call it once.
+    generateNewGraph();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); 
+
+  // Recalculate steps when algorithm changes, graph type changes, or direction preference changes
+  useEffect(() => {
+    if (graph) {
+       const isBoruvka = algorithm === AlgorithmType.BORUVKA;
+       const graphHasUniqueWeights = graph.hasUniqueWeights === true;
+       
+       // Determine what the direction SHOULD be based on algorithm and user preference
+       // MST -> Undirected
+       // Bellman-Ford -> Directed
+       // Others -> User Preference
+       const shouldBeDirected = isMstAlgo(algorithm) ? false : (algorithm === AlgorithmType.BELLMAN_FORD ? true : userPreferredDirected);
+       const graphIsDirected = graph.isDirected !== false; // Default to true if undefined
+
+       const isBellmanFord = algorithm === AlgorithmType.BELLMAN_FORD;
+       
+       // Allow negative weights for Bellman-Ford AND MST Algorithms
+       const shouldHaveNegative = isBellmanFord || isMstAlgo(algorithm); 
+       const graphHasNegative = graph.edges.some(e => e.weight < 0);
+
+       if (isBoruvka && !graphHasUniqueWeights) {
+           // Force generation for Boruvka to ensure unique weights
+           generateNewGraph();
+       } else if (!isBoruvka && graphHasUniqueWeights) {
+           // Force generation if switching FROM Boruvka (Unique) TO something else
+           generateNewGraph();
+       } else if (shouldBeDirected !== graphIsDirected) {
+           // Force generation if direction mismatch (e.g. switching DFS Directed -> DFS Undirected)
+           generateNewGraph(); 
+       } else if (shouldHaveNegative && !graphHasNegative) {
+           // Switch TO algorithm needing negative weights (Bellman-Ford or MST)
+           generateNewGraph();
+       } else if (!shouldHaveNegative && graphHasNegative) {
+           // Switch FROM algorithm with negative weights to one without (e.g. Dijkstra)
+           generateNewGraph();
+       } else {
+           // Graph is compatible, just re-solve
+           solveGraph(graph, algorithm);
+       }
     }
-    
-    setSteps(solutionSteps);
-    setCurrentStepIndex(0);
-  }
+  }, [algorithm, userPreferredDirected, graph, generateNewGraph, solveGraph]);
+
+  // Auto Play Logic
+  useEffect(() => {
+    let interval: any;
+    if (isAutoPlaying && currentStepIndex < steps.length - 1) {
+      interval = setInterval(() => {
+        setCurrentStepIndex(prev => prev + 1);
+      }, 1000);
+    } else {
+      setIsAutoPlaying(false);
+    }
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, currentStepIndex, steps.length]);
 
   const handleNext = () => {
     if (currentStepIndex < steps.length - 1) {
