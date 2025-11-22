@@ -1,5 +1,6 @@
 import "./globals.css";
 import Navbar from "@/components/navbar"; // client component
+import MainLayoutWrapper from "@/components/MainLayoutWrapper";
 
 export const metadata = {
   title: "A&D Exercise Classes",
@@ -9,9 +10,9 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-gray-50 text-gray-900">
+      <body className="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
         <Navbar />
-        <main className="p-6 max-w-6xl mx-auto">{children}</main>
+        <MainLayoutWrapper>{children}</MainLayoutWrapper>
       </body>
     </html>
   );

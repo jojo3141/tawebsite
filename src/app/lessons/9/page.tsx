@@ -1,3 +1,4 @@
+
 "use client";
 
 import { lessons } from "@/data/lessons";
@@ -18,7 +19,7 @@ export default function Lesson1Page() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10"
+      className="w-full mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10"
     >
       {/* Title */}
       <h2 className="text-3xl font-bold mb-6 text-purple-700">
@@ -78,5 +79,3 @@ export default function Lesson1Page() {
     </motion.div>
   );
 }
-
-
