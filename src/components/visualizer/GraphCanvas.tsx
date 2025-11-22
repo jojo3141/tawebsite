@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Graph, AlgorithmStep, AlgorithmType, EdgeType } from '@/types/graph';
 import { motion } from 'framer-motion';
@@ -137,7 +138,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
 
   return (
     <div className="relative w-full h-full">
-      <svg width={width} height={height} className="bg-slate-900 border border-slate-700 rounded-xl shadow-inner overflow-visible">
+      <svg width={width} height={height} className="overflow-visible block">
         {/* Edges as Quadratic Bezier Curves */}
         <g>
           {graph.edges.map((edge, i) => {

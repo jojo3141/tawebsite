@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { generateRandomGraph, calculateDijkstraSteps, calculateBFSSteps, calculateDFSSteps, calculateBellmanFordSteps, calculatePrimSteps, calculateKruskalSteps, calculateBoruvkaSteps } from '@/utils/graphUtils';
 import GraphCanvas from '@/components/visualizer/GraphCanvas';
@@ -243,96 +244,100 @@ const VisualizerApp: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 flex gap-6 items-start">
+      <main className="flex-1 p-4 pt-2 flex gap-6 items-start">
         
         {/* Left Column: Graph & Controls */}
-        <div className="flex flex-col gap-6 w-auto shrink-0 sticky top-24">
+        <div className="flex flex-col gap-2 w-auto shrink-0 sticky top-20">
           
-          {/* Graph Visualization */}
-          <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-4 flex justify-center items-center relative shadow-xl w-fit">
-            <GraphCanvas 
-              graph={graph} 
-              currentStep={currentStep} 
-              width={600} 
-              height={450} 
-              algorithm={algorithm}
-            />
+          {/* Unified Card for Graph & Controls */}
+          <div className="bg-slate-900/50 rounded-2xl border border-slate-800 shadow-xl overflow-hidden w-fit flex flex-col">
             
-            {/* Current Action Toast */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur-md border border-slate-600 shadow-2xl flex items-center justify-center transition-all px-10 py-3 rounded-full gap-4 min-w-[300px]">
-               <div className="flex items-center gap-3 shrink-0">
-                   <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                   <span className="text-sm font-medium text-white">{currentStep.description}</span>
-               </div>
-               
-               {showDfsLegend && (
-                   <>
-                       <div className="w-px h-4 bg-slate-600 shrink-0"></div>
-                       <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-3 h-1 bg-green-500 rounded-full"></div>
-                                <span className="text-[10px] text-green-200">Tree</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-3 h-1 rounded-full" style={{backgroundColor: '#ec489980'}}></div>
-                                <span className="text-[10px] text-pink-200">Back</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-3 h-1 rounded-full" style={{backgroundColor: '#38bdf880'}}></div>
-                                <span className="text-[10px] text-sky-200">Forward</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-3 h-1 rounded-full" style={{backgroundColor: '#a855f780'}}></div>
-                                <span className="text-[10px] text-purple-200">Cross</span>
-                            </div>
-                       </div>
-                   </>
-               )}
-            </div>
-          </div>
-
-          {/* Playback Controls */}
-          <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              <button 
-                onClick={handlePrev}
-                disabled={currentStepIndex === 0}
-                className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 disabled:opacity-30 transition-colors"
-              >
-                <ArrowLeft size={20} />
-              </button>
+            {/* Graph Visualization Section */}
+            <div className="relative">
+              <GraphCanvas 
+                graph={graph} 
+                currentStep={currentStep} 
+                width={600} 
+                height={450} 
+                algorithm={algorithm}
+              />
               
-              <div className="text-sm font-mono text-slate-400 w-32 text-center">
-                Step {currentStep.stepId} / {steps.length - 1}
+              {/* Current Action Toast (Positioned inside graph) */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur-md border border-slate-600 shadow-2xl flex items-center justify-center transition-all px-10 py-3 rounded-full gap-4 min-w-[300px]">
+                 <div className="flex items-center gap-3 shrink-0">
+                     <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                     <span className="text-sm font-medium text-white">{currentStep.description}</span>
+                 </div>
+                 
+                 {showDfsLegend && (
+                     <>
+                         <div className="w-px h-4 bg-slate-600 shrink-0"></div>
+                         <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-1 bg-green-500 rounded-full"></div>
+                                  <span className="text-[10px] text-green-200">Tree</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-1 rounded-full" style={{backgroundColor: '#ec489980'}}></div>
+                                  <span className="text-[10px] text-pink-200">Back</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-1 rounded-full" style={{backgroundColor: '#38bdf880'}}></div>
+                                  <span className="text-[10px] text-sky-200">Forward</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-1 rounded-full" style={{backgroundColor: '#a855f780'}}></div>
+                                  <span className="text-[10px] text-purple-200">Cross</span>
+                              </div>
+                         </div>
+                     </>
+                 )}
+              </div>
+            </div>
+
+            {/* Playback Controls Section */}
+            <div className="border-t border-slate-800 p-3 bg-slate-900/50 flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={handlePrev}
+                  disabled={currentStepIndex === 0}
+                  className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 disabled:opacity-30 transition-colors"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                
+                <div className="text-sm font-mono text-slate-400 w-32 text-center">
+                  Step {currentStep.stepId} / {steps.length - 1}
+                </div>
+
+                <button 
+                  onClick={handleNext}
+                  disabled={currentStepIndex === steps.length - 1}
+                  className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 disabled:opacity-30 transition-colors"
+                >
+                  <ArrowRight size={20} />
+                </button>
               </div>
 
-              <button 
-                onClick={handleNext}
-                disabled={currentStepIndex === steps.length - 1}
-                className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 disabled:opacity-30 transition-colors"
-              >
-                <ArrowRight size={20} />
-              </button>
+              <div className="flex gap-1">
+                <button
+                   onClick={() => setIsAutoPlaying(!isAutoPlaying)}
+                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isAutoPlaying ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'}`}
+                >
+                  {isAutoPlaying ? 'Pause' : <><Play size={16} fill="currentColor" /> Auto Play</>}
+                </button>
+
+                <button 
+                  onClick={handleJumpToEnd}
+                  disabled={currentStepIndex === steps.length - 1}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-bold transition-colors border border-slate-700 text-slate-200 disabled:opacity-50"
+                >
+                  <SkipForward size={16} /> Jump to End
+                </button>
+              </div>
             </div>
 
-            <div className="flex gap-3">
-              <button
-                 onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isAutoPlaying ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'}`}
-              >
-                {isAutoPlaying ? 'Pause' : <><Play size={16} fill="currentColor" /> Auto Play</>}
-              </button>
-
-              <button 
-                onClick={handleJumpToEnd}
-                disabled={currentStepIndex === steps.length - 1}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-bold transition-colors border border-slate-700 text-slate-200 disabled:opacity-50"
-              >
-                <SkipForward size={16} /> Jump to End
-              </button>
-            </div>
           </div>
-
         </div>
 
         {/* Right Column: Algorithm & Data */}

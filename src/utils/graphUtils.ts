@@ -45,12 +45,12 @@ export const generateRandomGraph = (
   const layout = [
     { x: 0.10, y: 0.45 }, // Node A (Start) - Middle Left
     { x: 0.20, y: 0.15 }, // Node B - Top Left (Outwards)
-    { x: 0.20, y: 0.75 }, // Node C - Bottom Left (Outwards)
-    { x: 0.50, y: 0.10 }, // Node D - Top Center
+    { x: 0.20, y: 0.70 }, // Node C - Bottom Left (Moved UP from 0.75)
+    { x: 0.50, y: 0.12 }, // Node D - Top Center (Moved DOWN from 0.10)
     { x: 0.50, y: 0.45 }, // Node E - Dead Center
-    { x: 0.50, y: 0.80 }, // Node F - Bottom Center
+    { x: 0.50, y: 0.75 }, // Node F - Bottom Center (Moved UP from 0.80)
     { x: 0.80, y: 0.15 }, // Node G - Top Right (Outwards)
-    { x: 0.80, y: 0.75 }, // Node H - Bottom Right (Outwards)
+    { x: 0.80, y: 0.70 }, // Node H - Bottom Right (Moved UP from 0.75)
     { x: 0.90, y: 0.45 }, // Node I - Middle Right
   ];
 
