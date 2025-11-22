@@ -41,17 +41,17 @@ export const generateRandomGraph = (
   const letters = "ABCDEFGHIJKLM";
 
   // Fixed Layout Templates (Normalized 0-1 coordinates)
-  // Shifted up slightly and corners spread outwards
+  // Shifted up slightly (approx -0.02) to move graph upwards in the box
   const layout = [
-    { x: 0.10, y: 0.45 }, // Node A (Start) - Middle Left
-    { x: 0.20, y: 0.15 }, // Node B - Top Left (Outwards)
-    { x: 0.20, y: 0.70 }, // Node C - Bottom Left (Moved UP from 0.75)
-    { x: 0.50, y: 0.12 }, // Node D - Top Center (Moved DOWN from 0.10)
-    { x: 0.50, y: 0.45 }, // Node E - Dead Center
-    { x: 0.50, y: 0.75 }, // Node F - Bottom Center (Moved UP from 0.80)
-    { x: 0.80, y: 0.15 }, // Node G - Top Right (Outwards)
-    { x: 0.80, y: 0.70 }, // Node H - Bottom Right (Moved UP from 0.75)
-    { x: 0.90, y: 0.45 }, // Node I - Middle Right
+    { x: 0.10, y: 0.43 }, // Node A (Start) - Middle Left
+    { x: 0.20, y: 0.13 }, // Node B - Top Left (Outwards)
+    { x: 0.20, y: 0.68 }, // Node C - Bottom Left (Outwards)
+    { x: 0.50, y: 0.10 }, // Node D - Top Center
+    { x: 0.50, y: 0.43 }, // Node E - Dead Center
+    { x: 0.50, y: 0.73 }, // Node F - Bottom Center
+    { x: 0.80, y: 0.13 }, // Node G - Top Right (Outwards)
+    { x: 0.80, y: 0.68 }, // Node H - Bottom Right (Outwards)
+    { x: 0.90, y: 0.43 }, // Node I - Middle Right
   ];
 
   // 1. Generate Nodes using fixed layout
@@ -79,6 +79,11 @@ export const generateRandomGraph = (
     return nodes.filter(target => {
         if (source.id === target.id) return false;
         const dist = Math.hypot(source.x - target.x, source.y - target.y);
+        
+        // Explicitly disallow edges between B-C and G-H
+        if ((source.id === 'B' && target.id === 'C') || (source.id === 'C' && target.id === 'B')) return false;
+        if ((source.id === 'G' && target.id === 'H') || (source.id === 'H' && target.id === 'G')) return false;
+
         return dist < 260;
     });
   };

@@ -67,7 +67,7 @@ const VisualizerApp: React.FC = () => {
   const generateNewGraph = useCallback(() => {
     setIsAutoPlaying(false);
     const width = 600;
-    const height = 450; 
+    const height = 420; 
     
     // Determine settings based on current state
     const uniqueWeights = algorithm === AlgorithmType.BORUVKA;
@@ -179,7 +179,7 @@ const VisualizerApp: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header with Grid Layout for Stability */}
-      <header className="bg-slate-900 border-b border-slate-800 px-6 py-4 grid grid-cols-[1fr_auto_1fr] items-center sticky top-0 z-40 shadow-md gap-4">
+      <header className="bg-slate-900 border-b border-slate-800 px-4 py-2 grid grid-cols-[1fr_auto_1fr] items-center sticky top-0 z-40 shadow-md gap-2">
         
         {/* Left: Spacer/Logo Placeholder */}
         <div className="flex items-center space-x-3 justify-self-start">
@@ -236,7 +236,7 @@ const VisualizerApp: React.FC = () => {
 
              <button 
                 onClick={generateNewGraph}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-700 whitespace-nowrap"
+                className="flex items-center gap-2 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-700 whitespace-nowrap"
              >
                <RotateCcw size={16} /> New Graph
              </button>
@@ -246,8 +246,8 @@ const VisualizerApp: React.FC = () => {
       {/* Main Content */}
       <main className="flex-1 p-4 pt-2 flex gap-6 items-start">
         
-        {/* Left Column: Graph & Controls */}
-        <div className="flex flex-col gap-2 w-auto shrink-0 sticky top-20">
+        {/* Left Column: Graph & Controls (FIXED POSITION) */}
+        <div className="flex flex-col gap-2 w-auto shrink-0 fixed top-16 left-4 z-30">
           
           {/* Unified Card for Graph & Controls */}
           <div className="bg-slate-900/50 rounded-2xl border border-slate-800 shadow-xl overflow-hidden w-fit flex flex-col">
@@ -258,12 +258,12 @@ const VisualizerApp: React.FC = () => {
                 graph={graph} 
                 currentStep={currentStep} 
                 width={600} 
-                height={450} 
+                height={420} 
                 algorithm={algorithm}
               />
               
               {/* Current Action Toast (Positioned inside graph) */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur-md border border-slate-600 shadow-2xl flex items-center justify-center transition-all px-10 py-3 rounded-full gap-4 min-w-[300px]">
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur-md border border-slate-600 shadow-2xl flex items-center justify-center transition-all px-10 py-3 rounded-full gap-4 min-w-[300px]">
                  <div className="flex items-center gap-3 shrink-0">
                      <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
                      <span className="text-sm font-medium text-white">{currentStep.description}</span>
@@ -296,7 +296,7 @@ const VisualizerApp: React.FC = () => {
             </div>
 
             {/* Playback Controls Section */}
-            <div className="border-t border-slate-800 p-3 bg-slate-900/50 flex items-center justify-between">
+            <div className="border-t border-slate-800 p-2 bg-slate-900/50 flex items-center justify-between">
               <div className="flex items-center gap-1">
                 <button 
                   onClick={handlePrev}
@@ -341,7 +341,7 @@ const VisualizerApp: React.FC = () => {
         </div>
 
         {/* Right Column: Algorithm & Data */}
-        <div className="flex flex-col gap-6 flex-1 min-w-[400px]">
+        <div className="flex flex-col gap-6 flex-1 min-w-[400px] ml-[630px]">
           {/* Pseudocode */}
           <div className="shrink-0 h-[350px]">
              <PseudocodeViewer 
