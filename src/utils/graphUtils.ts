@@ -1,4 +1,5 @@
 
+
 import { Graph, Node, Edge, AlgorithmStep, PriorityQueueItem, EdgeType } from '@/types/graph';
 
 // Helper to detect negative cycles using Bellman-Ford logic
@@ -812,7 +813,7 @@ class UnionFind {
     }
 }
 
-export const calculateKruskalSteps = (graph: Graph, _startNodeId: string): AlgorithmStep[] => {
+export const calculateKruskalSteps = (graph: Graph, startNodeId: string): AlgorithmStep[] => {
     const steps: AlgorithmStep[] = [];
     const mstEdges: {source: string, target: string}[] = []; // Set F
     
@@ -885,7 +886,7 @@ export const calculateKruskalSteps = (graph: Graph, _startNodeId: string): Algor
 };
 
 // --- BORUVKA SOLVER ---
-export const calculateBoruvkaSteps = (graph: Graph, _startNodeId: string): AlgorithmStep[] => {
+export const calculateBoruvkaSteps = (graph: Graph, startNodeId: string): AlgorithmStep[] => {
     const steps: AlgorithmStep[] = [];
     const mstEdges: {source: string, target: string}[] = []; // Set F
     

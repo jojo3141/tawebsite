@@ -142,7 +142,7 @@ const VisualizerApp: React.FC = () => {
 
   // Auto Play Logic
   useEffect(() => {
-    let interval: any;
+    let interval: ReturnType<typeof setInterval>;
     if (isAutoPlaying && currentStepIndex < steps.length - 1) {
       interval = setInterval(() => {
         setCurrentStepIndex(prev => prev + 1);
