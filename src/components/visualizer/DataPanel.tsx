@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import { AlgorithmStep, AlgorithmType, Graph } from '@/types/graph';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,50 +22,59 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
 
   // Auto-scroll logic:
   useEffect(() => {
-    // Left Panel (Queue/Stack/F) Scrolling
-    // We EXCLUDE Bellman-Ford here because it uses listRef for the Edge Order list, 
-    // which has its own specific scrolling logic below.
+    // 1. General Queue/Stack Scrolling (Left Panel)
     if (algorithm !== AlgorithmType.BELLMAN_FORD && listRef.current) {
-        // Use setTimeout to ensure layout/animations have started/settled
         const timer = setTimeout(() => {
             if (listRef.current) {
                 if (algorithm === AlgorithmType.DFS) {
-                    // DFS Stack grows upwards (flex-col-reverse), so newest items are at scrollTop 0
                     listRef.current.scrollTop = 0;
                 } else {
-                    // BFS/Dijkstra Queue grows downwards, newest items are at bottom
                     listRef.current.scrollTop = listRef.current.scrollHeight;
                 }
             }
         }, 10);
-        return () => clearTimeout(timer);
+        // Cleanup not strictly necessary for 10ms, but good practice
     }
 
-    // Bellman Ford Edge List Scrolling
-    if (algorithm === AlgorithmType.BELLMAN_FORD && listRef.current && activeEdgeRef.current) {
-        const container = listRef.current;
-        const element = activeEdgeRef.current;
-        const topPos = element.offsetTop - 8;
-        container.scrollTo({ top: topPos, behavior: 'smooth' });
+    // 2. Bellman Ford Edge List Scrolling
+    if (algorithm === AlgorithmType.BELLMAN_FORD && listRef.current) {
+        setTimeout(() => {
+            if (activeEdgeRef.current && listRef.current) {
+                const container = listRef.current;
+                const element = activeEdgeRef.current;
+                const topPos = element.offsetTop - 4; // Minimal buffer
+                container.scrollTo({ top: topPos, behavior: 'smooth' });
+            }
+        }, 50);
     }
 
-    // Kruskal Sorted Edge List Scrolling
-    if (algorithm === AlgorithmType.KRUSKAL && sortedListRef.current && activeSortedEdgeRef.current) {
-        const container = sortedListRef.current;
-        const element = activeSortedEdgeRef.current;
-        const topPos = element.offsetTop - 8;
-        container.scrollTo({ top: topPos, behavior: 'smooth' });
+    // 3. Kruskal Sorted Edge List Scrolling
+    if (algorithm === AlgorithmType.KRUSKAL && sortedListRef.current) {
+        setTimeout(() => {
+            if (activeSortedEdgeRef.current && sortedListRef.current) {
+                const container = sortedListRef.current;
+                const element = activeSortedEdgeRef.current;
+                // Scroll active edge to the very top
+                const topPos = element.offsetTop; 
+                container.scrollTo({ top: topPos, behavior: 'smooth' });
+            }
+        }, 50);
     }
 
-    // Boruvka Right Panel Scrolling (Active Component)
-    if (algorithm === AlgorithmType.BORUVKA && rightPanelRef.current && activeComponentRef.current) {
-        const container = rightPanelRef.current;
-        const element = activeComponentRef.current;
-        const topPos = element.offsetTop - 8; // 8px padding buffer
-        container.scrollTo({ top: topPos, behavior: 'smooth' });
+    // 4. Boruvka Right Panel Scrolling (Active Component)
+    if (algorithm === AlgorithmType.BORUVKA && rightPanelRef.current) {
+        setTimeout(() => {
+            if (activeComponentRef.current && rightPanelRef.current) {
+                const container = rightPanelRef.current;
+                const element = activeComponentRef.current;
+                // Scroll active component to the very top
+                const topPos = element.offsetTop;
+                container.scrollTo({ top: topPos, behavior: 'smooth' });
+            }
+        }, 50);
     }
 
-  }, [step.stack, step.queue, step.mstEdges, algorithm, step.activeEdge, step.stepId]);
+  }, [step.stepId, algorithm]); // Triggers on every step update
 
   // Calculate Level Sets for BFS
   const levelSets: Record<number, string[]> = {};

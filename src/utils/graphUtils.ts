@@ -241,7 +241,7 @@ export const calculateDijkstraSteps = (graph: Graph, startNodeId: string): Algor
       parents[n.id] = null;
     }
   });
-  pushStep(1, "Initialize all nodes d[v] = ∞, p[v] = null");
+  pushStep(1, "Initialize all v ≠ s: d[v] = ∞, p[v] = null");
 
   distances[startNodeId] = 0;
   parents[startNodeId] = null;
@@ -358,7 +358,7 @@ export const calculateBFSSteps = (graph: Graph, startNodeId: string): AlgorithmS
     parents[n.id] = null;
   });
   pushStep(1, "Initialize all nodes: visited = false, dist = ∞");
-  pushStep(2, "Set distances to infinity");
+  pushStep(2, "Initialize all nodes: visited = false, dist = ∞");
 
   // 3. Q Init
   pushStep(3, "Initialize empty queue Q");
@@ -493,7 +493,7 @@ export const calculateDFSSteps = (graph: Graph, startNodeId: string): AlgorithmS
       
       // Line 9: If not visited
       if (!visited.includes(w)) {
-        pushStep(9, `${w} is not visited, recurse`, u, w, edge);
+        pushStep(9, `${w} is not visited`, u, w, edge);
         parents[w] = u;
         
         // Line 10: Recurse
@@ -609,7 +609,7 @@ export const calculateBellmanFordSteps = (graph: Graph, startNodeId: string): Al
           parents[n.id] = null;
       }
   });
-  pushStep(1, "Initialize v ≠ s: d[v] = ∞");
+  pushStep(1, "Initialize all v ≠ s:");
   pushStep(2, "d[v] ← ∞");
   pushStep(3, "p[v] ← null");
 
@@ -642,7 +642,7 @@ export const calculateBellmanFordSteps = (graph: Graph, startNodeId: string): Al
 
               // If d[u] is infinity, we can't relax.
               if (du === Infinity) {
-                 pushStep(7, `d[${u}] is ∞, cannot relax`, u, v, {source: u, target: v});
+                 pushStep(7, `d[${u}] is ∞, cannot improve`, u, v, {source: u, target: v});
                  return;
               }
 

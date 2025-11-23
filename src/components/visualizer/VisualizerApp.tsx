@@ -244,10 +244,10 @@ const VisualizerApp: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 pt-2 flex gap-6 items-start">
+      <main className="flex-1 p-4 pt-6 flex gap-6 items-start">
         
         {/* Left Column: Graph & Controls (FIXED POSITION) */}
-        <div className="flex flex-col gap-2 w-auto shrink-0 fixed top-16 left-4 z-30">
+        <div className="flex flex-col gap-2 w-auto shrink-0 fixed top-20 left-4 z-30">
           
           {/* Unified Card for Graph & Controls */}
           <div className="bg-slate-900/50 rounded-2xl border border-slate-800 shadow-xl overflow-hidden w-fit flex flex-col">
@@ -266,7 +266,7 @@ const VisualizerApp: React.FC = () => {
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur-md border border-slate-600 shadow-2xl flex items-center justify-center transition-all px-10 py-3 rounded-full gap-4 min-w-[300px]">
                  <div className="flex items-center gap-3 shrink-0">
                      <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                     <span className="text-sm font-medium text-white">{currentStep.description}</span>
+                     <span className="text-sm font-medium text-white whitespace-nowrap">{currentStep.description}</span>
                  </div>
                  
                  {showDfsLegend && (
@@ -343,7 +343,7 @@ const VisualizerApp: React.FC = () => {
         {/* Right Column: Algorithm & Data */}
         <div className="flex flex-col gap-6 flex-1 min-w-[400px] ml-[630px]">
           {/* Pseudocode */}
-          <div className="shrink-0 h-[350px]">
+          <div className="shrink-0 h-auto">
              <PseudocodeViewer 
                activeLine={currentStep.lineNumber} 
                algorithm={algorithm} 

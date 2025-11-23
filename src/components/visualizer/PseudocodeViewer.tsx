@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { 
     PSEUDOCODE_DIJKSTRA, PSEUDOCODE_DIJKSTRA_UNDIRECTED, 
@@ -21,7 +22,23 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
 
   useEffect(() => {
     if (activeRef.current && containerRef.current) {
-        activeRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const container = containerRef.current;
+        const activeElement = activeRef.current;
+
+        const containerRect = container.getBoundingClientRect();
+        const activeRect = activeElement.getBoundingClientRect();
+
+        // Check if active element is out of view relative to container
+        const isAbove = activeRect.top < containerRect.top;
+        const isBelow = activeRect.bottom > containerRect.bottom;
+
+        if (isAbove) {
+            // Scroll up just enough to show the element
+            container.scrollTop -= (containerRect.top - activeRect.top);
+        } else if (isBelow) {
+            // Scroll down just enough to show the element
+            container.scrollTop += (activeRect.bottom - containerRect.bottom);
+        }
     }
   }, [activeLine, algorithm]);
 
