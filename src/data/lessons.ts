@@ -69,6 +69,12 @@ export const lessons: Lesson[] = [
     title: "DFS",
     description: "DFS Tree, Pre/Post order, Topological Sorting, Counting connected components",
     pdf: "/lessons/week-9.pdf",
+  },
+  {
+    week: 10,
+    title: "BFS and Dijkstra",
+    description: "BFS, Shortest Paths in weighted Graphs, Dijkstra",
+    pdf: "/lessons/week-10.pdf",
   }
   // Add new lessons here each week
 ];
