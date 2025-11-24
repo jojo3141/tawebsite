@@ -22,7 +22,7 @@ const SearchTreeVisualizer: React.FC<{ step: AlgorithmStep; algorithm: Algorithm
         // Identify valid nodes for the tree
         const validNodes = new Set<string>();
         
-        if (algorithm === AlgorithmType.BFS || algorithm === AlgorithmType.DIJKSTRA) {
+        if (algorithm === AlgorithmType.BFS || algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD) {
             Object.entries(step.distances).forEach(([id, d]) => {
                 if (d !== Infinity) validNodes.add(id);
             });
@@ -575,11 +575,11 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
         )}
       </div>
 
-      {/* --- MIDDLE SECTION: SEARCH TREE (DFS/BFS/DIJKSTRA Only) --- */}
-      {(algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.BFS || algorithm === AlgorithmType.DIJKSTRA) && (
+      {/* --- MIDDLE SECTION: SEARCH TREE (DFS/BFS/DIJKSTRA/BELLMAN-FORD Only) --- */}
+      {(algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.BFS || algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD) && (
           <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden h-auto min-h-[300px]">
               <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-sky-400 uppercase tracking-wider">
-                  {algorithm === AlgorithmType.DIJKSTRA ? 'Shortest Path Tree' : 'Search Tree'}
+                  {algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD ? 'Shortest Path Tree' : 'Search Tree'}
               </div>
               <div className="flex-1 relative bg-slate-900/30">
                   <SearchTreeVisualizer step={step} algorithm={algorithm} />
