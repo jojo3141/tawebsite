@@ -1,5 +1,6 @@
-import React, { useRef, useEffect } from 'react';
-import { AlgorithmStep, AlgorithmType, Graph } from '@/types/graph';
+
+import React, { useRef, useEffect, useMemo } from 'react';
+import { AlgorithmStep, AlgorithmType, Graph, EdgeType } from '@/types/graph';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Infinity as InfinityIcon } from 'lucide-react';
 
@@ -8,6 +9,157 @@ interface DataPanelProps {
   algorithm: AlgorithmType;
   graph: Graph;
 }
+
+// --- INTERNAL COMPONENT: SEARCH TREE VISUALIZER ---
+const SearchTreeVisualizer: React.FC<{ step: AlgorithmStep; algorithm: AlgorithmType }> = ({ step, algorithm }) => {
+    
+    const treeData = useMemo(() => {
+        const nodes: { id: string, x: number, y: number }[] = [];
+        const links: { source: string, target: string }[] = [];
+        const childrenMap: Record<string, string[]> = {};
+        const roots: string[] = [];
+        
+        // Identify valid nodes for the tree
+        const validNodes = new Set<string>();
+        
+        if (algorithm === AlgorithmType.BFS || algorithm === AlgorithmType.DIJKSTRA) {
+            Object.entries(step.distances).forEach(([id, d]) => {
+                if (d !== Infinity) validNodes.add(id);
+            });
+        } else if (algorithm === AlgorithmType.DFS) {
+            Object.keys(step.discoveryTimes).forEach(id => validNodes.add(id));
+        }
+
+        // Build hierarchy
+        validNodes.forEach(nodeId => {
+            const parent = step.parents[nodeId];
+            if (parent && validNodes.has(parent)) {
+                if (!childrenMap[parent]) childrenMap[parent] = [];
+                childrenMap[parent].push(nodeId);
+            } else {
+                // It's a root if it has no parent (or parent not in valid set yet)
+                roots.push(nodeId);
+            }
+        });
+
+        // Sort for deterministic layout
+        roots.sort();
+        Object.values(childrenMap).forEach(list => list.sort());
+
+        // Layout Algorithm (Recursive Reingold-Tilford simplified)
+        let leafCounter = 0;
+        
+        const traverse = (u: string, depth: number): { minX: number, maxX: number } => {
+            const myChildren = childrenMap[u] || [];
+            
+            if (myChildren.length === 0) {
+                // Leaf
+                const x = leafCounter++;
+                nodes.push({ id: u, x, y: depth });
+                return { minX: x, maxX: x };
+            }
+
+            let minC = Infinity;
+            let maxC = -Infinity;
+
+            myChildren.forEach(v => {
+                const { minX, maxX } = traverse(v, depth + 1);
+                minC = Math.min(minC, minX);
+                maxC = Math.max(maxC, maxX);
+            });
+
+            // Parent centered above children
+            const myX = (minC + maxC) / 2;
+            nodes.push({ id: u, x: myX, y: depth });
+            
+            // Add links (These are inherently TREE edges)
+            myChildren.forEach(v => links.push({ source: u, target: v }));
+
+            return { minX: minC, maxX: maxC };
+        };
+
+        roots.forEach(root => {
+            traverse(root, 0);
+            leafCounter += 0.5; 
+        });
+
+        return { nodes, links, width: leafCounter };
+    }, [step.parents, step.distances, step.discoveryTimes, algorithm]);
+
+    if (treeData.nodes.length === 0) {
+        return <div className="h-full flex items-center justify-center text-slate-600 text-sm italic">Tree Empty</div>;
+    }
+
+    // Scaling
+    const X_SCALE = 50;
+    const Y_SCALE = 60;
+    const RADIUS = 14;
+    const PADDING_X = 40;
+    const PADDING_Y = 40;
+    
+    const svgWidth = Math.max(100, treeData.width * X_SCALE + PADDING_X * 2);
+    const svgHeight = Math.max(100, Math.max(...treeData.nodes.map(n => n.y)) * Y_SCALE + PADDING_Y * 2);
+
+    return (
+        <div className="overflow-auto w-full h-full">
+            <svg width={svgWidth} height={svgHeight} className="block mx-auto overflow-visible">
+                <g transform={`translate(${PADDING_X}, ${PADDING_Y})`}>
+                    
+                    {/* 1. Standard Tree Links (Parent Pointers) */}
+                    {treeData.links.map(link => {
+                        const src = treeData.nodes.find(n => n.id === link.source)!;
+                        const tgt = treeData.nodes.find(n => n.id === link.target)!;
+                        
+                        // Use static grey for tree links in the search tree visualization
+                        const color = '#475569';
+                        const strokeWidth = 2;
+
+                        return (
+                            <motion.line
+                                key={`tree-${link.source}-${link.target}`}
+                                initial={{ pathLength: 0, opacity: 0 }}
+                                animate={{ pathLength: 1, opacity: 1 }}
+                                x1={src.x * X_SCALE}
+                                y1={src.y * Y_SCALE}
+                                x2={tgt.x * X_SCALE}
+                                y2={tgt.y * Y_SCALE}
+                                stroke={color}
+                                strokeWidth={strokeWidth}
+                            />
+                        );
+                    })}
+                    
+                    {/* Nodes */}
+                    {treeData.nodes.map(node => {
+                        const isCurrent = node.id === step.currentNodeId;
+                        const isNeighbor = node.id === step.currentNeighborId;
+                        
+                        return (
+                            <g key={node.id} transform={`translate(${node.x * X_SCALE}, ${node.y * Y_SCALE})`}>
+                                <motion.circle
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    r={RADIUS}
+                                    fill={isCurrent ? '#eab308' : (isNeighbor ? '#3b82f6' : '#1e293b')}
+                                    stroke={isCurrent ? '#fff' : '#64748b'}
+                                    strokeWidth="2"
+                                />
+                                <text
+                                    dy=".35em"
+                                    textAnchor="middle"
+                                    className="text-[10px] font-bold fill-slate-200 pointer-events-none"
+                                >
+                                    {node.id}
+                                </text>
+                            </g>
+                        )
+                    })}
+                </g>
+            </svg>
+        </div>
+    );
+};
+
 
 const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
   
@@ -24,25 +176,16 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
   useEffect(() => {
     // 1. General Queue/Stack Scrolling (Left Panel)
     if (algorithm !== AlgorithmType.BELLMAN_FORD && listRef.current) {
-        const timer = setTimeout(() => {
-            if (listRef.current) {
-                if (algorithm === AlgorithmType.DFS) {
-                    listRef.current.scrollTop = 0;
-                } else {
-                    listRef.current.scrollTop = listRef.current.scrollHeight;
-                }
-            }
-        }, 10);
-        // Cleanup not strictly necessary for 10ms, but good practice
+        // No auto-scroll for general data panels as requested in previous prompt
     }
 
-    // 2. Bellman Ford Edge List Scrolling
+    // 2. Bellman Ford Edge List Scrolling (Keep this as it highlights active item)
     if (algorithm === AlgorithmType.BELLMAN_FORD && listRef.current) {
         setTimeout(() => {
             if (activeEdgeRef.current && listRef.current) {
                 const container = listRef.current;
                 const element = activeEdgeRef.current;
-                const topPos = element.offsetTop - 4; // Minimal buffer
+                const topPos = element.offsetTop - 4; 
                 container.scrollTo({ top: topPos, behavior: 'smooth' });
             }
         }, 50);
@@ -74,7 +217,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
         }, 50);
     }
 
-  }, [step.stepId, algorithm]); // Triggers on every step update
+  }, [step.stepId, algorithm]); 
 
   // Calculate Level Sets for BFS
   const levelSets: Record<number, string[]> = {};
@@ -91,7 +234,6 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
   // Calculate Components for Kruskal/Boruvka (Disjoint Sets)
   const componentSets: Record<string, string[]> = {};
   if (algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA) {
-      // Helper to find root in the snapshot
       const findRoot = (node: string, parents: Record<string, string | null>): string => {
           let curr = node;
           let p = parents[curr];
@@ -156,11 +298,9 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
       return 'Visited / Processed';
   }
 
-  // Layout Logic
   const isBellman = algorithm === AlgorithmType.BELLMAN_FORD;
   const isKruskal = algorithm === AlgorithmType.KRUSKAL;
   
-  // Grid Config: Bellman=Flex(1col), Kruskal=Grid(3cols), Others=Grid(2cols)
   const topSectionClass = isBellman ? 'flex' : (isKruskal ? 'grid grid-cols-3 gap-4' : 'grid grid-cols-2 gap-4');
 
   // --- BORUVKA SCROLL TARGET LOGIC ---
@@ -169,7 +309,6 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
     const roots = Object.keys(componentSets).sort();
     const activeRoots: string[] = [];
 
-    // Identify all active roots based on current step
     roots.forEach(root => {
         const minEdgeEntry = step.boruvkaMinEdges?.find(entry => entry.root === root);
         const isQueueActive = step.queue.some(q => componentSets[root].includes(q.nodeId));
@@ -183,11 +322,9 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
     });
 
     if (activeRoots.length > 0) {
-        // Line 6 (Merge Step): Scroll to FIRST active component (F ← F ∪ {e1...})
         if (step.lineNumber === 6) {
             boruvkaScrollTargetRoot = activeRoots[0];
         } 
-        // Line 5 (Scan Step) or others: Scroll to LAST active component (ei ← min edge...)
         else {
             boruvkaScrollTargetRoot = activeRoots[activeRoots.length - 1];
         }
@@ -199,7 +336,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
       
       {/* --- TOP SECTION: STRUCTURES --- */}
       <div className={`h-64 ${topSectionClass}`}>
-        
+        {/* ... (No changes to Top Section rendering) ... */}
         {isBellman ? (
            <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden w-full">
              <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-indigo-300 uppercase tracking-wider">
@@ -302,10 +439,8 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                     </div>
                     <div ref={sortedListRef} className="p-2 overflow-auto flex-1 relative">
                         {kruskalSortedEdges.map((edge, idx) => {
-                            // Check if currently inspecting this edge
                             const isActive = step.activeEdge?.source === edge.source && step.activeEdge?.target === edge.target;
                             
-                            // Check if already in MST (Amber)
                             const isInMST = step.mstEdges.some(e => 
                                 (e.source === edge.source && e.target === edge.target) || 
                                 (e.source === edge.target && e.target === edge.source)
@@ -338,8 +473,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                 {getRightPanelTitle()}
               </div>
               <div ref={rightPanelRef} className="p-2 overflow-auto flex-1 relative">
-                
-                {/* BFS Level Sets View */}
+                {/* ... (Existing logic for BFS/Boruvka/Kruskal/Standard panels) ... */}
                 {algorithm === AlgorithmType.BFS ? (
                   <div className="space-y-2">
                     {Object.keys(levelSets).sort((a,b) => Number(a)-Number(b)).map((distStr) => {
@@ -359,25 +493,17 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                     })}
                   </div>
                 ) : algorithm === AlgorithmType.BORUVKA ? (
-                    // BORUVKA: Combined Components & Min Edges View
+                    // BORUVKA
                     <div className="space-y-3">
                         {Object.keys(componentSets).sort().map((root, i) => {
-                            // Find min edge for this root
                             const minEdgeEntry = step.boruvkaMinEdges?.find(entry => entry.root === root);
-                            
-                            // Check if this component is "active" (its nodes are in the step.queue for highlighting)
                             const isQueueActive = step.queue.some(q => componentSets[root].includes(q.nodeId));
-
-                            // Check if min edge is the active edge (Line 6 - Merge Step)
-                            // Note: Boruvka edges are undirected, check both directions
                             const isEdgeActive = step.activeEdge && minEdgeEntry && (
                                 (step.activeEdge.source === minEdgeEntry.edge.source && step.activeEdge.target === minEdgeEntry.edge.target) ||
                                 (step.activeEdge.source === minEdgeEntry.edge.target && step.activeEdge.target === minEdgeEntry.edge.source)
                             );
 
                             const isActive = isQueueActive || isEdgeActive;
-                            
-                            // Dynamic styles based on state (Scanning vs Merging)
                             const borderColor = isEdgeActive 
                                 ? 'border-amber-500 bg-amber-900/10' 
                                 : (isQueueActive ? 'border-purple-500 bg-purple-900/10' : 'border-slate-700/50');
@@ -420,7 +546,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                         })}
                     </div>
                 ) : algorithm === AlgorithmType.KRUSKAL ? (
-                    // KRUSKAL: Simple Connected Components
+                    // KRUSKAL
                     <div className="space-y-2">
                         {Object.values(componentSets).map((set, i) => (
                             <div key={i} className="flex items-center gap-2 flex-wrap bg-slate-700/30 p-1.5 rounded border border-slate-700/50">
@@ -434,7 +560,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                         ))}
                     </div>
                 ) : (
-                  // Standard Visited Set View (Dijkstra / DFS / BF / Prim)
+                  // Standard Visited Set View
                   <div className="flex flex-wrap content-start gap-2">
                       {step.processedSet.map((id) => (
                         <span key={id} className="flex items-center justify-center w-8 h-8 bg-green-900/30 border border-green-700 text-green-300 rounded-full text-sm font-bold">
@@ -448,6 +574,18 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
           </>
         )}
       </div>
+
+      {/* --- MIDDLE SECTION: SEARCH TREE (DFS/BFS/DIJKSTRA Only) --- */}
+      {(algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.BFS || algorithm === AlgorithmType.DIJKSTRA) && (
+          <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden h-auto min-h-[300px]">
+              <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-sky-400 uppercase tracking-wider">
+                  {algorithm === AlgorithmType.DIJKSTRA ? 'Shortest Path Tree' : 'Search Tree'}
+              </div>
+              <div className="flex-1 relative bg-slate-900/30">
+                  <SearchTreeVisualizer step={step} algorithm={algorithm} />
+              </div>
+          </div>
+      )}
 
       {/* --- BOTTOM SECTION: TABLE --- */}
       <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden h-[26rem]">
@@ -471,7 +609,6 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
               </tr>
             </thead>
             <tbody>
-              {/* For Kruskal/Boruvka, we iterate all graph nodes, not just distances keys (distances might be empty) */}
               {(algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA ? Object.keys(step.parents).sort() : Object.keys(step.distances).sort()).map((nodeId) => {
                 const dist = step.distances[nodeId];
                 const parent = step.parents[nodeId];
@@ -493,7 +630,6 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                         ? <span className="text-green-400 font-bold">YES</span> 
                         : <span className="text-slate-600">NO</span>;
                 } else if (algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA) {
-                    // Display Root for Kruskal/Boruvka
                     let curr = nodeId;
                     let p = step.parents[curr];
                     let count = 0;
@@ -522,6 +658,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
           </table>
         </div>
       </div>
+
     </div>
   );
 };

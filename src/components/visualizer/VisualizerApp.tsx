@@ -1,12 +1,12 @@
 
-
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { generateRandomGraph, calculateDijkstraSteps, calculateBFSSteps, calculateDFSSteps, calculateBellmanFordSteps, calculatePrimSteps, calculateKruskalSteps, calculateBoruvkaSteps } from '@/utils/graphUtils';
 import GraphCanvas from '@/components/visualizer/GraphCanvas';
 import PseudocodeViewer from '@/components/visualizer/PseudocodeViewer';
 import DataPanel from '@/components/visualizer/DataPanel';
 import { Graph, AlgorithmStep, AlgorithmType } from '@/types/graph';
-import { Play, RotateCcw, ArrowRight, ArrowLeft, SkipForward } from 'lucide-react';
+import { Play, RotateCcw, ArrowRight, ArrowLeft, SkipForward, SkipBack } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const VisualizerApp: React.FC = () => {
@@ -170,6 +170,11 @@ const VisualizerApp: React.FC = () => {
       setCurrentStepIndex(steps.length - 1);
   };
 
+  const handleReset = () => {
+      setIsAutoPlaying(false);
+      setCurrentStepIndex(0);
+  };
+
   const currentStep = steps[currentStepIndex];
 
   if (!graph || !currentStep) return <div className="h-full flex items-center justify-center text-slate-400">Loading...</div>;
@@ -181,9 +186,12 @@ const VisualizerApp: React.FC = () => {
       {/* Header with Grid Layout for Stability */}
       <header className="bg-slate-900 border-b border-slate-800 px-4 py-2 grid grid-cols-[1fr_auto_1fr] items-center sticky top-0 z-40 shadow-md gap-2">
         
-        {/* Left: Spacer/Logo Placeholder */}
+        {/* Left: Back Button */}
         <div className="flex items-center space-x-3 justify-self-start">
-           {/* Can add back tool logo if desired */}
+           <Link href="/" className="flex items-center gap-2 px-3 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+              <ArrowLeft size={18} />
+              <span className="font-medium text-sm">Back</span>
+           </Link>
         </div>
         
         {/* Center: Algorithm Switcher (Fixed Position) */}
@@ -320,6 +328,14 @@ const VisualizerApp: React.FC = () => {
               </div>
 
               <div className="flex gap-1">
+                <button
+                   onClick={handleReset}
+                   disabled={currentStepIndex === 0}
+                   className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-bold transition-colors border border-slate-700 text-slate-200 disabled:opacity-50"
+                >
+                  <SkipBack size={16} /> Reset
+                </button>
+
                 <button
                    onClick={() => setIsAutoPlaying(!isAutoPlaying)}
                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isAutoPlaying ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'}`}
