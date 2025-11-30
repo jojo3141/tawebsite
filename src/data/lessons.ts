@@ -20,7 +20,7 @@ export const lessons: Lesson[] = [
     title: "Asymptotic Growth",
     description: "Administration basics and introduction to induction and asymptotic growth",
     pdf: "/lessons/week-1.pdf",
-  }, 
+  },
   {
     week: 2,
     title: "O-Notation",
@@ -75,6 +75,12 @@ export const lessons: Lesson[] = [
     title: "BFS and Dijkstra",
     description: "BFS, Shortest Paths in weighted Graphs, Dijkstra",
     pdf: "/lessons/week-10.pdf",
+  },
+  {
+    week: 11,
+    title: "Bellman-Ford, MST",
+    description: "Bellman-Ford, MST, Boruvka, Prim, Old Exam Exercises",
+    pdf: "/lessons/week-11.pdf",
   }
   // Add new lessons here each week
 ];
