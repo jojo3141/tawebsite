@@ -59,9 +59,9 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode }) => {
     } else if (algo === AlgorithmType.PRIM) {
       solutionSteps = calculatePrimSteps(g, startNode);
     } else if (algo === AlgorithmType.KRUSKAL) {
-      solutionSteps = calculateKruskalSteps(g, startNode);
+      solutionSteps = calculateKruskalSteps(g);
     } else if (algo === AlgorithmType.BORUVKA) {
-      solutionSteps = calculateBoruvkaSteps(g, startNode);
+      solutionSteps = calculateBoruvkaSteps(g);
     }
     
     setSteps(solutionSteps);
@@ -178,7 +178,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode }) => {
         setMode={setMode}
         algorithms={ALGORITHMS}
         currentAlgorithm={algorithm}
-        setAlgorithm={setAlgorithm}
+        setAlgorithm={(algo: string) => setAlgorithm(algo as AlgorithmType)}
         onGenerateNew={generateNewGraph}
         showDirectionToggle={supportsDirectionToggle(algorithm)}
         isDirected={userPreferredDirected}

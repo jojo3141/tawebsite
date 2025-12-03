@@ -226,7 +226,7 @@ const SortingMode: React.FC<SortingModeProps> = ({ mode, setMode }) => {
         setMode={setMode}
         algorithms={ALGORITHMS}
         currentAlgorithm={algorithm}
-        setAlgorithm={setAlgorithm}
+        setAlgorithm={(algo: string) => setAlgorithm(algo as SortingAlgorithmType)}
         onGenerateNew={generateNewData}
       />
 

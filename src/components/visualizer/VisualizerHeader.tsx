@@ -10,7 +10,7 @@ interface VisualizerHeaderProps {
   setMode: (mode: 'GRAPH' | 'SORTING') => void;
   algorithms: string[];
   currentAlgorithm: string;
-  setAlgorithm: (algo: any) => void;
+  setAlgorithm: (algo: string) => void;
   onGenerateNew: () => void;
   // Graph specific controls
   showDirectionToggle?: boolean;

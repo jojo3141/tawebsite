@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect, useMemo } from 'react';
-import { AlgorithmStep, AlgorithmType, Graph, EdgeType } from '@/types/graph';
+import { AlgorithmStep, AlgorithmType, Graph } from '@/types/graph';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Infinity as InfinityIcon } from 'lucide-react';
 
