@@ -60,14 +60,20 @@ export default function HomePage() {
           <Link
             key={lesson.week}
             href={`/lessons/${lesson.week}`}
-            className="group p-6 bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
+            className="group block"
+            scroll={false}
           >
-            <h3 className="text-2xl font-bold mb-2 group-hover:text-purple-600 transition-colors duration-300">
-              Week {lesson.week} – {lesson.title}
-            </h3>
-            <p className="text-gray-600 group-hover:text-gray-800 transition-colors duration-300">
-              {lesson.description}
-            </p>
+            <motion.div
+              layoutId={`lesson-card-${lesson.week}`}
+              className="p-6 bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300 h-full"
+            >
+              <h3 className="text-2xl font-bold mb-2 group-hover:text-purple-600 transition-colors duration-300">
+                Week {lesson.week} – {lesson.title}
+              </h3>
+              <p className="text-gray-600 group-hover:text-gray-800 transition-colors duration-300">
+                {lesson.description}
+              </p>
+            </motion.div>
           </Link>
         ))}
       </motion.div>

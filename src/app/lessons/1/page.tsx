@@ -5,6 +5,8 @@ import { lessons } from "@/data/lessons";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
+import { smoothScrollToTop } from "@/utils/smoothScroll";
+
 // When Copying this file, update LessonsXPage and l.week === X
 
 export default function Lesson1Page() {
@@ -16,9 +18,9 @@ export default function Lesson1Page() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      layoutId={`lesson-card-${lesson.week}`}
+      transition={{ duration: 0.8, ease: "easeInOut" }}
+      onLayoutAnimationStart={() => smoothScrollToTop(800)}
       className="w-full mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10"
     >
       {/* Title */}

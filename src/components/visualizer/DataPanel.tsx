@@ -175,8 +175,9 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
   // Auto-scroll logic:
   useEffect(() => {
     // 1. General Queue/Stack Scrolling (Left Panel)
-    if (algorithm !== AlgorithmType.BELLMAN_FORD && listRef.current) {
-        // No auto-scroll for general data panels as requested in previous prompt
+    if (algorithm === AlgorithmType.DFS && listRef.current) {
+        // Auto-scroll to top for DFS stack
+        listRef.current.scrollTop = 0;
     }
 
     // 2. Bellman Ford Edge List Scrolling (Keep this as it highlights active item)
@@ -374,15 +375,15 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
               </div>
               <div 
                 ref={listRef}
-                className={`p-2 overflow-auto flex-1 gap-1 flex ${algorithm === AlgorithmType.DFS ? 'flex-col-reverse justify-start' : 'flex-col'}`}
+                className={`p-2 overflow-auto flex-1 gap-1 flex flex-col`}
               >
                 <AnimatePresence initial={false}>
                   {/* DFS Stack View */}
                   {algorithm === AlgorithmType.DFS && (
                     step.stack.length === 0 ? <div className="text-slate-600 text-center text-xs py-4 italic">Empty</div> :
-                    step.stack.map((nodeId, idx) => (
+                    [...step.stack].reverse().map((nodeId, idx) => (
                       <motion.div
-                        key={`${nodeId}-${idx}`}
+                        key={`${nodeId}-${step.stack.length - 1 - idx}`}
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}

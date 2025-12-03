@@ -10,7 +10,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const navItems = [
     { name: "Weekly Material", href: "/" },
-    { name: "Graph Algorithm Visualizer", href: "/algorithms" },
+    { name: "Algorithm Visualizer", href: "/algorithms" },
     { name: "Exam & Bonus", href: "/exam" },
     { name: "Useful Resources", href: "/resources" },
     { name: "Contact & Questions", href: "/contact" },
@@ -20,7 +20,10 @@ export default function Navbar() {
   const refs = useRef<HTMLAnchorElement[]>([]);
 
   const activeIndex = navItems.findIndex(
-    (item) => pathname === item.href || (pathname === "/" && item.href === "/")
+    (item) =>
+      pathname === item.href ||
+      (pathname === "/" && item.href === "/") ||
+      (item.href === "/" && pathname.startsWith("/lessons/"))
   );
 
   const isAlgorithms = pathname === "/algorithms";
