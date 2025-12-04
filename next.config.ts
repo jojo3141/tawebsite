@@ -2,10 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "export", // <- Hier aktivierst du den statischen Export
+  images: {
+    unoptimized: true,
+  },
   // optional: weitere Konfigurationsoptionen hier
   // basePath: "/tawebsite",
   // assetPrefix: "/tawebsite/",
-  
+
 };
 
 export default nextConfig;
