@@ -66,13 +66,12 @@ export default function Navbar() {
 
           {/* Sliding underline */}
           <motion.div
-            layout
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="absolute bottom-0 h-1 rounded bg-purple-700"
-            style={{
+            animate={{
               left: underlineStyle.left,
               width: underlineStyle.width,
             }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="absolute bottom-0 h-1 rounded bg-purple-700"
           />
         </div>
       </div>

@@ -5,16 +5,16 @@ import { usePathname } from "next/navigation";
 
 export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAlgorithms = pathname === "/algorithms";
+
 
   return (
-    <AnimatePresence mode="popLayout" onExitComplete={() => window.scrollTo(0, 0)}>
+    <AnimatePresence mode="wait">
       <motion.div
         key={pathname}
-        initial={isAlgorithms ? { opacity: 0, scale: 0.95, filter: "blur(10px)" } : { opacity: 1 }}
-        animate={isAlgorithms ? { opacity: 1, scale: 1, filter: "blur(0px)" } : { opacity: 1 }}
-        exit={isAlgorithms ? { opacity: 0, scale: 0.95, filter: "blur(10px)" } : { opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeInOut" }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
       >
         {children}
       </motion.div>

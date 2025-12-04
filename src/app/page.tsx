@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+// Force rebuild
 import { lessons } from "@/data/lessons";
 import { ClockIcon, MapPinIcon } from "@heroicons/react/24/outline";
 export const dynamic = "force-static";
@@ -61,11 +62,10 @@ export default function HomePage() {
             key={lesson.week}
             href={`/lessons/${lesson.week}`}
             className="group block"
-            scroll={false}
           >
             <motion.div
-              layoutId={`lesson-card-${lesson.week}`}
               className="p-6 bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300 h-full"
+              whileHover={{ y: -5 }}
             >
               <h3 className="text-2xl font-bold mb-2 group-hover:text-purple-600 transition-colors duration-300">
                 Week {lesson.week} – {lesson.title}
