@@ -797,6 +797,7 @@ export const calculatePrimSteps = (graph: Graph, startNodeId: string): Algorithm
 };
 
 // --- KRUSKAL SOLVER ---
+// --- KRUSKAL SOLVER ---
 class UnionFind {
   parent: Record<string, string> = {};
   constructor(nodes: Node[]) {
@@ -822,9 +823,9 @@ export const calculateKruskalSteps = (graph: Graph): AlgorithmStep[] => {
   const steps: AlgorithmStep[] = [];
   const mstEdges: { source: string, target: string }[] = []; // Set F
 
-  // We use 'parents' to visualize the disjoint sets in the table
-  // We initiate UF helper
-  const uf = new UnionFind(graph.nodes);
+  // Data Structures
+  const rep: Record<string, string> = {};
+  const members: Record<string, string[]> = {};
 
   let stepCounter = 0;
   const pushStep = (line: number, desc: string, u: string | null = null, v: string | null = null, edge: { source: string, target: string } | null = null) => {
@@ -833,7 +834,8 @@ export const calculateKruskalSteps = (graph: Graph): AlgorithmStep[] => {
       lineNumber: line,
       description: desc,
       distances: {},
-      parents: { ...uf.parent }, // Snapshot of UF parents
+      parents: { ...rep }, // Map rep to parents for visualization compatibility (though semantics differ)
+      unionFindMembers: JSON.parse(JSON.stringify(members)), // Deep copy
       discoveryTimes: {},
       finishTimes: {},
       edgeClassifications: {},
@@ -848,45 +850,113 @@ export const calculateKruskalSteps = (graph: Graph): AlgorithmStep[] => {
     });
   };
 
-  pushStep(1, "F ← Ø (Initialize Empty MST)");
+  // 1. Init
+  // 1. Line 1: Kruskal Function Entry
+  pushStep(1, "Kruskal(G = (V, E))");
 
-  // Sort Edges by Weight (Ascending)
+  // 2. Line 2: F <- Empty
+  pushStep(2, "F ← Ø");
+
+  // 3. Line 3: Call MAKE(V)
+  pushStep(3, "MAKE(V)");
+
+  // Execute Make(V) Logic (Helper function lines 10-13)
+  pushStep(10, "Make(V):");
+  graph.nodes.forEach(node => {
+    rep[node.id] = node.id;
+    members[node.id] = [node.id];
+    pushStep(12, `rep[${node.id}] ← ${node.id}`, node.id);
+    pushStep(13, `members[${node.id}] ← {${node.id}}`, node.id);
+  });
+
+  // 18. Sort Edges
   const sortedEdges = [...graph.edges].sort((a, b) => {
     if (a.weight !== b.weight) return a.weight - b.weight;
-    // Tie-break: source, then target
     if (a.source !== b.source) return a.source.localeCompare(b.source);
     return a.target.localeCompare(b.target);
   });
+  pushStep(4, "Sort edges by weight ascending");
 
-  pushStep(2, "Sort edges by weight ascending");
+  // Helper: Same(u, v)
+  const same = (u: string, v: string, edge: Edge) => {
+    pushStep(15, `Same(${u}, ${v}): Check rep[${u}] == rep[${v}]`, u, v, edge);
+    const result = rep[u] === rep[v];
+    pushStep(16, `return (${rep[u]} == ${rep[v]}) -> ${result}`, u, v, edge);
+    return result;
+  };
 
-  // Loop
+  // Helper: Union(u, v)
+  const union = (u: string, v: string, edge: Edge) => {
+    pushStep(18, `Union(${u}, ${v})`, u, v, edge);
+
+    let rootU = rep[u];
+    let rootV = rep[v];
+
+    // 10. Check sizes
+    pushStep(19, `if |members[${rootU}]| (${members[rootU].length}) > |members[${rootV}]| (${members[rootV].length})`, u, v, edge);
+    if (members[rootU].length > members[rootV].length) {
+      pushStep(20, `Swap ${u}, ${v}`, u, v, edge);
+      // Swap u, v effectively means we merge smaller into larger. 
+      // The code says "Swap u, v". In our context, we just swap the roots we are working with.
+      [u, v] = [v, u];
+      [rootU, rootV] = [rootV, rootU];
+    }
+
+    // 12. Loop x in members[rep[u]]
+    // Note: After swap, u is the one being merged INTO v. So we iterate members[rep[u]].
+    // VISUALIZATION FIX: Sort so that rootU is processed LAST. 
+    // This allows rootU to remain the "representative" (rep[rootU] == rootU) until the very end,
+    // keeping the "members[rootU]" row visible in the table as it shrinks.
+    const membersToMove = [...members[rootU]].sort((a, b) => {
+      if (a === rootU) return 1;
+      if (b === rootU) return -1;
+      return a.localeCompare(b);
+    });
+
+    for (const x of membersToMove) {
+      pushStep(21, `for x (${x}) in members[${rootU}]`, u, v, edge);
+
+      // 13. rep[x] <- rep[v]
+      rep[x] = rootV;
+      pushStep(22, `rep[${x}] ← ${rootV}`, u, v, edge);
+
+      // 14. members[rep[v]] <- members[rep[v]] U {x}
+      // VISUALIZATION FIX: Explicitly remove from old set and add to new set step-by-step
+      members[rootU] = members[rootU].filter(m => m !== x);
+      members[rootV].push(x);
+
+      // Optional: Sort members[rootV] for cleanliness if desired, but append is fine for showing history
+      // members[rootV].sort(); 
+
+      pushStep(23, `members[${rootV}] ← members[${rootV}] ∪ {${x}}`, u, v, edge);
+    }
+
+    // Cleanup old members set to avoid clutter in visualization if we iterate keys
+    delete members[rootU];
+  };
+
+  // Main Loop
   for (const edge of sortedEdges) {
     const u = edge.source;
     const v = edge.target;
-    const weight = edge.weight;
+    pushStep(4, `Inspect edge {${u}, ${v}} (w: ${edge.weight})`, u, v, edge);
 
-    pushStep(2, `Inspect edge {${u}, ${v}} with weight ${weight}`, u, v, edge);
+    // 19. if not Same(u, v)
+    if (!same(u, v, edge)) {
+      pushStep(5, `Same(${u}, ${v}) is false.`, u, v, edge);
 
-    const rootU = uf.find(u);
-    const rootV = uf.find(v);
-
-    pushStep(3, `Check components: Find(${u})=${rootU}, Find(${v})=${rootV}`, u, v, edge);
-
-    if (rootU !== rootV) {
-      pushStep(3, `Roots differ (${rootU} ≠ ${rootV}). Nodes are in different components.`, u, v, edge);
-
+      // 20. F <- F U {(u, v)}
       mstEdges.push({ source: u, target: v });
-      uf.union(u, v); // Update UF structure
+      pushStep(6, `F ← F ∪ {(${u}, ${v})}`, u, v, edge);
 
-      pushStep(4, `Add {${u}, ${v}} to F. Union sets.`, u, v, edge);
+      // 21. Union(u, v)
+      union(u, v, edge);
     } else {
-      pushStep(3, `Roots are same (${rootU}). Edge forms a cycle. Skip.`, u, v, edge);
+      pushStep(5, `Same(${u}, ${v}) is true. Cycle detected. Skip.`, u, v, edge);
     }
   }
 
-  pushStep(6, "Algorithm Complete. F is MST.");
-
+  pushStep(8, "return F (MST completed)");
   return steps;
 };
 

@@ -44,28 +44,31 @@ export interface AlgorithmStep {
   stepId: number;
   lineNumber: number; // Corresponds to pseudocode line
   description: string;
-  
+
   // Snapshot of data
   distances: Record<string, number>; // d[v] for Dijkstra/BFS
   parents: Record<string, string | null>; // p[v]
-  
+
   // DFS Specific
   discoveryTimes: Record<string, number>; // d[v] (Pre-order)
   finishTimes: Record<string, number>;    // f[v] (Post-order)
   edgeClassifications: Record<string, EdgeType>; // Key: "source-target"
-  
+
   // Prim Specific
-  mstEdges: {source: string, target: string}[]; // Set F
+  mstEdges: { source: string, target: string }[]; // Set F
 
   // Boruvka Specific
   // Stores the edge selected by a specific component (root)
-  boruvkaMinEdges?: { root: string, edge: {source: string, target: string, weight: number} }[]; 
+  boruvkaMinEdges?: { root: string, edge: { source: string, target: string, weight: number } }[];
+
+  // Kruskal Specific
+  unionFindMembers?: Record<string, string[]>; // members[rep[v]]
 
   // Data Structures
   queue: PriorityQueueItem[]; // Used for Dijkstra (PQ) and BFS (FIFO)
   stack: string[]; // Used for DFS (Recursion Stack)
   processedSet: string[]; // S (nodes finished/visited)
-  
+
   // Highlight state
   currentNodeId: string | null; // u
   currentNeighborId: string | null; // v
@@ -200,10 +203,29 @@ export const PSEUDOCODE_PRIM = [
 ];
 
 export const PSEUDOCODE_KRUSKAL = [
-  { line: 1, text: "F ← Ø", indent: 0 },
-  { line: 2, text: "for {u, v} ∈ E sorted by weight ascending do", indent: 0 },
-  { line: 3, text: "if u and v in different components of F then", indent: 2 },
-  { line: 4, text: "F ← F ∪ {{u, v}}", indent: 4 },
+  { line: 1, text: "Kruskal(G = (V, E)):", indent: 0 },
+  { line: 2, text: "F ← Ø", indent: 2 },
+  { line: 3, text: "MAKE(V)", indent: 2 },
+  { line: 4, text: "for (u, v) ∈ E sorted by weight ascending do", indent: 2 },
+  { line: 5, text: "if not SAME(u, v) then", indent: 4 },
+  { line: 6, text: "F ← F ∪ {(u, v)}", indent: 6 },
+  { line: 7, text: "UNION(u, v)", indent: 6 },
+  { line: 8, text: "return F", indent: 2 },
+  { line: 9, text: "", indent: 0 },
+  { line: 10, text: "Make(V):", indent: 0 },
+  { line: 11, text: "for v ∈ V do", indent: 2 },
+  { line: 12, text: "rep[v] ← v", indent: 4 },
+  { line: 13, text: "members[rep[v]] ← {v}", indent: 4 },
+  { line: 14, text: "", indent: 0 },
+  { line: 15, text: "Same(u, v):", indent: 0 },
+  { line: 16, text: "return (rep[u] == rep[v])", indent: 2 },
+  { line: 17, text: "", indent: 0 },
+  { line: 18, text: "Union(u, v):", indent: 0 },
+  { line: 19, text: "if |members[rep[u]]| > |members[rep[v]]| then", indent: 2 },
+  { line: 20, text: "Swap u, v", indent: 4 },
+  { line: 21, text: "for x in members[rep[u]] do", indent: 2 },
+  { line: 22, text: "rep[x] ← rep[v]", indent: 4 },
+  { line: 23, text: "members[rep[v]] ← members[rep[v]] ∪ {x}", indent: 4 },
 ];
 
 export const PSEUDOCODE_BORUVKA = [

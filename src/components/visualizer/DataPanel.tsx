@@ -588,77 +588,79 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
           </div>
       )}
 
-      {/* --- BOTTOM SECTION: TABLE --- */}
-      <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden h-[26rem]">
-        <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-slate-300 uppercase tracking-wider">
-             {algorithm === AlgorithmType.DFS ? 'Tracking Table' : (algorithm === AlgorithmType.PRIM ? 'Node Status' : (algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA ? 'Union-Find Structure' : 'Tracking Table'))}
-        </div>
-        <div className="overflow-auto flex-1">
-          <table className="w-full text-sm text-left text-slate-400">
-            <thead className="text-xs text-slate-500 uppercase bg-slate-900/50 sticky top-0 backdrop-blur-sm">
-              <tr>
-                <th className="px-4 py-2">Node</th>
-                <th className={`px-4 py-2 ${(algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD) ? 'normal-case' : ''}`}>
-                  {algorithm === AlgorithmType.DFS ? 'Pre / Post' : (algorithm === AlgorithmType.BFS ? 'Distance' : (algorithm === AlgorithmType.PRIM ? 'In Set S?' : (algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA ? 'Root ID' : 'd[v]')))}
-                </th>
-                {algorithm === AlgorithmType.BFS && (
-                  <th className="px-4 py-2">Enter / Leave</th>
-                )}
-                <th className={`px-4 py-2 ${(algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD) ? 'normal-case' : ''}`}>
-                    {algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD ? 'p[v]' : (algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA ? 'Parent Pointer' : 'Parent')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {(algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA ? Object.keys(step.parents).sort() : Object.keys(step.distances).sort()).map((nodeId) => {
-                const dist = step.distances[nodeId];
-                const parent = step.parents[nodeId];
-                const isUpdated = nodeId === step.currentNeighborId || nodeId === step.currentNodeId;
-                
-                let valueDisplay: React.ReactNode = dist === Infinity ? <InfinityIcon size={14} /> : dist;
-
-                if (algorithm === AlgorithmType.DFS) {
-                  const d = step.discoveryTimes[nodeId];
-                  const f = step.finishTimes[nodeId];
-                  valueDisplay = (
-                    <span className="font-mono">
-                      {d || '-'} / {f || '-'}
-                    </span>
-                  );
-                } else if (algorithm === AlgorithmType.PRIM) {
-                    const inS = step.processedSet.includes(nodeId);
-                    valueDisplay = inS 
-                        ? <span className="text-green-400 font-bold">YES</span> 
-                        : <span className="text-slate-600">NO</span>;
-                } else if (algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA) {
-                    let curr = nodeId;
-                    let p = step.parents[curr];
-                    let count = 0;
-                    while(p && p !== curr && count < 10) { curr = p; p = step.parents[curr]; count++ }
-                    valueDisplay = <span className="font-mono text-indigo-300 font-bold">{curr}</span>
-                }
-
-                return (
-                  <tr key={nodeId} className={isUpdated ? "bg-blue-900/20 transition-colors" : "border-b border-slate-700/50"}>
-                    <td className="px-4 py-2 font-bold text-slate-200">{nodeId}</td>
-                    <td className="px-4 py-2 font-mono">
-                      {valueDisplay}
-                    </td>
-                    {algorithm === AlgorithmType.BFS && (
+      {/* --- BOTTOM SECTION: TABLE (Hidden for Boruvka) --- */}
+      {algorithm !== AlgorithmType.BORUVKA && (
+        <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden h-[26rem]">
+          <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-slate-300 uppercase tracking-wider">
+              {algorithm === AlgorithmType.DFS ? 'Tracking Table' : (algorithm === AlgorithmType.PRIM ? 'Node Status' : (algorithm === AlgorithmType.KRUSKAL ? 'Union-Find Structure' : 'Tracking Table'))}
+          </div>
+          <div className="overflow-auto flex-1">
+            <table className="w-full text-sm text-left text-slate-400">
+              <thead className="text-xs text-slate-500 uppercase bg-slate-900/50 sticky top-0 backdrop-blur-sm">
+                <tr>
+                  <th className="px-4 py-2">Node</th>
+                  <th className={`px-4 py-2 ${(algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD) ? 'normal-case' : ''}`}>
+                    {algorithm === AlgorithmType.DFS ? 'Pre / Post' : (algorithm === AlgorithmType.BFS ? 'Distance' : (algorithm === AlgorithmType.PRIM ? 'In Set S?' : (algorithm === AlgorithmType.KRUSKAL ? 'rep[v]' : 'd[v]')))}
+                  </th>
+                  {algorithm === AlgorithmType.BFS && (
+                    <th className="px-4 py-2">Enter / Leave</th>
+                  )}
+                  <th className={`px-4 py-2 ${(algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD) ? 'normal-case' : ''}`}>
+                      {algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD ? 'p[v]' : (algorithm === AlgorithmType.KRUSKAL ? 'members[rep[v]]' : 'Parent')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {(algorithm === AlgorithmType.KRUSKAL ? Object.keys(step.parents).sort() : Object.keys(step.distances).sort()).map((nodeId) => {
+                  const dist = step.distances[nodeId];
+                  const parent = step.parents[nodeId];
+                  const isUpdated = nodeId === step.currentNeighborId || nodeId === step.currentNodeId;
+                  
+                  let valueDisplay: React.ReactNode = dist === Infinity ? <InfinityIcon size={14} /> : dist;
+                  if (algorithm === AlgorithmType.DFS) {
+                    const d = step.discoveryTimes[nodeId];
+                    const f = step.finishTimes[nodeId];
+                    valueDisplay = (
+                      <span className="font-mono">
+                        {d || '-'} / {f || '-'}
+                      </span>
+                    );
+                  } else if (algorithm === AlgorithmType.PRIM) {
+                      const inS = step.processedSet.includes(nodeId);
+                      valueDisplay = inS 
+                          ? <span className="text-green-400 font-bold">YES</span> 
+                          : <span className="text-slate-600">NO</span>;
+                  } else if (algorithm === AlgorithmType.KRUSKAL) {
+                      valueDisplay = <span className="font-mono text-indigo-300 font-bold">{step.parents[nodeId]}</span>;
+                  }
+                  return (
+                    <tr key={nodeId} className={isUpdated ? "bg-blue-900/20 transition-colors" : "border-b border-slate-700/50"}>
+                      <td className="px-4 py-2 font-bold text-slate-200">{nodeId}</td>
                       <td className="px-4 py-2 font-mono">
-                         {step.discoveryTimes[nodeId] || '-'}/{step.finishTimes[nodeId] || '-'}
+                        {valueDisplay}
                       </td>
-                    )}
-                    <td className="px-4 py-2 font-mono text-slate-500">
-                      {parent || <span className="text-slate-700">null</span>}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      {algorithm === AlgorithmType.BFS && (
+                        <td className="px-4 py-2 font-mono">
+                           {step.discoveryTimes[nodeId] || '-'}/{step.finishTimes[nodeId] || '-'}
+                        </td>
+                      )}
+                      <td className="px-4 py-2 font-mono text-slate-500">
+                        {algorithm === AlgorithmType.KRUSKAL ? (
+                          step.parents[nodeId] === nodeId && step.unionFindMembers && step.unionFindMembers[nodeId] ? (
+                            <span>&#123;{step.unionFindMembers[nodeId].join(', ')}&#125;</span>
+                          ) : '-'
+                        ) : (
+                          parent || <span className="text-slate-700">null</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
     </div>
   );
