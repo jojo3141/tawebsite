@@ -69,6 +69,20 @@ export default function LessonPageContent({ week }: LessonPageContentProps) {
         {lesson.description}
       </motion.p>
 
+      {/* Additional PDF Link */}
+      {lesson.additionalPdf && (
+        <motion.div variants={itemVariants} className="mb-6">
+          <a
+            href={lesson.additionalPdf.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 underline font-medium flex items-center gap-2"
+          >
+            📄 {lesson.additionalPdf.label}
+          </a>
+        </motion.div>
+      )}
+
       {/* PDF Viewer */}
       {lesson.pdf && (
         <motion.div variants={itemVariants} className="min-h-[50vh]">

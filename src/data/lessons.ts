@@ -3,6 +3,10 @@ export interface Lesson {
   title: string;
   description: string;
   pdf?: string; // optional
+  additionalPdf?: {
+    url: string;
+    label: string;
+  };
 }
 
 // & "C:\Program Files\PuTTY\pscp.exe" -r "out\*" jheger@slab1.ethz.ch:homepage/
@@ -81,6 +85,16 @@ export const lessons: Lesson[] = [
     title: "Bellman-Ford, MST",
     description: "Bellman-Ford, MST, Boruvka, Prim, Old Exam Exercises",
     pdf: "/lessons/week-11.pdf",
+  },
+  {
+    week: 12,
+    title: "Kruskal",
+    description: "Kruskal, Tricks for Graph Problems, Learning Goals for A&D",
+    pdf: "/lessons/week-12.pdf",
+    additionalPdf: {
+      url: "/lessons/learning-goals.pdf",
+      label: "Learning Goals for A&D",
+    },
   }
   // Add new lessons here each week
 ];
