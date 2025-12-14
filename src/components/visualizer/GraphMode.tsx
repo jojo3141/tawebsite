@@ -5,16 +5,17 @@ import { AnimatePresence, motion } from 'framer-motion';
 import GraphCanvas from '@/components/visualizer/GraphCanvas';
 import PseudocodeViewer from '@/components/visualizer/PseudocodeViewer';
 import DataPanel from '@/components/visualizer/DataPanel';
-import VisualizerHeader from '@/components/visualizer/VisualizerHeader';
+import VisualizerHeader, { VisualizerMode } from '@/components/visualizer/VisualizerHeader';
 import { Graph, AlgorithmStep, AlgorithmType } from '@/types/graph';
 import { Play, ArrowRight, ArrowLeft, SkipForward, SkipBack } from 'lucide-react';
 
 interface GraphModeProps {
-  mode: 'GRAPH' | 'SORTING';
-  setMode: (mode: 'GRAPH' | 'SORTING') => void;
+  mode: VisualizerMode;
+  setMode: (mode: VisualizerMode) => void;
+  onBack?: () => void;
 }
 
-const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode }) => {
+const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack }) => {
   // State
   const [graph, setGraph] = useState<Graph | null>(null);
   const [steps, setSteps] = useState<AlgorithmStep[]>([]);
@@ -183,6 +184,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode }) => {
         showDirectionToggle={supportsDirectionToggle(algorithm)}
         isDirected={userPreferredDirected}
         setIsDirected={setUserPreferredDirected}
+        onBack={onBack}
       />
 
       {/* Main Content */}

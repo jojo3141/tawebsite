@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { 
     PSEUDOCODE_DIJKSTRA, PSEUDOCODE_DIJKSTRA_UNDIRECTED, 
@@ -14,16 +13,27 @@ import {
     PSEUDOCODE_QUICK_SORT, PSEUDOCODE_HEAP_SORT,
     SortingAlgorithmType
 } from '@/types/sorting';
+import {
+    PSEUDOCODE_FIBONACCI, PSEUDOCODE_MAX_SUBARRAY,
+    PSEUDOCODE_FIBONACCI_TOP_DOWN, PSEUDOCODE_MAX_SUBARRAY_TOP_DOWN,
+    PSEUDOCODE_JUMP_GAME, PSEUDOCODE_LCS, PSEUDOCODE_LCS_TOP_DOWN,
+    PSEUDOCODE_EDIT_DISTANCE, PSEUDOCODE_EDIT_DISTANCE_TOP_DOWN,
+    PSEUDOCODE_SUBSET_SUM, PSEUDOCODE_SUBSET_SUM_TOP_DOWN,
+    PSEUDOCODE_KNAPSACK, PSEUDOCODE_KNAPSACK_TOP_DOWN,
+    PSEUDOCODE_LAS,
+    DPAlgorithmType, DPApproach
+} from '@/types/dp';
 import { clsx } from 'clsx';
 import { Code } from 'lucide-react';
 
 interface PseudocodeViewerProps {
   activeLine: number;
-  algorithm: AlgorithmType | SortingAlgorithmType;
+  algorithm: AlgorithmType | SortingAlgorithmType | DPAlgorithmType;
   isDirected?: boolean;
+  dpApproach?: DPApproach;
 }
 
-const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorithm, isDirected = true }) => {
+const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorithm, isDirected = true, dpApproach = 'BOTTOM_UP' }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLDivElement>(null);
 
@@ -47,30 +57,63 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
             container.scrollTop += (activeRect.bottom - containerRect.bottom);
         }
     }
-  }, [activeLine, algorithm]);
+  }, [activeLine, algorithm, dpApproach]);
 
   let lines: { line: number, text: string, indent: number }[] = [];
   
   // Graph Algorithms
-  if (algorithm === AlgorithmType.DIJKSTRA) {
-      lines = isDirected ? PSEUDOCODE_DIJKSTRA : PSEUDOCODE_DIJKSTRA_UNDIRECTED;
-  } else if (algorithm === AlgorithmType.BFS) {
-      lines = isDirected ? PSEUDOCODE_BFS : PSEUDOCODE_BFS_UNDIRECTED;
-  } else if (algorithm === AlgorithmType.DFS) {
-      lines = isDirected ? PSEUDOCODE_DFS : PSEUDOCODE_DFS_UNDIRECTED;
-  } else if (algorithm === AlgorithmType.BELLMAN_FORD) {
-      lines = isDirected ? PSEUDOCODE_BELLMAN_FORD : PSEUDOCODE_BELLMAN_FORD_UNDIRECTED;
-  } else if (algorithm === AlgorithmType.PRIM) lines = PSEUDOCODE_PRIM;
-  else if (algorithm === AlgorithmType.KRUSKAL) lines = PSEUDOCODE_KRUSKAL;
-  else if (algorithm === AlgorithmType.BORUVKA) lines = PSEUDOCODE_BORUVKA;
-  
+  if (Object.values(AlgorithmType).includes(algorithm as AlgorithmType)) {
+      const graphAlgo = algorithm as AlgorithmType;
+      if (graphAlgo === AlgorithmType.DIJKSTRA) {
+          lines = isDirected ? PSEUDOCODE_DIJKSTRA : PSEUDOCODE_DIJKSTRA_UNDIRECTED;
+      } else if (graphAlgo === AlgorithmType.BFS) {
+          lines = isDirected ? PSEUDOCODE_BFS : PSEUDOCODE_BFS_UNDIRECTED;
+      } else if (graphAlgo === AlgorithmType.DFS) {
+          lines = isDirected ? PSEUDOCODE_DFS : PSEUDOCODE_DFS_UNDIRECTED;
+      } else if (graphAlgo === AlgorithmType.BELLMAN_FORD) {
+          lines = isDirected ? PSEUDOCODE_BELLMAN_FORD : PSEUDOCODE_BELLMAN_FORD_UNDIRECTED;
+      } else if (graphAlgo === AlgorithmType.PRIM) lines = PSEUDOCODE_PRIM;
+      else if (graphAlgo === AlgorithmType.KRUSKAL) lines = PSEUDOCODE_KRUSKAL;
+      else if (graphAlgo === AlgorithmType.BORUVKA) lines = PSEUDOCODE_BORUVKA;
+  }
   // Sorting Algorithms
-  else if (algorithm === SortingAlgorithmType.BUBBLE_SORT) lines = PSEUDOCODE_BUBBLE_SORT;
-  else if (algorithm === SortingAlgorithmType.SELECTION_SORT) lines = PSEUDOCODE_SELECTION_SORT;
-  else if (algorithm === SortingAlgorithmType.INSERTION_SORT) lines = PSEUDOCODE_INSERTION_SORT;
-  else if (algorithm === SortingAlgorithmType.MERGE_SORT) lines = PSEUDOCODE_MERGE_SORT;
-  else if (algorithm === SortingAlgorithmType.QUICK_SORT) lines = PSEUDOCODE_QUICK_SORT;
-  else if (algorithm === SortingAlgorithmType.HEAP_SORT) lines = PSEUDOCODE_HEAP_SORT;
+  else if (Object.values(SortingAlgorithmType).includes(algorithm as SortingAlgorithmType)) {
+      const sortAlgo = algorithm as SortingAlgorithmType;
+      if (sortAlgo === SortingAlgorithmType.BUBBLE_SORT) lines = PSEUDOCODE_BUBBLE_SORT;
+      else if (sortAlgo === SortingAlgorithmType.SELECTION_SORT) lines = PSEUDOCODE_SELECTION_SORT;
+      else if (sortAlgo === SortingAlgorithmType.INSERTION_SORT) lines = PSEUDOCODE_INSERTION_SORT;
+      else if (sortAlgo === SortingAlgorithmType.MERGE_SORT) lines = PSEUDOCODE_MERGE_SORT;
+      else if (sortAlgo === SortingAlgorithmType.QUICK_SORT) lines = PSEUDOCODE_QUICK_SORT;
+      else if (sortAlgo === SortingAlgorithmType.HEAP_SORT) lines = PSEUDOCODE_HEAP_SORT;
+  }
+  // DP Algorithms
+  else if (Object.values(DPAlgorithmType).includes(algorithm as DPAlgorithmType)) {
+      const dpAlgo = algorithm as DPAlgorithmType;
+      if (dpAlgo === DPAlgorithmType.FIBONACCI) {
+          lines = dpApproach === 'TOP_DOWN' ? PSEUDOCODE_FIBONACCI_TOP_DOWN : PSEUDOCODE_FIBONACCI;
+      }
+      else if (dpAlgo === DPAlgorithmType.MAXIMUM_SUBARRAY_SUM) {
+          lines = dpApproach === 'TOP_DOWN' ? PSEUDOCODE_MAX_SUBARRAY_TOP_DOWN : PSEUDOCODE_MAX_SUBARRAY;
+      }
+      else if (dpAlgo === DPAlgorithmType.JUMP_GAME) {
+          lines = PSEUDOCODE_JUMP_GAME;
+      }
+      else if (dpAlgo === DPAlgorithmType.LCS) {
+          lines = dpApproach === 'TOP_DOWN' ? PSEUDOCODE_LCS_TOP_DOWN : PSEUDOCODE_LCS;
+      }
+      else if (dpAlgo === DPAlgorithmType.EDIT_DISTANCE) {
+          lines = dpApproach === 'TOP_DOWN' ? PSEUDOCODE_EDIT_DISTANCE_TOP_DOWN : PSEUDOCODE_EDIT_DISTANCE;
+      }
+      else if (dpAlgo === DPAlgorithmType.SUBSET_SUM) {
+          lines = dpApproach === 'TOP_DOWN' ? PSEUDOCODE_SUBSET_SUM_TOP_DOWN : PSEUDOCODE_SUBSET_SUM;
+      }
+      else if (dpAlgo === DPAlgorithmType.KNAPSACK) {
+          lines = dpApproach === 'TOP_DOWN' ? PSEUDOCODE_KNAPSACK_TOP_DOWN : PSEUDOCODE_KNAPSACK;
+      }
+      else if (dpAlgo === DPAlgorithmType.LAS) {
+          lines = PSEUDOCODE_LAS;
+      }
+  }
 
   return (
     <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col h-full">

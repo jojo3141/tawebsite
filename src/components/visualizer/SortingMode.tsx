@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import VisualizerHeader from '@/components/visualizer/VisualizerHeader';
+import VisualizerHeader, { VisualizerMode } from '@/components/visualizer/VisualizerHeader';
 import PseudocodeViewer from '@/components/visualizer/PseudocodeViewer';
 import { SortingAlgorithmType, SortingStep, SortableItem } from '@/types/sorting';
 import { 
@@ -13,8 +13,9 @@ import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface SortingModeProps {
-  mode: 'GRAPH' | 'SORTING';
-  setMode: (mode: 'GRAPH' | 'SORTING') => void;
+  mode: VisualizerMode;
+  setMode: (mode: VisualizerMode) => void;
+  onBack?: () => void;
 }
 
 const RecursionStackPanel: React.FC<{ stack: string[] }> = ({ stack }) => {
@@ -58,7 +59,7 @@ const RecursionStackPanel: React.FC<{ stack: string[] }> = ({ stack }) => {
     );
 };
 
-const SortingMode: React.FC<SortingModeProps> = ({ mode, setMode }) => {
+const SortingMode: React.FC<SortingModeProps> = ({ mode, setMode, onBack }) => {
   // State
   const [algorithm, setAlgorithm] = useState<SortingAlgorithmType>(SortingAlgorithmType.BUBBLE_SORT);
   const [steps, setSteps] = useState<SortingStep[]>([]);
@@ -228,6 +229,7 @@ const SortingMode: React.FC<SortingModeProps> = ({ mode, setMode }) => {
         currentAlgorithm={algorithm}
         setAlgorithm={(algo: string) => setAlgorithm(algo as SortingAlgorithmType)}
         onGenerateNew={generateNewData}
+        onBack={onBack}
       />
 
       <main className="flex-1 p-4 pt-6 flex gap-6 items-start">

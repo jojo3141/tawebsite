@@ -9,15 +9,6 @@ export interface Lesson {
   };
 }
 
-// & "C:\Program Files\PuTTY\pscp.exe" -r "out\*" jheger@slab1.ethz.ch:homepage/
-
-// update this file here and copy a new page.tsx for the new lesson
-// then run npm run build
-// then use WinSCP to copy the out folder to slab1.ethz.ch:homepage
-// finally, go to n.ethz.ch/~jheger to see the result
-
-// running it locally, you can go to http://localhost:3000/~jheger
-
 export const lessons: Lesson[] = [
   {
     week: 1,
@@ -95,6 +86,12 @@ export const lessons: Lesson[] = [
       url: "/lessons/learning-goals.pdf",
       label: "Learning Goals for A&D",
     },
+  },
+  {
+    week: 13,
+    title: "All to All Shortest Paths",
+    description: "Floyd Warshall, Johnson, and some code expert",
+    pdf: "/lessons/week-13.pdf",
   }
   // Add new lessons here each week
 ];

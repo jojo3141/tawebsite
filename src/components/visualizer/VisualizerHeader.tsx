@@ -5,13 +5,16 @@ import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
 
+export type VisualizerMode = 'GRAPH' | 'SORTING' | 'DP' | 'TREES';
+
 interface VisualizerHeaderProps {
-  mode: 'GRAPH' | 'SORTING';
-  setMode: (mode: 'GRAPH' | 'SORTING') => void;
+  mode: VisualizerMode;
+  setMode: (mode: VisualizerMode) => void;
   algorithms: string[];
   currentAlgorithm: string;
   setAlgorithm: (algo: string) => void;
-  onGenerateNew: () => void;
+  onGenerateNew?: () => void;
+  onBack?: () => void;
   // Graph specific controls
   showDirectionToggle?: boolean;
   isDirected?: boolean;
@@ -20,50 +23,35 @@ interface VisualizerHeaderProps {
 
 const VisualizerHeader: React.FC<VisualizerHeaderProps> = ({
   mode,
-  setMode,
+  // setMode, // Unused
   algorithms,
   currentAlgorithm,
   setAlgorithm,
   onGenerateNew,
+  onBack,
   showDirectionToggle = false,
   isDirected = true,
   setIsDirected
 }) => {
   return (
-    <header className="bg-slate-900 border-b border-slate-800 px-4 py-2 grid grid-cols-[auto_auto_1fr_auto] items-center sticky top-0 z-40 shadow-md gap-4">
+    <header className="bg-slate-900 border-b border-slate-800 px-4 py-2 grid grid-cols-[auto_1fr_auto] items-center sticky top-0 z-40 shadow-md gap-4">
       
       {/* 1. Back Button */}
       <div className="flex items-center">
-         <Link href="/" className="flex items-center gap-2 px-3 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-            <ArrowLeft size={18} />
-            <span className="font-medium text-sm">Back</span>
-         </Link>
-      </div>
-
-      {/* 2. Mode Switcher */}
-      <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
-        <button
-          onClick={() => setMode('GRAPH')}
-          className={clsx(
-            "px-3 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap",
-            mode === 'GRAPH' 
-              ? "bg-indigo-600 text-white shadow-sm" 
-              : "text-slate-400 hover:text-white hover:bg-slate-700"
-          )}
-        >
-          Graphs
-        </button>
-        <button
-          onClick={() => setMode('SORTING')}
-          className={clsx(
-            "px-3 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap",
-            mode === 'SORTING' 
-              ? "bg-indigo-600 text-white shadow-sm" 
-              : "text-slate-400 hover:text-white hover:bg-slate-700"
-          )}
-        >
-          Sorting
-        </button>
+         {onBack ? (
+            <button 
+                onClick={onBack}
+                className="flex items-center gap-2 px-3 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+            >
+                <ArrowLeft size={18} />
+                <span className="font-medium text-sm">Back</span>
+            </button>
+         ) : (
+             <Link href="/" className="flex items-center gap-2 px-3 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                <ArrowLeft size={18} />
+                <span className="font-medium text-sm">Back</span>
+             </Link>
+         )}
       </div>
       
       {/* 3. Algorithm Switcher */}
@@ -124,13 +112,15 @@ const VisualizerHeader: React.FC<VisualizerHeaderProps> = ({
                </div>
            </div>
 
-           <button 
-              onClick={onGenerateNew}
-              className="flex items-center gap-2 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-700 whitespace-nowrap"
-           >
-             <RotateCcw size={16} /> 
-             {mode === 'GRAPH' ? 'New Graph' : 'New Data'}
-           </button>
+           {onGenerateNew && (
+               <button 
+                  onClick={onGenerateNew}
+                  className="flex items-center gap-2 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-700 whitespace-nowrap"
+               >
+                 <RotateCcw size={16} /> 
+                 {mode === 'GRAPH' ? 'New Graph' : 'New Data'}
+               </button>
+           )}
       </div>
     </header>
   );
