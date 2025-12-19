@@ -243,36 +243,46 @@ export class BSTManager {
                 // Case 3: Two children
                 steps.push({ root: this.clone(currentTreeState), description: `Node ${val} has two children. Finding inorder successor (smallest in right subtree).` });
 
-                // Find Successor (Min of Right Subtree) with visualization
-                let successor = node.children[1];
+                // Find Successor (Min of Right Subtree) with direct removal hook
+                let successor = node.children[1]!; // We know it exists because of check above
+                let successorParent = node;
 
                 // Visual step: Go to right child
-                if (successor) {
-                    successor.highlight = 'search';
-                    steps.push({ root: this.clone(currentTreeState), description: `Step 1: Go to the right child ${successor.keys[0]}...` });
-                }
+                successor.highlight = 'search';
+                steps.push({ root: this.clone(currentTreeState), description: `Step 1: Go to the right child ${successor.keys[0]}...` });
 
-                while (successor && successor.children[0]) {
+                while (successor.children[0]) {
                     successor.highlight = undefined; // Clear previous
+                    successorParent = successor;
                     successor = successor.children[0];
                     successor.highlight = 'search';
                     steps.push({ root: this.clone(currentTreeState), description: `Step 2: Go left to find smallest value... Found ${successor.keys[0]}` });
                 }
 
-                if (successor) {
-                    const successorVal = successor.keys[0];
-                    successor.highlight = 'match';
-                    steps.push({ root: this.clone(currentTreeState), description: `Found successor ${successorVal} (smallest value in right subtree).` });
+                const successorVal = successor.keys[0];
+                successor.highlight = 'match';
+                steps.push({ root: this.clone(currentTreeState), description: `Found successor ${successorVal} (smallest value in right subtree).` });
 
-                    // Replace value
-                    node.keys[0] = successorVal;
-                    node.highlight = 'insert';
-                    successor.highlight = undefined;
-                    steps.push({ root: this.clone(currentTreeState), description: `Replaced ${val} with inorder successor ${successorVal}. Now removing the duplicate successor from right subtree.` });
+                // Replace value
+                node.keys[0] = successorVal;
+                node.highlight = 'insert';
 
-                    // Delete successor from right subtree
-                    node.children[1] = deleteRec(node.children[1], successorVal);
+                // Direct Delete Logic
+                steps.push({ root: this.clone(currentTreeState), description: `Replaced ${val} with inorder successor ${successorVal}. Now directly removing the duplicate successor.` });
+
+                const successorRightChild = successor.children[1];
+
+                if (successorParent === node) {
+                    // Successor is the immediate right child of node
+                    node.children[1] = successorRightChild || null; // Ensure null if undefined, though type expects null | Node
+                } else {
+                    // Successor is the left child of its parent
+                    successorParent.children[0] = successorRightChild || null;
                 }
+
+                // Clear highlights
+                node.highlight = undefined;
+                // Note: successor node is now detatched, we don't need to clear its highlight
             }
             return node;
         };

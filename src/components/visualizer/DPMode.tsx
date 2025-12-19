@@ -239,102 +239,6 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
     }
   }, [currentStep?.stack]); // Trigger on stack change
 
-  // Smart Sticky Scroll Logic
-  const sidebarRef = React.useRef<HTMLDivElement>(null);
-  const currentTRef = React.useRef(0); 
-  // const rafRef = React.useRef<number | null>(null);
-  const cachedMetricsRef = React.useRef<{
-      sidebarHeight: number;
-      originalPageY: number;
-      containerTop: number;
-      viewportHeight: number;
-  } | null>(null);
-
-  React.useLayoutEffect(() => {
-    const sidebar = sidebarRef.current;
-    if (!sidebar) return;
-
-    // 1. MEASURE PHASE
-    // Calculate static properties that don't change on scroll.
-    // Call this rarely (mount, resize, step change).
-    const measure = () => {
-        const viewportHeight = window.innerHeight;
-        const rect = sidebar.getBoundingClientRect();
-        
-        // Recover original page Y by removing current transform effect
-        // If currentT is 100, and rect.top is 150, then original visual top without transform was 50.
-        // Add scrollY to get absolute document position.
-        const currentT = currentTRef.current;
-        const scrollY = window.scrollY;
-        
-        // Note: We must ensure we measure when sidebar is 'relative' roughly in place
-        // But since we use transform, layout flow is preserved.
-        
-        const originalPageY = (rect.top + scrollY) - currentT;
-        const sidebarHeight = sidebar.offsetHeight;
-        
-        const container = sidebar.offsetParent as HTMLElement;
-        const containerTop = container ? container.offsetTop : 0;
-        
-        cachedMetricsRef.current = {
-            sidebarHeight,
-            originalPageY,
-            containerTop,
-            viewportHeight
-        };
-    };
-
-    // 2. SCROLL PHASE
-    // Pure calculation, no DOM Measure.
-    const onScroll = () => {
-        if (!cachedMetricsRef.current) measure();
-        const metrics = cachedMetricsRef.current!;
-        const { sidebarHeight, originalPageY, viewportHeight } = metrics;
-        
-        const scrollY = window.scrollY;
-        
-        const topPadding = 96; 
-        const bottomPadding = 24; 
-
-        // Bounds
-        // Stick to Bottom: T >= scrollY + ViewportHeight - bottomPadding - Height - OriginalPageY
-        const minT = scrollY + viewportHeight - bottomPadding - sidebarHeight - originalPageY;
-        
-        // Stick to Top: T <= scrollY + topPadding - OriginalPageY
-        const maxT = scrollY + topPadding - originalPageY;
-        
-        let targetT = currentTRef.current;
-
-        if (sidebarHeight + topPadding < viewportHeight) {
-             // Short: Stick to Top
-             targetT = maxT;
-        } else {
-             // Tall: Clamp
-             targetT = Math.min(Math.max(targetT, minT), maxT);
-        }
-        
-        // Update
-        if (targetT !== currentTRef.current) {
-            currentTRef.current = targetT;
-            // SYNC UPDATE to prevent jitter
-            sidebar.style.transform = `translateY(${targetT}px)`;
-        }
-    };
-    
-    // Listeners
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', measure); // re-measure on resize
-    
-    // Initial Measure & Update
-    measure();
-    onScroll();
-
-    return () => {
-        window.removeEventListener('scroll', onScroll);
-        window.removeEventListener('resize', measure);
-    };
-  }, [currentStep, algorithm]);
-
   if (!currentStep) return <div className="h-full flex items-center justify-center text-slate-400">Loading...</div>;
 
   return (
@@ -348,14 +252,14 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
         onBack={onBack}
       />
 
-      <main className="flex-1 p-4 pt-6 flex gap-6 items-start">
+      <main className="flex-1 p-2 pt-4 flex gap-6 items-start">
         
         {/* Left Column: Visualization */}
-        <div ref={sidebarRef} className="flex flex-col gap-2 w-auto shrink-0 z-30">
+        <div className="flex flex-col gap-2 w-auto shrink-0 z-30 sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto no-scrollbar">
           <div className="bg-slate-900/50 rounded-2xl border border-slate-800 shadow-xl overflow-hidden w-fit flex flex-col">
             
             {/* Canvas Area */}
-            <div className="relative w-[600px] min-h-[420px] bg-slate-950 flex flex-col items-center justify-center p-8 gap-12">
+            <div className="relative w-[600px] min-h-[300px] bg-slate-950 flex flex-col items-center justify-start p-4 gap-4">
                
                 {/* 1. Input Array - Old Style (Hidden for Max Subarray & Jump Game) */}
                 {currentStep.inputArray && algorithm !== DPAlgorithmType.MAXIMUM_SUBARRAY_SUM && algorithm !== DPAlgorithmType.JUMP_GAME && (
@@ -715,7 +619,7 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                </div>
 
                {/* Toast */}
-               <div className="bg-slate-800/90 backdrop-blur-md border border-slate-600 shadow-2xl flex items-center justify-center transition-all px-6 py-3 rounded-full gap-4 mt-8 max-w-lg text-center">
+               <div className="bg-slate-800/90 backdrop-blur-md border border-slate-600 shadow-2xl flex items-center justify-center transition-all px-6 py-3 rounded-full gap-4 mt-2 max-w-lg text-center">
                  <div className="flex items-center gap-3 shrink-0">
                      <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
                      <span className="text-sm font-medium text-white">{currentStep.description}</span>

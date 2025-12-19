@@ -12,7 +12,7 @@ interface TreeModeProps {
 }
 
 const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
-  const [algorithm, setAlgorithm] = useState<string>('BST');
+  const [algorithm, setAlgorithm] = useState<string>('BINARY SEARCH TREE');
   const [inputValue, setInputValue] = useState<string>('');
   // const [treeRoot, setTreeRoot] = useState<TreeNode | null>(null);
   const [steps, setSteps] = useState<TreeStep[]>([]);
@@ -27,7 +27,7 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
   
   const getManager = () => {
       switch(algorithm) {
-          case 'BST': return bstManager.current;
+          case 'BINARY SEARCH TREE': return bstManager.current;
           case 'MAX_HEAP': return heapManager.current;
           case '2-3_TREE': return twoThreeManager.current;
           default: return bstManager.current;
@@ -95,7 +95,7 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
   
   const handleReset = useCallback(() => {
       // Reset manager state
-      if (algorithm === 'BST') bstManager.current = new BSTManager();
+      if (algorithm === 'BINARY SEARCH TREE') bstManager.current = new BSTManager();
       if (algorithm === 'MAX_HEAP') heapManager.current = new MaxHeapManager();
       if (algorithm === '2-3_TREE') twoThreeManager.current = new TwoThreeManager();
       
@@ -280,7 +280,7 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
       <VisualizerHeader 
         mode="TREES" 
         setMode={() => {}} 
-        algorithms={['BST', 'MAX_HEAP', '2-3_TREE']}
+        algorithms={['BINARY SEARCH TREE', 'MAX_HEAP', '2-3_TREE']}
         currentAlgorithm={algorithm}
         setAlgorithm={setAlgorithm}
         onBack={onBack}
@@ -382,7 +382,7 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
                          <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">DEFINITION</h3>
                          <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-800">
                             <ul className="list-disc pl-4 space-y-2 text-xs text-slate-300 leading-relaxed marker:text-slate-500">
-                                {algorithm === 'BST' && (
+                                {algorithm === 'BINARY SEARCH TREE' && (
                                     <>
                                         <li><strong>Binary Tree:</strong> Every node <em className="font-serif">v</em> has at most 2 children.</li>
                                         <li><strong>Search Property:</strong> For any node <em className="font-serif">x</em>, if <em className="font-serif">y</em> is in the left subtree of <em className="font-serif">x</em>, then <em className="font-serif">y.key &lt; x.key</em>. If <em className="font-serif">y</em> is in the right subtree, <em className="font-serif">y.key &gt; x.key</em>.</li>
