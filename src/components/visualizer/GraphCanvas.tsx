@@ -14,7 +14,7 @@ interface GraphCanvasProps {
 const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, height, algorithm }) => {
   
   // Constants for styling
-  const NODE_RADIUS = 18;
+  const NODE_RADIUS = algorithm === AlgorithmType.TARJAN ? 14 : 18;
   const showArrows = graph.isDirected !== false;
   const isMstAlgo = algorithm === AlgorithmType.PRIM || algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA;
   const isNodeHighlightDisabled = algorithm === AlgorithmType.KRUSKAL;
@@ -42,6 +42,11 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
         }
     }
 
+    // TARJAN: Highlight Articulation Points in Red
+    if (algorithm === AlgorithmType.TARJAN && currentStep.articulationPoints?.includes(nodeId)) {
+        return '#ef4444'; // Red-500
+    }
+
     if (currentStep.currentNodeId === nodeId) return '#eab308'; // Yellow-500 (Current u)
     if (currentStep.currentNeighborId === nodeId) return '#3b82f6'; // Blue-500 (Neighbor v)
     if (currentStep.processedSet.includes(nodeId)) return '#22c55e'; // Green-500 (Processed / S)
@@ -50,9 +55,13 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
     // Visited but idle (Has distance)
     // We exclude Bellman-Ford from this brighter color shift as requested, keeping it the standard grey.
     if (currentStep.distances[nodeId] !== Infinity && currentStep.distances[nodeId] !== undefined) {
-        if (algorithm !== AlgorithmType.BELLMAN_FORD) {
-            return '#cbd5e1'; // Slate-300 (Visited but idle) - BRIGHTER
+        if (algorithm !== AlgorithmType.BELLMAN_FORD && algorithm !== AlgorithmType.TARJAN) {
+            return '#cbd5e1'; // Slate-300
         }
+    }
+    // For Tarjan, visited nodes (have discovery time) show as visited
+    if (algorithm === AlgorithmType.TARJAN && currentStep.discoveryTimes[nodeId]) {
+         return '#cbd5e1'; 
     }
     
     return '#64748b'; // Slate-500 (Unvisited) - BRIGHTER
@@ -66,15 +75,36 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
         isActive = currentStep.activeEdge?.source === target && currentStep.activeEdge?.target === source;
     }
 
-    if (isActive) {
+    if (isActive && algorithm !== AlgorithmType.TARJAN) {
         if (algorithm === AlgorithmType.BELLMAN_FORD) return '#3b82f6'; // Blue-500 for BF
         return '#ef4444'; // Red-500 for others
     }
+
+    // TARJAN BRIDGE HIGHLIGHT (Persistent)
+    if (algorithm === AlgorithmType.TARJAN) {
+       const isBridge = currentStep.bridges?.some(b => 
+          (b.source === source && b.target === target) ||
+          (b.source === target && b.target === source)
+       );
+       if (isBridge) return '#ef4444'; // Red for Bridges
+    }
     
-    // DFS Edge Classification (Final Step)
+    // DFS / Tarjan Edge Classification (Final Step)
     const classification = currentStep.edgeClassifications?.[`${source}-${target}`];
-    if (classification) {
-        switch (classification) {
+    // For Undirected Tarjan, we might index edges as u-v or v-u. Check both.
+    const reverseKey = `${target}-${source}`;
+    const classificationRev = currentStep.edgeClassifications?.[reverseKey];
+    
+    const finalClass = classification || classificationRev;
+
+    if (finalClass) {
+        // TARJAN OVERRIDE: Tree is green, all others (Back) are Grey
+        if (algorithm === AlgorithmType.TARJAN) {
+            if (finalClass === EdgeType.TREE) return '#22c55e'; // Green
+            return '#94a3b8'; // Grey for Back edges
+        }
+
+        switch (finalClass) {
             case EdgeType.TREE: return '#22c55e'; // Green (Tree Edges remain solid green)
             case EdgeType.BACK: return '#ec489980'; // Pink-500 with 50% opacity
             case EdgeType.FORWARD: return '#38bdf880'; // Light Blue (Sky-400) with 50% opacity
@@ -129,7 +159,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
     });
     
     // Also bold if classified in DFS
-    const isClassified = !!currentStep.edgeClassifications?.[`${source}-${target}`];
+    const isClassified = !!currentStep.edgeClassifications?.[`${source}-${target}`] || !!currentStep.edgeClassifications?.[`${target}-${source}`];
     
     return isActive || isParent || isInF || isClassified ? 3 : 1.5;
   };
@@ -194,6 +224,47 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
             // This avoids jitter from derivative calculations on short curves
             const arrowAngle = Math.atan2(end.y - start.y, end.x - start.x) * (180 / Math.PI);
 
+            // TARJAN DIRECTION LOGIC
+            const tNormalClass = currentStep.edgeClassifications?.[`${edge.source}-${edge.target}`];
+            const tRevClass = currentStep.edgeClassifications?.[`${edge.target}-${edge.source}`];
+            const tNormalParent = currentStep.parents[edge.target] === edge.source; 
+            const tRevParent = currentStep.parents[edge.source] === edge.target;
+
+            let showTarjanArrow = false;
+            let tarjanReverse = false;
+
+            if (algorithm === AlgorithmType.TARJAN) {
+                // 1. Tree Edges: Forward (Parent -> Child)
+                // Defined by explicit TREE classification or current Parent pointer
+                const isTreeNormal = (tNormalClass === EdgeType.TREE) || tNormalParent;
+                const isTreeRev = (tRevClass === EdgeType.TREE) || tRevParent;
+
+                if (isTreeNormal) {
+                    showTarjanArrow = true;
+                    tarjanReverse = false; // Source -> Target
+                } else if (isTreeRev) {
+                    showTarjanArrow = true;
+                    tarjanReverse = true; // Target -> Source
+                } else {
+                    // 2. Non-Tree Edges: Backwards (High DFS -> Low DFS)
+                    const dSource = currentStep.discoveryTimes[edge.source];
+                    const dTarget = currentStep.discoveryTimes[edge.target];
+
+                    if (dSource !== undefined && dTarget !== undefined) {
+                        showTarjanArrow = true;
+                        if (dSource > dTarget) {
+                            // Source is Descendant (High), Target is Ancestor (Low)
+                            // Arrow: Source -> Target (Normal visual direction)
+                            tarjanReverse = false;
+                        } else {
+                            // Target is Descendant (High), Source is Ancestor (Low)
+                            // Arrow: Target -> Source (Reverse visual direction)
+                            tarjanReverse = true;
+                        }
+                    }
+                }
+            }
+            
             return (
               <g key={`${edge.source}-${edge.target}-${i}`}>
                 {/* The Edge Line */}
@@ -206,16 +277,14 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
                   strokeLinecap="round"
                 />
 
-                {/* The Arrow Head (Manually positioned on curve) - ONLY IF DIRECTED */}
-                {showArrows && (
+                {/* The Arrow Head */}
+                {(showArrows || showTarjanArrow) && (
                   <motion.path
                     d="M -4 -5 L 4 0 L -4 5 z" 
-                    // Centered Arrow Geometry:
-                    // Tip at x=4 (Forward), Base at x=-4 (Back)
                     initial={false}
                     animate={{ 
                       fill: color, 
-                      transform: `translate(${arrowX}px, ${arrowY}px) rotate(${arrowAngle}deg) scale(${strokeWidth > 2 ? 1.4 : 1.2})` 
+                      transform: `translate(${arrowX}px, ${arrowY}px) rotate(${arrowAngle + (tarjanReverse ? 180 : 0)}deg) scale(${strokeWidth > 2 ? 1.4 : 1.2})` 
                     }}
                     transition={{ duration: 0.3 }}
                   />
@@ -261,6 +330,14 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
               } else {
                   showBadge = false;
               }
+            } else if (algorithm === AlgorithmType.TARJAN) {
+               const d = currentStep.discoveryTimes[node.id];
+               const low = currentStep.lowLinks?.[node.id];
+               if (d) {
+                   badgeText = `${d}/${low !== undefined ? low : '?'}`;
+               } else {
+                   showBadge = false;
+               }
             } else if (isMstAlgo) {
                 // For Prim/Kruskal/Boruvka, distance label isn't primary focus
                 // We hide badges for all MST algorithms (including Prim)
@@ -289,15 +366,16 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
                   dy=".35em"
                   textAnchor="middle"
                   className="text-xs font-bold fill-white pointer-events-none select-none"
+                  style={{ fontSize: algorithm === AlgorithmType.TARJAN ? '10px' : '12px' }}
                 >
                   {node.label}
                 </text>
                 
                 {/* Distance / Info Label Badge */}
                 {showBadge && (
-                  <g transform={`translate(${node.x + 12}, ${node.y - 12})`}>
-                    <rect x="0" y="-10" width={algorithm === AlgorithmType.DFS ? 34 : 24} height="14" rx="4" fill="#0f172a" stroke="#334155" strokeWidth="1" />
-                    <text x={algorithm === AlgorithmType.DFS ? 17 : 12} y="-1" textAnchor="middle" className="text-[9px] fill-white font-mono">
+                  <g transform={`translate(${node.x + (algorithm === AlgorithmType.TARJAN ? 8 : 12)}, ${node.y - (algorithm === AlgorithmType.TARJAN ? 10 : 12)})`}>
+                    <rect x="0" y="-10" width={algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.TARJAN ? 34 : 24} height="14" rx="4" fill="#0f172a" stroke="#334155" strokeWidth="1" />
+                    <text x={algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.TARJAN ? 17 : 12} y="-1" textAnchor="middle" className="text-[9px] fill-white font-mono">
                       {badgeText}
                     </text>
                   </g>

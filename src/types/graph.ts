@@ -26,6 +26,7 @@ export enum AlgorithmType {
   PRIM = 'PRIM',
   KRUSKAL = 'KRUSKAL',
   BORUVKA = 'BORUVKA',
+  TARJAN = 'TARJAN',
 }
 
 export enum EdgeType {
@@ -53,6 +54,11 @@ export interface AlgorithmStep {
   discoveryTimes: Record<string, number>; // d[v] (Pre-order)
   finishTimes: Record<string, number>;    // f[v] (Post-order)
   edgeClassifications: Record<string, EdgeType>; // Key: "source-target"
+
+  // Tarjan Specific
+  lowLinks?: Record<string, number>; // low[v]
+  articulationPoints?: string[]; // List of IDs
+  bridges?: { source: string, target: string }[]; // List of Bridge Edges
 
   // Prim Specific
   mstEdges: { source: string, target: string }[]; // Set F
@@ -236,3 +242,17 @@ export const PSEUDOCODE_BORUVKA = [
   { line: 5, text: "ei ← min edge leaving Si", indent: 4 },
   { line: 6, text: "F ← F ∪ {e1,...,ek}", indent: 2 },
 ];
+
+export const PSEUDOCODE_TARJAN = [
+  { line: 1, text: "TARJAN(u, parent):", indent: 0 },
+  { line: 2, text: "dfs[u] ← time; low[u] ← time", indent: 2 },
+  { line: 3, text: "time++", indent: 2 },
+  { line: 4, text: "for each (u, v) ∈ E do", indent: 2 },
+  { line: 5, text: "if v == parent then continue", indent: 4 },
+  { line: 6, text: "if v is visited then", indent: 4 },
+  { line: 7, text: "low[u] ← min(low[u], dfs[v])", indent: 6 },
+  { line: 8, text: "else", indent: 4 },
+  { line: 9, text: "TARJAN(v, u)", indent: 6 },
+  { line: 10, text: "low[u] ← min(low[u], low[v])", indent: 6 },
+];
+

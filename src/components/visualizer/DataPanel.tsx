@@ -336,7 +336,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
     <div className="flex flex-col gap-4">
       
       {/* --- TOP SECTION: STRUCTURES --- */}
-      <div className={`h-64 ${topSectionClass}`}>
+      <div className={`${algorithm === AlgorithmType.TARJAN ? 'hidden' : 'h-64'} ${topSectionClass}`}>
         {/* ... (No changes to Top Section rendering) ... */}
         {isBellman ? (
            <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden w-full">
@@ -366,7 +366,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                })}
              </div>
            </div>
-        ) : (
+        ) : algorithm !== AlgorithmType.TARJAN && (
           <>
             {/* PANEL 1: Queue / Stack / Set F */}
             <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden">
@@ -469,6 +469,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
             )}
 
             {/* PANEL 3: Processed/Visited / Level Sets / Set S / Components */}
+
             <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden">
               <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-green-500 uppercase tracking-wider">
                 {getRightPanelTitle()}
@@ -572,6 +573,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                 )}
               </div>
             </div>
+
           </>
         )}
       </div>
@@ -600,7 +602,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                 <tr>
                   <th className="px-4 py-2">Node</th>
                   <th className={`px-4 py-2 ${(algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD) ? 'normal-case' : ''}`}>
-                    {algorithm === AlgorithmType.DFS ? 'Pre / Post' : (algorithm === AlgorithmType.BFS ? 'Distance' : (algorithm === AlgorithmType.PRIM ? 'In Set S?' : (algorithm === AlgorithmType.KRUSKAL ? 'rep[v]' : 'd[v]')))}
+                    {algorithm === AlgorithmType.DFS ? 'Pre / Post' : (algorithm === AlgorithmType.BFS ? 'Distance' : (algorithm === AlgorithmType.PRIM ? 'In Set S?' : (algorithm === AlgorithmType.KRUSKAL ? 'rep[v]' : (algorithm === AlgorithmType.TARJAN ? 'DFS / Low' : 'd[v]'))))}
                   </th>
                   {algorithm === AlgorithmType.BFS && (
                     <th className="px-4 py-2">Enter / Leave</th>
@@ -611,7 +613,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                 </tr>
               </thead>
               <tbody>
-                {(algorithm === AlgorithmType.KRUSKAL ? Object.keys(step.parents).sort() : Object.keys(step.distances).sort()).map((nodeId) => {
+                {((algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.TARJAN) ? Object.keys(step.parents).sort() : Object.keys(step.distances).sort()).map((nodeId) => {
                   const dist = step.distances[nodeId];
                   const parent = step.parents[nodeId];
                   const isUpdated = nodeId === step.currentNeighborId || nodeId === step.currentNodeId;
@@ -632,6 +634,14 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                           : <span className="text-slate-600">NO</span>;
                   } else if (algorithm === AlgorithmType.KRUSKAL) {
                       valueDisplay = <span className="font-mono text-indigo-300 font-bold">{step.parents[nodeId]}</span>;
+                  } else if (algorithm === AlgorithmType.TARJAN) {
+                      const d = step.discoveryTimes[nodeId];
+                      const l = step.lowLinks?.[nodeId];
+                      valueDisplay = (
+                        <span className="font-mono text-xs">
+                          {d !== undefined ? d : '-'} / <span className="text-yellow-400">{l !== undefined ? l : '-'}</span>
+                        </span>
+                      );
                   }
                   return (
                     <tr key={nodeId} className={isUpdated ? "bg-blue-900/20 transition-colors" : "border-b border-slate-700/50"}>

@@ -3,22 +3,24 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Share2, ArrowUpDown, Trees, Layers, ArrowRight, ArrowLeft } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useCourse } from '@/context/CourseContext';
 
-export type CategoryType = 'GRAPH' | 'SORTING' | 'TREES' | 'DP';
+export type CategoryType = 'GRAPH' | 'SORTING' | 'TREES' | 'DP' | 'TARJAN';
 
 interface CategorySelectionProps {
   onSelect: (category: CategoryType) => void;
 }
 
 const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
-  const categories: { 
+  const { course, setCourse } = useCourse();
+
+  const categoriesAD: { 
     id: CategoryType; 
     name: string; 
     description: string;
     icon: React.ElementType; 
     color: string;
     gradient: string;
-    delay: number;
   }[] = [
     {
       id: 'GRAPH',
@@ -27,7 +29,6 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
       icon: Share2,
       color: 'text-indigo-400',
       gradient: 'from-indigo-500/20 to-purple-500/20',
-      delay: 0.1
     },
     {
       id: 'SORTING',
@@ -36,7 +37,6 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
       icon: ArrowUpDown,
       color: 'text-emerald-400',
       gradient: 'from-emerald-500/20 to-teal-500/20',
-      delay: 0.2
     },
     {
       id: 'TREES',
@@ -45,7 +45,6 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
       icon: Trees,
       color: 'text-amber-400',
       gradient: 'from-amber-500/20 to-orange-500/20',
-      delay: 0.3
     },
     {
       id: 'DP',
@@ -54,9 +53,28 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
       icon: Layers,
       color: 'text-rose-400',
       gradient: 'from-rose-500/20 to-pink-500/20',
-      delay: 0.4
     }
   ];
+
+  const categoriesAW: { 
+    id: CategoryType; 
+    name: string; 
+    description: string;
+    icon: React.ElementType; 
+    color: string;
+    gradient: string;
+  }[] = [
+    {
+      id: 'TARJAN',
+      name: 'Tarjan Algorithm',
+      description: 'Find articulation points and critical connections in a network.',
+      icon: Share2,
+      color: 'text-pink-400',
+      gradient: 'from-pink-500/20 to-red-500/20',
+    }
+  ];
+
+  const categories = course === 'AD' ? categoriesAD : categoriesAW;
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-8 relative overflow-hidden">
@@ -73,36 +91,58 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
       </div>
 
       <div className="max-w-6xl w-full z-10 flex flex-col gap-12">
-        <div className="flex flex-col gap-4 text-center">
+        <div className="flex flex-col gap-8 items-center text-center">
              <motion.h1 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400"
              >
-                Algorithm Visualizer
+                Algorithm Lab
              </motion.h1>
-             <motion.p 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="text-slate-400 text-lg max-w-2xl mx-auto"
+             
+             {/* Course Switcher */}
+             <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-slate-900 p-1 rounded-xl flex items-center gap-1 border border-slate-800"
              >
-                Select a category to explore interactive visualizations of fundamental algorithms.
-             </motion.p>
+                {(['AD', 'AW'] as const).map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setCourse(c)}
+                    className={clsx(
+                      "relative px-4 py-2 text-sm font-bold rounded-lg transition-colors z-0 min-w-[80px]",
+                      course === c ? "text-indigo-400" : "text-slate-500 hover:text-slate-300"
+                    )}
+                  >
+                    {course === c && (
+                      <motion.div
+                        layoutId="visualizerCourseHighlight"
+                        className="absolute inset-0 bg-slate-800 shadow-sm rounded-lg border border-slate-700"
+                        initial={false}
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10">{c === "AD" ? "A&D" : "A&W"}</span>
+                  </button>
+                ))}
+            </motion.div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 auto-rows-fr max-w-4xl mx-auto w-full">
             {categories.map((category, index) => {
-                // Determine start position based on index (corner)
-                // 0: Top-Left, 1: Top-Right
-                // 2: Bottom-Left, 3: Bottom-Right
                 let initialPos = {};
-                switch(index) {
-                    case 0: initialPos = { x: -400, y: -400, opacity: 0 }; break;
-                    case 1: initialPos = { x: 400, y: -400, opacity: 0 }; break;
-                    case 2: initialPos = { x: -400, y: 400, opacity: 0 }; break;
-                    case 3: initialPos = { x: 400, y: 400, opacity: 0 }; break;
-                    default: initialPos = { opacity: 0 };
+                if (course === 'AD') {
+                    switch(index) {
+                        case 0: initialPos = { x: -400, y: -400, opacity: 0 }; break;
+                        case 1: initialPos = { x: 400, y: -400, opacity: 0 }; break;
+                        case 2: initialPos = { x: -400, y: 400, opacity: 0 }; break;
+                        case 3: initialPos = { x: 400, y: 400, opacity: 0 }; break;
+                        default: initialPos = { opacity: 0 };
+                    }
+                } else {
+                     initialPos = { y: 50, opacity: 0 };
                 }
 
                 return (
@@ -111,13 +151,15 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
                         initial={initialPos}
                         animate={{ x: 0, y: 0, opacity: 1 }}
                         transition={{ 
-                            duration: 1.4,
+                            duration: course === 'AD' ? 1.4 : 0.5,
                             ease: "easeOut",
                             type: "spring"
                         }}
                         onClick={() => onSelect(category.id)}
                         className={clsx(
-                            "group relative flex flex-col p-8 rounded-3xl border border-slate-800 text-left transition-colors duration-300 hover:border-slate-600 hover:shadow-2xl overflow-hidden bg-slate-900/40 backdrop-blur-sm"
+                            "group relative flex flex-col p-8 rounded-3xl border border-slate-800 text-left transition-colors duration-300 hover:border-slate-600 hover:shadow-2xl overflow-hidden bg-slate-900/40 backdrop-blur-sm",
+                            // Center single item if needed, but grid handles it reasonably well usually. 
+                            course === 'AW' && "col-span-full md:col-span-2 lg:col-span-2 max-w-lg mx-auto w-full" 
                         )}
                     >
                         <div className={clsx("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500", category.gradient)} />
@@ -141,6 +183,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
                 );
             })}
         </div>
+
       </div>
     </div>
   );

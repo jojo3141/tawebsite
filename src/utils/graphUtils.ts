@@ -1108,3 +1108,275 @@ export const calculateBoruvkaSteps = (graph: Graph): AlgorithmStep[] => {
 
   return steps;
 };
+
+// --- TARJAN SOLVER (Articulation Points) ---
+export const calculateTarjanSteps = (graph: Graph, startNodeId: string): AlgorithmStep[] => {
+  const steps: AlgorithmStep[] = [];
+  const visited: string[] = [];
+  const parents: Record<string, string | null> = {};
+  const discoveryTimes: Record<string, number> = {};
+  const lowLinks: Record<string, number> = {};
+
+  const articulationPoints: Set<string> = new Set();
+  const foundBridges: { source: string, target: string }[] = [];
+  const edgeClassifications: Record<string, EdgeType> = {}; // Reuse EdgeType for BACK edges (optional visualization)
+
+  let time = 0;
+  let stepCounter = 0;
+
+  // Helper to push steps
+  const pushStep = (
+    line: number,
+    desc: string,
+    u: string | null = null,
+    v: string | null = null,
+    edge: { source: string, target: string } | null = null
+  ) => {
+    steps.push({
+      stepId: stepCounter++,
+      lineNumber: line,
+      description: desc,
+      distances: {}, // Not used
+      parents: { ...parents },
+      discoveryTimes: { ...discoveryTimes },
+      finishTimes: {}, // Not used
+      edgeClassifications: { ...edgeClassifications },
+      mstEdges: [],
+      boruvkaMinEdges: [],
+      queue: [],
+      stack: [],
+      processedSet: [...visited],
+      currentNodeId: u,
+      currentNeighborId: v,
+      activeEdge: edge,
+      lowLinks: { ...lowLinks },
+      articulationPoints: Array.from(articulationPoints),
+      bridges: [...foundBridges]
+    });
+  };
+
+  // Init
+  graph.nodes.forEach(n => {
+    parents[n.id] = null;
+    // lowLinks and discoveryTimes technically undefined initially
+  });
+
+  const dfsAP = (u: string, p: string | null) => {
+    let children = 0;
+    time++;
+    discoveryTimes[u] = time;
+    lowLinks[u] = time;
+    visited.push(u);
+
+    pushStep(2, `dfs[${u}] = low[${u}] = ${time}`, u);
+    pushStep(3, `time++ (time is now ${time + 1})`, u);
+
+    // Get neighbors sorted
+    const neighbors: { id: string, edge: Edge }[] = [];
+    graph.edges.forEach(e => {
+      if (e.source === u) neighbors.push({ id: e.target, edge: e });
+      else if (e.target === u) neighbors.push({ id: e.source, edge: e });
+    });
+    neighbors.sort((a, b) => a.id.localeCompare(b.id));
+
+    pushStep(4, `Examine neighbors of ${u}`, u);
+    for (const { id: v, edge } of neighbors) {
+      pushStep(4, `Check neighbor ${v}`, u, v, { source: u, target: v });
+
+      if (v === p) {
+        pushStep(5, `Neighbor ${v} is parent. Continue.`, u, v, { source: u, target: v });
+        continue;
+      }
+
+      if (visited.includes(v)) {
+        pushStep(6, `${v} is already visited (Back Edge)`, u, v, { source: u, target: v });
+
+        const currentLow = lowLinks[u];
+        const discV = discoveryTimes[v];
+
+        if (discV < currentLow) {
+          lowLinks[u] = discV;
+          pushStep(7, `Update low[${u}] = min(${currentLow}, dfs[${v}]:${discV}) = ${discV}`, u, v, { source: u, target: v });
+        } else {
+          pushStep(7, `low[${u}]:${currentLow} <= dfs[${v}]:${discV}. No change.`, u, v, { source: u, target: v });
+        }
+
+        // Visualize back edge?
+        edgeClassifications[`${u}-${v}`] = EdgeType.BACK;
+      } else {
+        pushStep(8, `${v} is not visited. Recurse.`, u, v, { source: u, target: v });
+        children++;
+        parents[v] = u;
+
+        pushStep(9, `Call TARJAN(${v}, ${u})`, u, v, { source: u, target: v });
+        dfsAP(v, u);
+        pushStep(9, `Returned to ${u} from ${v}`, u, v, { source: u, target: v });
+
+        // Update Low
+        const currentLow = lowLinks[u];
+        const childLow = lowLinks[v];
+
+        // Silent AP/Bridge Detection for Visualization
+        if (lowLinks[v] > discoveryTimes[u]) {
+          foundBridges.push({ source: u, target: v });
+        }
+        if (p !== null && lowLinks[v] >= discoveryTimes[u]) {
+          articulationPoints.add(u);
+        }
+
+        if (childLow < currentLow) {
+          lowLinks[u] = childLow;
+          pushStep(10, `Update low[${u}] = min(${currentLow}, low[${v}]:${childLow}) = ${childLow}`, u, v, { source: u, target: v });
+        } else {
+          pushStep(10, `low[${u}]:${currentLow} <= low[${v}]:${childLow}. No change.`, u, v, { source: u, target: v });
+        }
+      }
+    }
+
+    // Root check (Silent)
+    if (p === null && children > 1) {
+      articulationPoints.add(u);
+    }
+  };
+
+  pushStep(1, "Start TARJAN on start node");
+  // Assuming graph is connected or we just run on start component
+  dfsAP(startNodeId, null);
+
+  pushStep(1, "Algorithm Complete. Articulation Points found: " + Array.from(articulationPoints).join(", "));
+  return steps;
+};
+
+// --- FIXED GRAPH GENERATOR FOR TARJAN ---
+export const generateTarjanGraph = (width: number, height: number): Graph => {
+  const nodes: Node[] = [];
+  const edges: Edge[] = [];
+  const ids = "ABCDEFGHIJKL".split(''); // 12 Nodes
+
+  // Layout: 12 nodes, fixed placement.
+  // Structure:
+  // Ring A-B-C-D (Left)
+  // connection D-E
+  // Ring E-F-G-H (Middle)
+  // connection H-I
+  // Triangle I-J-K (Right)
+  // L hanging off K
+
+  // Refined Layout coordinates - Spaced evenly to fill canvas
+  const layout = [
+    // Left Group (Cluster 1)
+    { id: 'A', x: 0.10, y: 0.20 },
+    { id: 'B', x: 0.10, y: 0.80 },
+    { id: 'C', x: 0.25, y: 0.60 },
+    { id: 'D', x: 0.35, y: 0.30 }, // Bridge source
+
+    // Middle Group (Cluster 2)
+    { id: 'E', x: 0.45, y: 0.50 }, // Bridge dest from D
+    { id: 'F', x: 0.50, y: 0.20 },
+    { id: 'G', x: 0.50, y: 0.72 },
+    { id: 'H', x: 0.60, y: 0.45 }, // Bridge source to I
+
+    // Right Group (Cluster 3)
+    { id: 'I', x: 0.70, y: 0.50 }, // Bridge dest from H
+    { id: 'J', x: 0.80, y: 0.23 },
+    { id: 'K', x: 0.80, y: 0.73 },
+    { id: 'L', x: 0.90, y: 0.50 }  // Leaf
+  ];
+
+  layout.forEach(pos => {
+    nodes.push({
+      id: pos.id,
+      label: pos.id,
+      x: pos.x * width,
+      y: pos.y * height
+    });
+  });
+
+  const addEdge = (u: string, v: string) => {
+    // Prevent potential duplicates if randomization selects same edge
+    if (!edges.some(e => (e.source === u && e.target === v) || (e.source === v && e.target === u))) {
+      edges.push({ source: u, target: v, weight: 1 });
+    }
+  };
+
+  // --- Randomized Edge Generation ---
+
+  // Define all physically "reasonable" edges that adhere to constraints
+  const allowedEdges = [
+    // Cluster 1 (Left) Allowed
+    ['A', 'B'], ['B', 'C'], ['C', 'D'], ['C', 'E'], ['D', 'A'], ['A', 'C'],
+    // Bridge Left-Mid (Strict to keep D as AP)
+    ['D', 'E'],
+    // Cluster 2 (Mid) Allowed
+    ['E', 'F'], ['E', 'G'], ['E', 'H'],
+    ['F', 'H'], ['G', 'H'], ['F', 'J'],
+    // Bridge Mid-Right (Strict to keep H-I link)
+    ['H', 'I'],
+    // Cluster 3 (Right) Allowed
+    ['I', 'J'], ['I', 'K'],
+    ['J', 'L'], ['K', 'L'],
+    ['I', 'L'], ['G', 'K'], ['B', 'G']// Extra chord
+  ];
+
+  let bestEdges: Edge[] = [];
+  let connected = false;
+  let attempt = 0;
+
+  // Helper BFS for connectivity
+  const checkConnected = (testEdges: Edge[]) => {
+    if (testEdges.length < nodes.length - 1) return false; // Optimization
+    const adj: Record<string, string[]> = {};
+    nodes.forEach(n => adj[n.id] = []);
+    testEdges.forEach(e => {
+      adj[e.source].push(e.target);
+      adj[e.target].push(e.source);
+    });
+
+    const q = [nodes[0].id];
+    const visited = new Set<string>([nodes[0].id]);
+    let head = 0;
+    while (head < q.length) {
+      const u = q[head++];
+      for (const v of adj[u]) {
+        if (!visited.has(v)) {
+          visited.add(v);
+          q.push(v);
+        }
+      }
+    }
+    return visited.size === nodes.length;
+  };
+
+  while (!connected && attempt < 100) {
+    attempt++;
+    const currentEdges: Edge[] = [];
+
+    // Randomly select from allowed edges
+    // Use higher probability to ensure connectivity is likely
+    allowedEdges.forEach(pair => {
+      if (Math.random() > 0.35) { // 65% chance to keep edge
+        currentEdges.push({ source: pair[0], target: pair[1], weight: 1 });
+      }
+    });
+
+    if (checkConnected(currentEdges)) {
+      bestEdges = currentEdges;
+      connected = true;
+    }
+  }
+
+  // Fallback: Use all allowed edges if random generation fails
+  if (!connected) {
+    bestEdges = [];
+    allowedEdges.forEach(pair => {
+      bestEdges.push({ source: pair[0], target: pair[1], weight: 1 });
+    });
+  }
+
+  return {
+    nodes,
+    edges: bestEdges,
+    isDirected: false,
+    hasUniqueWeights: false
+  };
+};

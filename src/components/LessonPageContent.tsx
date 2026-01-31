@@ -1,148 +1,168 @@
+"use client";
+
 import { useState, useEffect } from "react";
-import { lessons } from "@/data/lessons";
+import { lessons, Course } from "@/data/lessons";
 import { motion, Variants } from "framer-motion";
 import Link from "next/link";
 import { smoothScrollToTop } from "@/utils/smoothScroll";
+import { useCourse } from "@/context/CourseContext";
 
 interface LessonPageContentProps {
   week: number;
+  forcedCourse?: Course;
 }
 
 const containerVariants: Variants = {
-  hidden: { opacity: 0 },
+  hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,
+    y: 0,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1,
-    },
-  },
+      type: "spring",
+      mass: 0.5,
+      damping: 20
+    }
+  }
 };
 
 const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 10 },
   visible: { 
     opacity: 1, 
     y: 0, 
-    transition: { 
-      duration: 0.5, 
-      ease: "easeOut" 
-    } 
+    transition: { duration: 0.4 } 
   },
 };
 
-export default function LessonPageContent({ week }: LessonPageContentProps) {
-  const lesson = lessons.find((l) => l.week === week);
+export default function LessonPageContent({ week, forcedCourse }: LessonPageContentProps) {
+  const { course, setCourse } = useCourse();
+  
+  useEffect(() => {
+      if (forcedCourse) {
+          setCourse(forcedCourse);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forcedCourse]);
+
+  const activeCourse = forcedCourse || course;
+  const currentLessons = lessons[activeCourse];
+  const lesson = currentLessons?.find((l) => l.week === week);
   const [pdfLoaded, setPdfLoaded] = useState(false);
 
   useEffect(() => {
-    // Smooth scroll to top when the page opens
-    smoothScrollToTop(1000);
+    smoothScrollToTop(800);
   }, []);
 
-  // Simulate PDF loading or handle actual load event if possible
   useEffect(() => {
     const timer = setTimeout(() => {
       setPdfLoaded(true);
-    }, 500); // Small artificial delay for smooth entrance
+    }, 500); 
     return () => clearTimeout(timer);
   }, []);
 
   if (!lesson) {
-    return <p className="text-center mt-20 text-gray-600">Lesson not found</p>;
+    return <p className="text-center mt-20 text-slate-500 text-lg">Lesson not found</p>;
   }
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="w-full mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10"
-    >
-      {/* Title */}
-      <motion.h2 variants={itemVariants} className="text-3xl font-bold mb-6 text-purple-700">
-        Week {lesson.week} – {lesson.title}
-      </motion.h2>
+    <div className="relative w-full max-w-5xl mx-auto px-4 py-8 md:py-0">
+      
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 ring-1 ring-slate-200/50 p-8 md:p-12 overflow-hidden"
+      >
+        
+        {/* Watermark Number */}
+         <div className="absolute top-0 right-0 p-8 opacity-40 pointer-events-none select-none">
+            <span className="text-9xl font-black text-slate-300">
+                {lesson.week}
+            </span>
+         </div>
 
-      {/* Description */}
-      <motion.p variants={itemVariants} className="mb-6 text-lg text-gray-700">
-        {lesson.description}
-      </motion.p>
 
-      {/* Additional PDF Link */}
-      {lesson.additionalPdf && (
-        <motion.div variants={itemVariants} className="mb-6">
-          <a
-            href={lesson.additionalPdf.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 underline font-medium flex items-center gap-2"
-          >
-            📄 {lesson.additionalPdf.label}
-          </a>
-        </motion.div>
-      )}
+        {/* Header Section */}
+        <div className="relative z-10 mb-5">
+            <Link href="/" className="inline-flex items-center text-sm font-medium text-slate-400 hover:text-purple-600 mb-6 transition-colors">
+                 ← Back to overview
+            </Link>
 
-      {/* PDF Viewer */}
-      {lesson.pdf && (
-        <motion.div variants={itemVariants} className="min-h-[50vh]">
-          {pdfLoaded ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
+            <motion.h2 
+                variants={itemVariants} 
+                className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-indigo-600 tracking-tight mb-4"
             >
-              <div className="mb-6">
-                <a
+                {lesson.title}
+            </motion.h2>
+
+            <motion.div variants={itemVariants} className="flex items-center gap-3">
+                <p className="text-lg text-slate-600">
+                    {lesson.description}
+                </p>
+            </motion.div>
+        </div>
+
+        {/* PDF Viewer */}
+        {lesson.pdf && (
+        <motion.div variants={itemVariants} className="mt-0">
+            <div className="flex items-center mb-4">
+                 {lesson.additionalPdf && (
+                    <a
+                      href={lesson.additionalPdf.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-white text-slate-700 border border-slate-200 text-sm font-semibold rounded-lg shadow-sm hover:bg-slate-50 hover:border-purple-200 hover:text-purple-700 hover:shadow-md transition-all"
+                    >
+                      {lesson.additionalPdf.label}
+                    </a>
+                 )}
+                 <a
                   href={lesson.pdf}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-colors inline-block"
+                  className="ml-auto px-4 py-2 bg-slate-900 text-white text-sm font-semibold rounded-lg shadow hover:bg-slate-800 hover:shadow-md transition-all"
                 >
-                  📥 Download PDF
+                  Download PDF
                 </a>
-              </div>
-
-              <object
-                data={lesson.pdf}
-                type="application/pdf"
-                className="w-full h-[90vh] border rounded-lg shadow-md"
-              >
-                <p>
-                  PDF cannot be displayed. You can{" "}
-                  <a
-                    href={lesson.pdf}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline"
-                  >
-                    download it here
-                  </a>
-                  .
-                </p>
-              </object>
-            </motion.div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-[50vh] text-slate-400 gap-4">
-              <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-              <p>Loading PDF...</p>
             </div>
-          )}
-        </motion.div>
-      )}
 
-      {/* Back Button */}
-      <motion.div variants={itemVariants} className="mt-8">
-        <Link href="/">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-6 py-3 bg-purple-600 text-white rounded-xl shadow-lg hover:bg-purple-700 transition-colors"
-          >
-            ← Back to Lessons
-          </motion.button>
-        </Link>
+            <div className="bg-slate-50 rounded-2xl border border-slate-200 shadow-inner overflow-hidden min-h-[300px] relative">
+            {pdfLoaded ? (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="h-full w-full"
+                >
+                    <object
+                        data={lesson.pdf}
+                        type="application/pdf"
+                        className="w-full h-[60vh] md:h-[700px]"
+                    >
+                         <div className="flex flex-col items-center justify-center h-full text-slate-500 p-8 text-center">
+                            <p className="mb-4">Unable to display PDF directly.</p>
+                            <a
+                                href={lesson.pdf}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-purple-600 font-semibold underline hover:text-purple-800"
+                            >
+                               Click here to download/view the file.
+                             </a>
+                         </div>
+                    </object>
+                </motion.div>
+            ) : (
+                <div className="flex flex-col items-center justify-center h-[500px] text-slate-400 gap-4">
+                  <div className="w-10 h-10 border-4 border-slate-200 border-t-purple-500 rounded-full animate-spin"></div>
+                  <p className="font-medium animate-pulse">Loading Document...</p>
+                </div>
+            )}
+            </div>
+        </motion.div>
+        )}
+
       </motion.div>
-    </motion.div>
+    </div>
   );
 }

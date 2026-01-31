@@ -5,7 +5,7 @@ import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
 
-export type VisualizerMode = 'GRAPH' | 'SORTING' | 'DP' | 'TREES';
+export type VisualizerMode = 'GRAPH' | 'SORTING' | 'DP' | 'TREES' | 'TARJAN';
 
 interface VisualizerHeaderProps {
   mode: VisualizerMode;
@@ -118,7 +118,7 @@ const VisualizerHeader: React.FC<VisualizerHeaderProps> = ({
                   className="flex items-center gap-2 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-700 whitespace-nowrap"
                >
                  <RotateCcw size={16} /> 
-                 {mode === 'GRAPH' ? 'New Graph' : 'New Data'}
+                 {mode === 'GRAPH' || mode === 'TARJAN' ? 'New Graph' : 'New Data'}
                </button>
            )}
       </div>

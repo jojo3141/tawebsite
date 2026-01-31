@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { generateRandomGraph, calculateDijkstraSteps, calculateBFSSteps, calculateDFSSteps, calculateBellmanFordSteps, calculatePrimSteps, calculateKruskalSteps, calculateBoruvkaSteps } from '@/utils/graphUtils';
+import { generateRandomGraph, generateTarjanGraph, calculateDijkstraSteps, calculateBFSSteps, calculateDFSSteps, calculateBellmanFordSteps, calculatePrimSteps, calculateKruskalSteps, calculateBoruvkaSteps, calculateTarjanSteps } from '@/utils/graphUtils';
 import { AnimatePresence, motion } from 'framer-motion';
 import GraphCanvas from '@/components/visualizer/GraphCanvas';
 import PseudocodeViewer from '@/components/visualizer/PseudocodeViewer';
@@ -13,27 +13,11 @@ interface GraphModeProps {
   mode: VisualizerMode;
   setMode: (mode: VisualizerMode) => void;
   onBack?: () => void;
+  initialAlgorithm?: AlgorithmType | string;
+  availableAlgorithms?: AlgorithmType[]; // New prop
 }
 
-const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack }) => {
-  // State
-  const [graph, setGraph] = useState<Graph | null>(null);
-  const [steps, setSteps] = useState<AlgorithmStep[]>([]);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
-  const [algorithm, setAlgorithm] = useState<AlgorithmType>(AlgorithmType.DFS);
-  
-  // User preference for graph direction (only applies to non-MST algorithms)
-  const [userPreferredDirected, setUserPreferredDirected] = useState<boolean>(true);
-
-  // Helper: These algorithms MUST be undirected
-  const isMstAlgo = (algo: AlgorithmType) => algo === AlgorithmType.PRIM || algo === AlgorithmType.KRUSKAL || algo === AlgorithmType.BORUVKA;
-  
-  // Helper: These algorithms support the toggle (Exclude MST and Bellman-Ford)
-  const supportsDirectionToggle = (algo: AlgorithmType) => !isMstAlgo(algo) && algo !== AlgorithmType.BELLMAN_FORD;
-
-  // Navigation Order
-  const ALGORITHMS = [
+const DEFAULT_ALGORITHMS = [
     AlgorithmType.DFS,
     AlgorithmType.BFS,
     AlgorithmType.DIJKSTRA,
@@ -41,7 +25,37 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack }) => {
     AlgorithmType.PRIM,
     AlgorithmType.KRUSKAL,
     AlgorithmType.BORUVKA
-  ];
+];
+
+const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlgorithm, availableAlgorithms }) => {
+  // Navigation Order
+  const activeAlgorithms = availableAlgorithms || DEFAULT_ALGORITHMS;
+
+  // State
+  const [graph, setGraph] = useState<Graph | null>(null);
+  const [steps, setSteps] = useState<AlgorithmStep[]>([]);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  
+  // Ensure we start with a valid algorithm from the active list
+  const getInitialAlgo = () => {
+      if (initialAlgorithm && activeAlgorithms.includes(initialAlgorithm as AlgorithmType)) {
+          return initialAlgorithm as AlgorithmType;
+      }
+      return activeAlgorithms[0];
+  };
+
+  const [algorithm, setAlgorithm] = useState<AlgorithmType>(getInitialAlgo());
+  
+  // User preference for graph direction (only applies to non-MST algorithms)
+  const [userPreferredDirected, setUserPreferredDirected] = useState<boolean>(true);
+
+  // Helper: These algorithms must be undirected
+  const isMstAlgo = (algo: AlgorithmType) => algo === AlgorithmType.PRIM || algo === AlgorithmType.KRUSKAL || algo === AlgorithmType.BORUVKA;
+  const isTarjan = (algo: AlgorithmType) => algo === AlgorithmType.TARJAN;
+  
+  // Helper: These algorithms support the toggle (Exclude MST, Bellman-Ford, Tarjan)
+  const supportsDirectionToggle = (algo: AlgorithmType) => !isMstAlgo(algo) && !isTarjan(algo) && algo !== AlgorithmType.BELLMAN_FORD;
 
   // Memoized solver to be stable for useEffect deps
   const solveGraph = useCallback((g: Graph, algo: AlgorithmType) => {
@@ -63,6 +77,8 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack }) => {
       solutionSteps = calculateKruskalSteps(g);
     } else if (algo === AlgorithmType.BORUVKA) {
       solutionSteps = calculateBoruvkaSteps(g);
+    } else if (algo === AlgorithmType.TARJAN) {
+      solutionSteps = calculateTarjanSteps(g, startNode);
     }
     
     setSteps(solutionSteps);
@@ -75,6 +91,14 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack }) => {
     const width = 600;
     const height = 420; 
     
+    // TARJAN Specific Fixed Graph
+    if (algorithm === AlgorithmType.TARJAN) {
+        const newGraph = generateTarjanGraph(width, height);
+        setGraph(newGraph);
+        solveGraph(newGraph, algorithm);
+        return;
+    }
+
     // Determine settings based on current state
     const uniqueWeights = algorithm === AlgorithmType.BORUVKA;
     
@@ -106,9 +130,10 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack }) => {
   useEffect(() => {
     if (graph) {
        const isBoruvka = algorithm === AlgorithmType.BORUVKA;
+       const isTarjan = algorithm === AlgorithmType.TARJAN;
        const graphHasUniqueWeights = graph.hasUniqueWeights === true;
        
-       const shouldBeDirected = isMstAlgo(algorithm) ? false : (algorithm === AlgorithmType.BELLMAN_FORD ? true : userPreferredDirected);
+       const shouldBeDirected = (isMstAlgo(algorithm) || isTarjan) ? false : (algorithm === AlgorithmType.BELLMAN_FORD ? true : userPreferredDirected);
        const graphIsDirected = graph.isDirected !== false; // Default to true if undefined
 
        const isBellmanFord = algorithm === AlgorithmType.BELLMAN_FORD;
@@ -120,8 +145,18 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack }) => {
            generateNewGraph();
        } else if (!isBoruvka && graphHasUniqueWeights) {
            generateNewGraph();
-       } else if (shouldBeDirected !== graphIsDirected) {
+       } else if (shouldBeDirected !== graphIsDirected && !isTarjan) {
+           // Tarjan handles its own graph generation in generateNewGraph so we skip this check if switching TO Tarjan or FROM Tarjan we do full regen
+           // Actually simpler: if switching to/from Tarjan, we probably want to regen because Tarjan graph is fixed 14 nodes, others are 9.
+           // The node count check is good indicator.
            generateNewGraph(); 
+       } else if (isTarjan && graph.nodes.length !== 12) {
+           generateNewGraph();
+       } else if (!isTarjan && graph.nodes.length === 12) {
+           generateNewGraph(); // Switch back from Tarjan graph
+       }
+        else if (shouldBeDirected !== graphIsDirected) {
+           generateNewGraph();
        } else if (shouldHaveNegative && !graphHasNegative) {
            generateNewGraph();
        } else if (!shouldHaveNegative && graphHasNegative) {
@@ -170,14 +205,14 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack }) => {
 
   if (!graph || !currentStep) return <div className="h-full flex items-center justify-center text-slate-400">Loading...</div>;
 
-  const showDfsLegend = algorithm === AlgorithmType.DFS && currentStep.edgeClassifications && Object.keys(currentStep.edgeClassifications).length > 0;
+  const showDfsLegend = (algorithm === AlgorithmType.DFS) && currentStep.edgeClassifications && Object.keys(currentStep.edgeClassifications).length > 0;
 
   return (
     <div className="min-h-screen flex flex-col">
       <VisualizerHeader 
         mode={mode}
         setMode={setMode}
-        algorithms={ALGORITHMS}
+        algorithms={activeAlgorithms}
         currentAlgorithm={algorithm}
         setAlgorithm={(algo: string) => setAlgorithm(algo as AlgorithmType)}
         onGenerateNew={generateNewGraph}

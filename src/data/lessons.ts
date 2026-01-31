@@ -1,3 +1,5 @@
+export type Course = 'AD' | 'AW';
+
 export interface Lesson {
   week: number;
   title: string;
@@ -9,81 +11,80 @@ export interface Lesson {
   };
 }
 
-export const lessons: Lesson[] = [
+export const lessonsAD: Lesson[] = [
   {
     week: 1,
     title: "Asymptotic Growth",
     description: "Administration basics and introduction to induction and asymptotic growth",
-    pdf: "/lessons/week-1.pdf",
+    pdf: "/lessons/AuD_HS25/week-1.pdf",
   },
   {
     week: 2,
     title: "O-Notation",
     description: "Some more Induction and O-Notation",
-    pdf: "/lessons/week-2.pdf",
+    pdf: "/lessons/AuD_HS25/week-2.pdf",
   },
   {
     week: 3,
     title: "Maximum Subarray Sum",
     description: "And Omeaga/Theta Notation and some more induction",
-    pdf: "/lessons/week-3.pdf",
+    pdf: "/lessons/AuD_HS25/week-3.pdf",
   },
   {
     week: 4,
     title: "Sorting Algorithms",
     description: "Bubble Sort, Selection Sort, Insertion Sort, Merge Sort",
-    pdf: "/lessons/week-4.pdf",
+    pdf: "/lessons/AuD_HS25/week-4.pdf",
   },
   {
     week: 5,
     title: "Sorting Algorithms II",
     description: "Quick Sort, Heap Sort and Max-Heaps in general",
-    pdf: "/lessons/week-5.pdf",
+    pdf: "/lessons/AuD_HS25/week-5.pdf",
   },
   {
     week: 6,
     title: "2-3-Trees and DP",
     description: "MSS, Jump Game, LGT, Edit Distance, Climbing Staris, Burglar",
-    pdf: "/lessons/week-6.pdf",
+    pdf: "/lessons/AuD_HS25/week-6.pdf",
   },
   {
     week: 7,
     title: "More DP",
     description: "Subset Sum, Knapsack, LAT, Summy Array, Museum Tour, Positional Sum",
-    pdf: "/lessons/week-7.pdf",
+    pdf: "/lessons/AuD_HS25/week-7.pdf",
   },
   {
     week: 8,
     title: "Graphs",
     description: "Graph Basics, Eulerian walks, Hamiltonian paths, General proof patterns",
-    pdf: "/lessons/week-8.pdf",
-  }
-  ,
+    pdf: "/lessons/AuD_HS25/week-8.pdf",
+  },
   {
     week: 9,
     title: "DFS",
     description: "DFS Tree, Pre/Post order, Topological Sorting, Counting connected components",
-    pdf: "/lessons/week-9.pdf",
+    pdf: "/lessons/AuD_HS25/week-9.pdf",
   },
   {
     week: 10,
     title: "BFS and Dijkstra",
     description: "BFS, Shortest Paths in weighted Graphs, Dijkstra",
-    pdf: "/lessons/week-10.pdf",
+    pdf: "/lessons/AuD_HS25/week-10.pdf",
   },
   {
     week: 11,
     title: "Bellman-Ford, MST",
     description: "Bellman-Ford, MST, Boruvka, Prim, Old Exam Exercises",
-    pdf: "/lessons/week-11.pdf",
+    pdf: "/lessons/AuD_HS25/week-11.pdf",
   },
   {
     week: 12,
     title: "Kruskal",
     description: "Kruskal, Tricks for Graph Problems, Learning Goals for A&D",
-    pdf: "/lessons/week-12.pdf",
+    pdf: "/lessons/AuD_HS25/week-12.pdf",
     additionalPdf: {
-      url: "/lessons/learning-goals.pdf",
+      url: "/lessons/AuD_HS25/learning-goals.pdf",
       label: "Learning Goals for A&D",
     },
   },
@@ -91,7 +92,27 @@ export const lessons: Lesson[] = [
     week: 13,
     title: "All to All Shortest Paths",
     description: "Floyd Warshall, Johnson, and some code expert",
-    pdf: "/lessons/week-13.pdf",
+    pdf: "/lessons/AuD_HS25/week-13.pdf",
   }
-  // Add new lessons here each week
 ];
+
+export const lessonsAW: Lesson[] = [
+  // Add new lessons for A&W here
+  {
+    week: 1,
+    title: "Graphs Repetition",
+    description: "Summary of Graphs",
+    pdf: "/lessons/AuW_FS26/week-1.pdf",
+  },
+  {
+    week: 2,
+    title: "Bridges and Articulation Points",
+    description: "Tarjan's Algorithm, Bridges, Articulation Points, Strongly Connected Components",
+    pdf: "/lessons/AuW_FS26/week-2.pdf",
+  },
+];
+
+export const lessons: Record<Course, Lesson[]> = {
+  AD: lessonsAD,
+  AW: lessonsAW
+};

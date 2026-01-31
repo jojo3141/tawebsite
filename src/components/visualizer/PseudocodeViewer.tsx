@@ -4,7 +4,7 @@ import {
     PSEUDOCODE_BFS, PSEUDOCODE_BFS_UNDIRECTED,
     PSEUDOCODE_DFS, PSEUDOCODE_DFS_UNDIRECTED,
     PSEUDOCODE_BELLMAN_FORD, PSEUDOCODE_BELLMAN_FORD_UNDIRECTED,
-    PSEUDOCODE_PRIM, PSEUDOCODE_KRUSKAL, PSEUDOCODE_BORUVKA, 
+    PSEUDOCODE_PRIM, PSEUDOCODE_KRUSKAL, PSEUDOCODE_BORUVKA, PSEUDOCODE_TARJAN,
     AlgorithmType 
 } from '@/types/graph';
 import {
@@ -25,6 +25,8 @@ import {
 } from '@/types/dp';
 import { clsx } from 'clsx';
 import { Code } from 'lucide-react';
+import 'katex/dist/katex.min.css';
+import { InlineMath } from 'react-katex';
 
 interface PseudocodeViewerProps {
   activeLine: number;
@@ -75,6 +77,7 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
       } else if (graphAlgo === AlgorithmType.PRIM) lines = PSEUDOCODE_PRIM;
       else if (graphAlgo === AlgorithmType.KRUSKAL) lines = PSEUDOCODE_KRUSKAL;
       else if (graphAlgo === AlgorithmType.BORUVKA) lines = PSEUDOCODE_BORUVKA;
+      else if (graphAlgo === AlgorithmType.TARJAN) lines = PSEUDOCODE_TARJAN;
   }
   // Sorting Algorithms
   else if (Object.values(SortingAlgorithmType).includes(algorithm as SortingAlgorithmType)) {
@@ -147,6 +150,30 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
               </div>
             );
           })}
+
+          {/* Tarjan Explanation Box */}
+          {algorithm === AlgorithmType.TARJAN && (
+             <div className="mt-6 p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg text-xs text-slate-300">
+                <div className="font-bold mb-2 text-indigo-300 uppercase tracking-wider text-[10px]">Conditions</div>
+                <div className="space-y-3">
+                   <div className="flex items-start gap-2">
+                       <div className="mt-0.5">
+                         <span className="font-semibold text-slate-200 block mb-0.5">Articulation Point</span> 
+                         <ul className="list-disc pl-3 space-y-1 text-slate-400 marker:text-slate-600">
+                            <li>For non-root <InlineMath math="u"/>: if child <InlineMath math="v"/> has <InlineMath math="low[v] \ge dfs[u]"/></li>
+                            <li>For root <InlineMath math="u"/>: if it has <InlineMath math="> 1"/> child in DFS tree</li>
+                         </ul>
+                      </div>
+                   </div>
+                   <div className="flex items-start gap-2">
+                      <div className="mt-0.5">
+                         <span className="font-semibold text-slate-200 block mb-0.5">Bridge</span> 
+                         <span className="text-slate-400">If edge <InlineMath math="(u, v)"/> satisfies <InlineMath math="low[v] > dfs[u]"/></span>
+                      </div>
+                   </div>
+                </div>
+             </div>
+          )}
         </div>
       </div>
     </div>
