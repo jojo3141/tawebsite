@@ -14,10 +14,11 @@ interface GraphCanvasProps {
 const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, height, algorithm }) => {
   
   // Constants for styling
-  const NODE_RADIUS = algorithm === AlgorithmType.TARJAN ? 14 : 18;
+  const NODE_RADIUS = (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || algorithm === AlgorithmType.FORD_FULKERSON) ? 14 : 18;
   const showArrows = graph.isDirected !== false;
   const isMstAlgo = algorithm === AlgorithmType.PRIM || algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA;
   const isNodeHighlightDisabled = algorithm === AlgorithmType.KRUSKAL;
+  const isFordFulkerson = algorithm === AlgorithmType.FORD_FULKERSON;
 
   // Helper for Bezier Math
   const getPointOnBezier = (t: number, p0: number, p1: number, p2: number) => {
@@ -28,6 +29,22 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
   const getNodeColor = (nodeId: string) => {
     // KRUSKAL: Nodes never highlight
     if (isNodeHighlightDisabled) return '#64748b'; // Slate-500 (Default)
+
+    // FORD-FULKERSON
+    if (isFordFulkerson) {
+        if (nodeId === 's') return '#22c55e'; // Green-500
+        if (nodeId === 't') return '#ef4444'; // Red-500
+        
+        // Final Min-Cut Visualization
+        if (currentStep.minCutSetS) {
+            const isInS = currentStep.minCutSetS.includes(nodeId);
+            return isInS ? '#22c55e' : '#ef4444'; // Green for S, Red for T
+        }
+
+        // Highlight active nodes in path?
+        if (currentStep.path && currentStep.path.includes(nodeId)) return '#3b82f6'; // Blue-500
+        return '#64748b';
+    }
 
     // BORUVKA: Only highlight if in queue (S_i members), otherwise default
     if (algorithm === AlgorithmType.BORUVKA) {
@@ -45,6 +62,46 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
     // TARJAN: Highlight Articulation Points in Red
     if (algorithm === AlgorithmType.TARJAN && currentStep.articulationPoints?.includes(nodeId)) {
         return '#ef4444'; // Red-500
+    }
+
+    // MATCHING ALGORITHM: GREEDY
+    if (algorithm === AlgorithmType.GREEDY_MATCHING) {
+        const isMatched = currentStep.processedSet?.includes(nodeId);
+        return isMatched ? '#a855f7' : '#64748b'; // Purple-500 for matched, Slate-500 for unmatched
+    }
+
+    // MATCHING ALGORITHM: HOPCROFT-KARP
+    if (algorithm === AlgorithmType.HOPCROFT_KARP) {
+        // 1. Visited (BFS Search) -> Blue (Part A) or Orange (Part B)
+        // Check if node is in processedSet OR in any of the computed layers
+        const isInLayer = currentStep.hopcroftLayers && Object.values(currentStep.hopcroftLayers).some(layer => layer.includes(nodeId));
+        
+        if (currentStep.processedSet?.includes(nodeId) || isInLayer) {
+            return nodeId.startsWith('A') ? '#3b82f6' : '#f97316'; // Blue-500 / Orange-500
+        }
+        
+        return '#64748b'; // Default (Matched nodes will be handled via Stroke)
+    }
+
+    // GRAPH COLORING ALGORITHMS
+    if (algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING) {
+        if (currentStep.nodeColors && currentStep.nodeColors[nodeId]) {
+            const colorIndex = currentStep.nodeColors[nodeId];
+            const colors = [
+                '#ef4444', // 1: Red
+                '#f97316', // 2: Orange
+                '#eab308', // 3: Yellow
+                '#22c55e', // 4: Green
+                '#06b6d4', // 5: Cyan
+                '#3b82f6', // 6: Blue
+            ];
+            return colors[(colorIndex - 1) % colors.length];
+        }
+        
+        // Highlight active node (being colored) in Yellow
+        if (currentStep.currentNodeId === nodeId) return '#eab308'; // Yellow-500
+        
+        return '#64748b'; // Slate-500 (Uncolored)
     }
 
     if (currentStep.currentNodeId === nodeId) return '#eab308'; // Yellow-500 (Current u)
@@ -75,9 +132,28 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
         isActive = currentStep.activeEdge?.source === target && currentStep.activeEdge?.target === source;
     }
 
-    if (isActive && algorithm !== AlgorithmType.TARJAN) {
+    if (isActive && algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.EULER && algorithm !== AlgorithmType.GREEDY_MATCHING && algorithm !== AlgorithmType.HOPCROFT_KARP && algorithm !== AlgorithmType.FORD_FULKERSON) {
         if (algorithm === AlgorithmType.BELLMAN_FORD) return '#3b82f6'; // Blue-500 for BF
         return '#ef4444'; // Red-500 for others
+    }
+
+     // FORD-FULKERSON PATH HIGHLIGHT
+    if (isFordFulkerson) {
+         // Final Min-Cut Highlight: S->T edges in purple
+         if (currentStep.minCutSetS) {
+             const sourceInS = currentStep.minCutSetS.includes(source);
+             const targetInS = currentStep.minCutSetS.includes(target); // If not in S, it's in T
+             
+             if (sourceInS && !targetInS) return '#a855f7'; // Purple-500 (Cut Edge S->T)
+         }
+
+         if (currentStep.path) {
+             // Check if edge is in path
+             for (let i = 0; i < currentStep.path.length - 1; i++) {
+                 if (currentStep.path[i] === source && currentStep.path[i+1] === target) return '#22c55e'; // Green path (Augmenting)
+             }
+         }
+         return '#94a3b8';
     }
 
     // TARJAN BRIDGE HIGHLIGHT (Persistent)
@@ -97,7 +173,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
     
     const finalClass = classification || classificationRev;
 
-    if (finalClass) {
+    if (finalClass && algorithm !== AlgorithmType.GREEDY_MATCHING && algorithm !== AlgorithmType.HOPCROFT_KARP) {
         // TARJAN OVERRIDE: Tree is green, all others (Back) are Grey
         if (algorithm === AlgorithmType.TARJAN) {
             if (finalClass === EdgeType.TREE) return '#22c55e'; // Green
@@ -127,12 +203,52 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
     // Parent edges (Dijkstra/BFS/DFS/BF Tree) - EXCLUDE MST ALGOS
     // Disable green parent edge coloring for MST algorithms to prevent incorrect edge highlighting
     // For UNDIRECTED graphs, we must check both directions: parent[target] == source OR parent[source] == target
-    const isParent = !isMstAlgo && (
+    const isParent = !isMstAlgo && algorithm !== AlgorithmType.EULER && (
         currentStep.parents[target] === source || 
         (graph.isDirected === false && currentStep.parents[source] === target)
     );
 
     if (isParent) return '#22c55e'; // Green for active path tree
+
+    // EULER TOUR
+    if (algorithm === AlgorithmType.EULER) {
+        // Check Sub-Tour First (Active construction)
+        if (currentStep.eulerSubTour) {
+            for (let i = 0; i < currentStep.eulerSubTour.length - 1; i++) {
+                const u = currentStep.eulerSubTour[i];
+                const v = currentStep.eulerSubTour[i+1];
+                if ((u === source && v === target) || (u === target && v === source)) {
+                    return '#06b6d4'; // Cyan-500 for W'
+                }
+            }
+        }
+        
+        // Check Main Tour
+        if (currentStep.eulerTour) {
+             for (let i = 0; i < currentStep.eulerTour.length - 1; i++) {
+                const u = currentStep.eulerTour[i];
+                const v = currentStep.eulerTour[i+1];
+                if ((u === source && v === target) || (u === target && v === source)) {
+                    return '#f97316'; // Orange-500 for W
+                }
+            }
+        }
+    }
+
+    // MATCHING ALGORITHMS
+    if (algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP) {
+        // Check if edge is in the matching (show in purple)
+        const isInMatching = currentStep.mstEdges?.some(e => {
+            if ((e.source === source && e.target === target) || (e.source === target && e.target === source)) {
+                return true;
+            }
+            return false;
+        });
+        
+        if (isInMatching) {
+            return '#a855f7'; // Purple-500 for matching edges
+        }
+    }
 
     return '#94a3b8'; // Slate-400 (Default edge) - BRIGHTER
   };
@@ -146,7 +262,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
     
     // Only consider parents for stroke width if NOT MST algo
     // Same bidirectional check for undirected graphs
-    const isParent = !isMstAlgo && (
+    const isParent = !isMstAlgo && !isFordFulkerson && (
         currentStep.parents[target] === source || 
         (graph.isDirected === false && currentStep.parents[source] === target)
     );
@@ -161,14 +277,85 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
     // Also bold if classified in DFS
     const isClassified = !!currentStep.edgeClassifications?.[`${source}-${target}`] || !!currentStep.edgeClassifications?.[`${target}-${source}`];
     
-    return isActive || isParent || isInF || isClassified ? 3 : 1.5;
+    // Euler Bold Logic
+    let isEuler = false;
+    if (algorithm === AlgorithmType.EULER && (currentStep.eulerTour || currentStep.eulerSubTour)) {
+         // Check if edge is in either tour
+         const checkTour = (tour: string[] | undefined) => {
+             if (!tour) return false;
+             for (let i = 0; i < tour.length - 1; i++) {
+                const u = tour[i];
+                const v = tour[i+1];
+                if ((u === source && v === target) || (u === target && v === source)) return true;
+             }
+             return false;
+         };
+         isEuler = checkTour(currentStep.eulerTour) || checkTour(currentStep.eulerSubTour);
+    }
+
+    // Matching Algorithms Bold Logic
+    let isInMatching = false;
+    if (algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP) {
+        isInMatching = currentStep.mstEdges?.some(e => {
+            return (e.source === source && e.target === target) || (e.source === target && e.target === source);
+        }) || false;
+    }
+
+    // Ford-Fulkerson Path Bold Logic
+    let isFFPath = false;
+    let isFFCutEdge = false;
+    if (isFordFulkerson) {
+        if (currentStep.path) {
+             for (let i = 0; i < currentStep.path.length - 1; i++) {
+                 if (currentStep.path[i] === source && currentStep.path[i+1] === target) isFFPath = true;
+             }
+        }
+        if (currentStep.minCutSetS) {
+             const sourceInS = currentStep.minCutSetS.includes(source);
+             const targetInS = currentStep.minCutSetS.includes(target);
+             if (sourceInS && !targetInS) isFFCutEdge = true;
+        }
+    }
+
+    return isActive || isParent || isInF || isClassified || isEuler || isInMatching || isFFPath || isFFCutEdge ? 3 : 1.5;
   };
 
-  const showWeights = algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD || isMstAlgo;
+  const showWeights = algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD || isMstAlgo || isFordFulkerson;
 
   return (
     <div className="relative w-full h-full">
       <svg width={width} height={height} className="overflow-visible block">
+        {/* Augmenting Path Highlight (Hopcroft-Karp) - Drawn BELOW edges */}
+        {currentStep.currentAugmentingPath && currentStep.currentAugmentingPath.length > 1 && (
+            <g>
+                {currentStep.currentAugmentingPath.map((nodeId, i) => {
+                    if (i === currentStep.currentAugmentingPath!.length - 1) return null;
+                    const nextId = currentStep.currentAugmentingPath![i + 1];
+                    const start = graph.nodes.find(n => n.id === nodeId);
+                    const end = graph.nodes.find(n => n.id === nextId);
+                    
+                    if (!start || !end) return null;
+
+                    return (
+                        <motion.line
+                            key={`augment-path-${i}`}
+                            x1={start.x}
+                            y1={start.y}
+                            x2={end.x}
+                            y2={end.y}
+                            stroke="#22c55e" // Green-500
+                            strokeWidth={12}
+                            strokeOpacity={0.6}
+                            fill="none"
+                            initial={{ pathLength: 0, opacity: 0 }}
+                            animate={{ pathLength: 1, opacity: 0.6 }}
+                            transition={{ duration: 0.4 }}
+                        />
+                    );
+                })}
+            </g>
+        )}
+
         {/* Edges as Quadratic Bezier Curves */}
         <g>
           {graph.edges.map((edge, i) => {
@@ -194,10 +381,11 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
             const nx = -dy / len;
             const ny = dx / len;
             
-            // Offset amount: 
-            // Adaptive: If hasReverse, curve more (70). Default 50.
-            // Constraint: Do not exceed 25% of edge length to prevent extremely sharp loops on short edges.
-            const baseOffset = hasReverse ? 70 : 50;
+            // Offset amount
+            let baseOffset = hasReverse ? 70 : 50;
+            if (algorithm === AlgorithmType.HOPCROFT_KARP || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING || algorithm === AlgorithmType.FORD_FULKERSON) {
+              baseOffset = 0; // Straight lines
+            }
             const offset = Math.min(baseOffset, len * 0.25);
             
             // Control point coordinates
@@ -212,16 +400,11 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
             const labelX = getPointOnBezier(labelT, start.x, cpX, end.x);
             const labelY = getPointOnBezier(labelT, start.y, cpY, end.y);
 
-            // Arrow Placement:
-            // Position: t=0.5 (Exact midpoint/peak of the curve)
-            // Angle: Parallel to the chord (Start -> End) because at t=0.5 of a symmetric quadratic bezier, 
-            // the tangent is strictly parallel to the line connecting P0 and P2.
+            // Arrow Placement
             const arrowT = 0.5;
             const arrowX = getPointOnBezier(arrowT, start.x, cpX, end.x);
             const arrowY = getPointOnBezier(arrowT, start.y, cpY, end.y);
             
-            // Calculate Exact Angle (Start -> End vector)
-            // This avoids jitter from derivative calculations on short curves
             const arrowAngle = Math.atan2(end.y - start.y, end.x - start.x) * (180 / Math.PI);
 
             // TARJAN DIRECTION LOGIC
@@ -233,67 +416,79 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
             let showTarjanArrow = false;
             let tarjanReverse = false;
 
+            // EULER DIRECTION LOGIC
+            let showEulerArrow = false;
+            let eulerReverse = false;
+
             if (algorithm === AlgorithmType.TARJAN) {
-                // 1. Tree Edges: Forward (Parent -> Child)
-                // Defined by explicit TREE classification or current Parent pointer
-                const isTreeNormal = (tNormalClass === EdgeType.TREE) || tNormalParent;
-                const isTreeRev = (tRevClass === EdgeType.TREE) || tRevParent;
-
-                if (isTreeNormal) {
-                    showTarjanArrow = true;
-                    tarjanReverse = false; // Source -> Target
-                } else if (isTreeRev) {
-                    showTarjanArrow = true;
-                    tarjanReverse = true; // Target -> Source
-                } else {
-                    // 2. Non-Tree Edges: Backwards (High DFS -> Low DFS)
-                    const dSource = currentStep.discoveryTimes[edge.source];
-                    const dTarget = currentStep.discoveryTimes[edge.target];
-
-                    if (dSource !== undefined && dTarget !== undefined) {
-                        showTarjanArrow = true;
-                        if (dSource > dTarget) {
-                            // Source is Descendant (High), Target is Ancestor (Low)
-                            // Arrow: Source -> Target (Normal visual direction)
-                            tarjanReverse = false;
-                        } else {
-                            // Target is Descendant (High), Source is Ancestor (Low)
-                            // Arrow: Target -> Source (Reverse visual direction)
-                            tarjanReverse = true;
-                        }
-                    }
-                }
+                // ... (Tarjan logic omitted for brevity, same as before) ...
+                 const isTreeNormal = (tNormalClass === EdgeType.TREE) || tNormalParent;
+                 const isTreeRev = (tRevClass === EdgeType.TREE) || tRevParent;
+                 if (isTreeNormal) { showTarjanArrow = true; tarjanReverse = false; }
+                 else if (isTreeRev) { showTarjanArrow = true; tarjanReverse = true; }
+                 else {
+                     const dSource = currentStep.discoveryTimes[edge.source];
+                     const dTarget = currentStep.discoveryTimes[edge.target];
+                     if (dSource !== undefined && dTarget !== undefined) {
+                         showTarjanArrow = true;
+                         if (dSource > dTarget) tarjanReverse = false;
+                         else tarjanReverse = true;
+                     }
+                 }
+            } else if (algorithm === AlgorithmType.EULER) {
+                 if (tNormalClass) { showEulerArrow = true; eulerReverse = false; }
+                 else if (tRevClass) { showEulerArrow = true; eulerReverse = true; }
             }
             
+            // VISIBILITY LOGIC
+            let opacity = 1;
+            if (algorithm === AlgorithmType.EULER) {
+                 const isEulerVisited = tNormalClass || tRevClass;
+                 const isFinal = currentStep.description.startsWith("Algorithm Complete") || currentStep.description.startsWith("Eulerian Circuit found") || currentStep.description.startsWith("Graph has");
+                 if (isEulerVisited && !isFinal) opacity = 0;
+            }
+
+            if (algorithm === AlgorithmType.GREEDY_MATCHING) {
+                const isRemoved = currentStep.edgeClassifications?.[`${edge.source}-${edge.target}`] === EdgeType.CROSS || 
+                                 currentStep.edgeClassifications?.[`${edge.target}-${edge.source}`] === EdgeType.CROSS;
+                const isFinal = currentStep.description.startsWith("Algorithm Complete");
+                if (isRemoved && !isFinal) opacity = 0;
+            }
+
+            if (algorithm === AlgorithmType.SMALLEST_LAST_COLORING) {
+                const isSourceRemoved = currentStep.processedSet.includes(edge.source);
+                const isTargetRemoved = currentStep.processedSet.includes(edge.target);
+                if (isSourceRemoved || isTargetRemoved) opacity = 0;
+            }
+
             return (
               <g key={`${edge.source}-${edge.target}-${i}`}>
                 {/* The Edge Line */}
                 <motion.path
                   initial={false}
                   d={pathD}
-                  animate={{ stroke: color, strokeWidth: strokeWidth }}
+                  animate={{ stroke: color, strokeWidth: strokeWidth, opacity: opacity }}
                   transition={{ duration: 0.3 }}
                   fill="none"
                   strokeLinecap="round"
                 />
 
-                {/* The Arrow Head */}
-                {(showArrows || showTarjanArrow) && (
+                {(showArrows || showTarjanArrow || showEulerArrow) && opacity > 0 && (
                   <motion.path
                     d="M -4 -5 L 4 0 L -4 5 z" 
                     initial={false}
                     animate={{ 
                       fill: color, 
-                      transform: `translate(${arrowX}px, ${arrowY}px) rotate(${arrowAngle + (tarjanReverse ? 180 : 0)}deg) scale(${strokeWidth > 2 ? 1.4 : 1.2})` 
+                      transform: `translate(${arrowX}px, ${arrowY}px) rotate(${arrowAngle + (tarjanReverse || eulerReverse ? 180 : 0)}deg) scale(${strokeWidth > 2 ? 1.4 : 1.2})` 
                     }}
                     transition={{ duration: 0.3 }}
                   />
                 )}
 
-                {/* Edge Weight Label - Only for Dijkstra & Bellman-Ford & Prim & Kruskal & Boruvka */}
+                {/* Edge Weight Label */}
                 {showWeights && (
                   <>
-                    <circle cx={labelX} cy={labelY} r="8" fill="#1e293b" />
+                    <circle cx={labelX} cy={labelY} r={isFordFulkerson ? 14 : 8} fill="#1e293b" />
                     <text
                       x={labelX}
                       y={labelY}
@@ -301,7 +496,14 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
                       textAnchor="middle"
                       className="text-[10px] fill-slate-300 font-mono select-none pointer-events-none font-bold"
                     >
-                      {edge.weight}
+                      {isFordFulkerson ? (
+                        <>
+                          <tspan fill="#3b82f6">{currentStep.edgeFlows?.[`${edge.source}-${edge.target}`] ?? 0}</tspan>
+                          <tspan fill="#cbd5e1">/{edge.capacity}</tspan>
+                        </>
+                      ) : (
+                        edge.weight
+                      )}
                     </text>
                   </>
                 )}
@@ -314,51 +516,69 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
         <g>
           {graph.nodes.map((node) => {
             const dist = currentStep.distances[node.id];
-            // Safely handle undefined distance (can happen in init steps)
             const distLabel = (dist === undefined || dist === Infinity) ? '∞' : dist;
             const bgColor = getNodeColor(node.id);
 
-            // Logic for the info badge
             let badgeText = distLabel.toString();
             let showBadge = true;
             
             if (algorithm === AlgorithmType.DFS) {
-              const d = currentStep.discoveryTimes[node.id];
-              const f = currentStep.finishTimes[node.id];
-              if (d) {
-                  badgeText = `${d}/${f || '?'}`;
-              } else {
-                  showBadge = false;
-              }
+               // ... DFS logic
+               const d = currentStep.discoveryTimes[node.id];
+               const f = currentStep.finishTimes[node.id];
+               if (d) badgeText = `${d}/${f || '?'}`; else showBadge = false;
             } else if (algorithm === AlgorithmType.TARJAN) {
+               // ... Tarjan logic
                const d = currentStep.discoveryTimes[node.id];
                const low = currentStep.lowLinks?.[node.id];
-               if (d) {
-                   badgeText = `${d}/${low !== undefined ? low : '?'}`;
-               } else {
-                   showBadge = false;
-               }
-            } else if (isMstAlgo) {
-                // For Prim/Kruskal/Boruvka, distance label isn't primary focus
-                // We hide badges for all MST algorithms (including Prim)
+               if (d) badgeText = `${d}/${low !== undefined ? low : '?'}`; else showBadge = false;
+            } else if (isMstAlgo || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING || isFordFulkerson) {
                 showBadge = false;
             }
 
+            let nodeOpacity = 1;
+            // ... (Matching & Coloring visibility logic) ...
+            if (algorithm === AlgorithmType.GREEDY_MATCHING) {
+                const isNodeRemoved = currentStep.processedSet?.includes(node.id);
+                const isFinal = currentStep.description.startsWith("Algorithm Complete");
+                if (isNodeRemoved && !isFinal) nodeOpacity = 0;
+            }
+            if (algorithm === AlgorithmType.SMALLEST_LAST_COLORING) {
+                if (currentStep.processedSet?.includes(node.id)) nodeOpacity = 0;
+            }
+
             return (
-              <g key={node.id} className="transition-all duration-300">
-                {/* Main Node Circle */}
+              <g key={node.id} className="transition-all duration-300" style={{ opacity: nodeOpacity }}>
                 <motion.circle
                   initial={false}
                   animate={{ 
                     fill: bgColor, 
-                    // Disable white highlight stroke for Bellman-Ford to remove "white circle" around active nodes
-                    stroke: (!isNodeHighlightDisabled && currentStep.currentNodeId === node.id && algorithm !== AlgorithmType.BELLMAN_FORD) ? '#fff' : 'none' 
+                    stroke: (() => {
+                      if (isNodeHighlightDisabled) return 'none';
+                      if (algorithm === AlgorithmType.BELLMAN_FORD) return 'none';
+                      if ((algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP) && currentStep.activeEdge) {
+                        const isEndpoint = node.id === currentStep.activeEdge.source || node.id === currentStep.activeEdge.target;
+                        return isEndpoint ? '#fff' : 'none';
+                      }
+                      if (algorithm === AlgorithmType.HOPCROFT_KARP) {
+                          const isMatched = currentStep.mstEdges?.some(e => e.source === node.id || e.target === node.id);
+                          if (isMatched) return '#a855f7'; 
+                      }
+                      return 'none';
+                    })(),
+                    strokeWidth: (() => {
+                      if (algorithm === AlgorithmType.HOPCROFT_KARP) {
+                          const isMatched = currentStep.mstEdges?.some(e => e.source === node.id || e.target === node.id);
+                          const isActiveEndpoint = currentStep.activeEdge && (node.id === currentStep.activeEdge.source || node.id === currentStep.activeEdge.target);
+                          if (isMatched && !isActiveEndpoint) return 4;
+                      }
+                      return 2;
+                    })()
                   }}
                   cx={node.x}
                   cy={node.y}
                   r={NODE_RADIUS}
                   className="transition-all duration-300"
-                  strokeWidth={2}
                 />
                 <text
                   x={node.x}
@@ -366,12 +586,11 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
                   dy=".35em"
                   textAnchor="middle"
                   className="text-xs font-bold fill-white pointer-events-none select-none"
-                  style={{ fontSize: algorithm === AlgorithmType.TARJAN ? '10px' : '12px' }}
+                  style={{ fontSize: (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || isFordFulkerson) ? '10px' : '12px' }}
                 >
                   {node.label}
                 </text>
                 
-                {/* Distance / Info Label Badge */}
                 {showBadge && (
                   <g transform={`translate(${node.x + (algorithm === AlgorithmType.TARJAN ? 8 : 12)}, ${node.y - (algorithm === AlgorithmType.TARJAN ? 10 : 12)})`}>
                     <rect x="0" y="-10" width={algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.TARJAN ? 34 : 24} height="14" rx="4" fill="#0f172a" stroke="#334155" strokeWidth="1" />
@@ -385,6 +604,26 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
           })}
         </g>
       </svg>
+      
+      {/* Legend for Ford-Fulkerson */}
+      {isFordFulkerson && (
+        <div className="absolute top-2 left-2 bg-slate-800/80 backdrop-blur-sm p-2 rounded-lg border border-slate-700 pointer-events-none">
+            <div className="flex items-center gap-2 text-xs font-mono">
+                <span className="text-blue-500 font-bold">flow value</span>
+                <span className="text-slate-400">/</span>
+                <span className="text-slate-300">capacity</span>
+            </div>
+        </div>
+      )}
+
+      {/* Total Flow Display for Ford-Fulkerson */}
+      {isFordFulkerson && currentStep.totalFlow !== undefined && (
+        <div className="absolute top-2 right-2 bg-slate-800/80 backdrop-blur-sm p-2 rounded-lg border border-slate-700 pointer-events-none">
+            <div className="text-xs font-mono font-bold text-white">
+                val(f) = <span className="text-blue-500">{currentStep.totalFlow}</span>
+            </div>
+        </div>
+      )}
     </div>
   );
 };

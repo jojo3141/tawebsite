@@ -1,0 +1,5 @@
+             } else if (isMstAlgo || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP) {
+                 // For Prim/Kruskal/Boruvka/Euler/Greedy Matching/Hopcroft-Karp, distance label isn't primary focus
+                 // We hide badges for all MST algorithms (including Prim), Euler, and matching algorithms
+                 showBadge = false;
+             }

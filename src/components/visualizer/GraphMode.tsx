@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { generateRandomGraph, generateTarjanGraph, calculateDijkstraSteps, calculateBFSSteps, calculateDFSSteps, calculateBellmanFordSteps, calculatePrimSteps, calculateKruskalSteps, calculateBoruvkaSteps, calculateTarjanSteps } from '@/utils/graphUtils';
+import { generateRandomGraph, generateTarjanGraph, generateEulerianGraph, generateGreedyMatchingGraph, generateHopcroftKarpGraph, generateColoringGraph, generateFordFulkersonGraph, calculateDijkstraSteps, calculateBFSSteps, calculateDFSSteps, calculateBellmanFordSteps, calculatePrimSteps, calculateKruskalSteps, calculateBoruvkaSteps, calculateTarjanSteps, calculateEulerSteps, calculateGreedyMatchingSteps, calculateHopcroftKarpSteps, calculateGreedyColoringSteps, calculateSmallestLastColoringSteps, calculateFordFulkersonSteps } from '@/utils/graphUtils';
 import { AnimatePresence, motion } from 'framer-motion';
 import GraphCanvas from '@/components/visualizer/GraphCanvas';
 import PseudocodeViewer from '@/components/visualizer/PseudocodeViewer';
@@ -24,7 +24,10 @@ const DEFAULT_ALGORITHMS = [
     AlgorithmType.BELLMAN_FORD,
     AlgorithmType.PRIM,
     AlgorithmType.KRUSKAL,
-    AlgorithmType.BORUVKA
+    AlgorithmType.PRIM,
+    AlgorithmType.KRUSKAL,
+    AlgorithmType.BORUVKA,
+    AlgorithmType.EULER
 ];
 
 const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlgorithm, availableAlgorithms }) => {
@@ -54,8 +57,8 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
   const isMstAlgo = (algo: AlgorithmType) => algo === AlgorithmType.PRIM || algo === AlgorithmType.KRUSKAL || algo === AlgorithmType.BORUVKA;
   const isTarjan = (algo: AlgorithmType) => algo === AlgorithmType.TARJAN;
   
-  // Helper: These algorithms support the toggle (Exclude MST, Bellman-Ford, Tarjan)
-  const supportsDirectionToggle = (algo: AlgorithmType) => !isMstAlgo(algo) && !isTarjan(algo) && algo !== AlgorithmType.BELLMAN_FORD;
+  // Helper: These algorithms support the toggle (Exclude MST, Bellman-Ford, Tarjan, Euler, Matching, and Coloring algorithms)
+  const supportsDirectionToggle = (algo: AlgorithmType) => !isMstAlgo(algo) && !isTarjan(algo) && algo !== AlgorithmType.BELLMAN_FORD && algo !== AlgorithmType.EULER && algo !== AlgorithmType.GREEDY_MATCHING && algo !== AlgorithmType.HOPCROFT_KARP && algo !== AlgorithmType.GREEDY_COLORING && algo !== AlgorithmType.SMALLEST_LAST_COLORING && algo !== AlgorithmType.FORD_FULKERSON;
 
   // Memoized solver to be stable for useEffect deps
   const solveGraph = useCallback((g: Graph, algo: AlgorithmType) => {
@@ -79,6 +82,18 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
       solutionSteps = calculateBoruvkaSteps(g);
     } else if (algo === AlgorithmType.TARJAN) {
       solutionSteps = calculateTarjanSteps(g, startNode);
+    } else if (algo === AlgorithmType.EULER) {
+      solutionSteps = calculateEulerSteps(g, startNode);
+    } else if (algo === AlgorithmType.GREEDY_MATCHING) {
+      solutionSteps = calculateGreedyMatchingSteps(g);
+    } else if (algo === AlgorithmType.HOPCROFT_KARP) {
+      solutionSteps = calculateHopcroftKarpSteps(g);
+    } else if (algo === AlgorithmType.GREEDY_COLORING) {
+      solutionSteps = calculateGreedyColoringSteps(g);
+    } else if (algo === AlgorithmType.SMALLEST_LAST_COLORING) {
+      solutionSteps = calculateSmallestLastColoringSteps(g);
+    } else if (algo === AlgorithmType.FORD_FULKERSON) {
+      solutionSteps = calculateFordFulkersonSteps(g);
     }
     
     setSteps(solutionSteps);
@@ -99,11 +114,51 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
         return;
     }
 
+    // EULER Specific Graph (Even Degrees)
+    if (algorithm === AlgorithmType.EULER) {
+        const newGraph = generateEulerianGraph(width, height);
+        setGraph(newGraph);
+        solveGraph(newGraph, algorithm);
+        return;
+    }
+
+    // GREEDY_MATCHING Specific Graph (similar to Tarjan structure)
+    if (algorithm === AlgorithmType.GREEDY_MATCHING) {
+        const newGraph = generateGreedyMatchingGraph(width, height);
+        setGraph(newGraph);
+        solveGraph(newGraph, algorithm);
+        return;
+    }
+
+    // HOPCROFT_KARP Specific Graph (bipartite graph with 8+7 nodes)
+    if (algorithm === AlgorithmType.HOPCROFT_KARP) {
+        const newGraph = generateHopcroftKarpGraph(width, height);
+        setGraph(newGraph);
+        solveGraph(newGraph, algorithm);
+        return;
+    }
+
+    // COLORING Specific Graph (similar to Matching)
+    if (algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING) {
+        const newGraph = generateColoringGraph(width, height);
+        setGraph(newGraph);
+        solveGraph(newGraph, algorithm);
+        return;
+    }
+
+    // FORD_FULKERSON Specific Graph
+    if (algorithm === AlgorithmType.FORD_FULKERSON) {
+        const newGraph = generateFordFulkersonGraph(width, height);
+        setGraph(newGraph);
+        solveGraph(newGraph, algorithm);
+        return;
+    }
+
     // Determine settings based on current state
     const uniqueWeights = algorithm === AlgorithmType.BORUVKA;
     
     // If it's an MST algo, force Undirected. 
-    // If it's Bellman-Ford, force Directed.
+    // If it's Bellman-Ford or Ford-Fulkerson, force Directed.
     // Else use user preference.
     const isDirected = isMstAlgo(algorithm) ? false : (algorithm === AlgorithmType.BELLMAN_FORD ? true : userPreferredDirected);
     
@@ -131,9 +186,12 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
     if (graph) {
        const isBoruvka = algorithm === AlgorithmType.BORUVKA;
        const isTarjan = algorithm === AlgorithmType.TARJAN;
+       const isEuler = algorithm === AlgorithmType.EULER;
+       const isGreedyMatching = algorithm === AlgorithmType.GREEDY_MATCHING;
+       const isHopcroftKarp = algorithm === AlgorithmType.HOPCROFT_KARP;
        const graphHasUniqueWeights = graph.hasUniqueWeights === true;
        
-       const shouldBeDirected = (isMstAlgo(algorithm) || isTarjan) ? false : (algorithm === AlgorithmType.BELLMAN_FORD ? true : userPreferredDirected);
+       const shouldBeDirected = (isMstAlgo(algorithm) || isTarjan || isEuler || isGreedyMatching || isHopcroftKarp || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING) ? false : (algorithm === AlgorithmType.BELLMAN_FORD || algorithm === AlgorithmType.FORD_FULKERSON ? true : userPreferredDirected);
        const graphIsDirected = graph.isDirected !== false; // Default to true if undefined
 
        const isBellmanFord = algorithm === AlgorithmType.BELLMAN_FORD;
@@ -141,21 +199,19 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
        const shouldHaveNegative = isBellmanFord || isMstAlgo(algorithm); 
        const graphHasNegative = graph.edges.some(e => e.weight < 0);
 
+       // Expected node count: 15 for Hopcroft-Karp (8+7), 12 for Tarjan/Euler/Greedy/Coloring; 9 for others
+       const isColoring = algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING;
+       const isFlow = algorithm === AlgorithmType.FORD_FULKERSON;
+       const expectedNodeCount = (isHopcroftKarp || isColoring) ? 15 : (isTarjan || isEuler || isGreedyMatching) ? 12 : (isFlow ? 11 : 9); // FF uses 11 nodes
+
        if (isBoruvka && !graphHasUniqueWeights) {
            generateNewGraph();
        } else if (!isBoruvka && graphHasUniqueWeights) {
            generateNewGraph();
-       } else if (shouldBeDirected !== graphIsDirected && !isTarjan) {
-           // Tarjan handles its own graph generation in generateNewGraph so we skip this check if switching TO Tarjan or FROM Tarjan we do full regen
-           // Actually simpler: if switching to/from Tarjan, we probably want to regen because Tarjan graph is fixed 14 nodes, others are 9.
-           // The node count check is good indicator.
-           generateNewGraph(); 
-       } else if (isTarjan && graph.nodes.length !== 12) {
+       } else if (graph.nodes.length !== expectedNodeCount) {
            generateNewGraph();
-       } else if (!isTarjan && graph.nodes.length === 12) {
-           generateNewGraph(); // Switch back from Tarjan graph
-       }
-        else if (shouldBeDirected !== graphIsDirected) {
+       } else if (shouldBeDirected !== graphIsDirected) {
+           // Only regen if direction mismatch AND it's not a fixed graph type that forces it (already covered by shouldBeDirected logic)
            generateNewGraph();
        } else if (shouldHaveNegative && !graphHasNegative) {
            generateNewGraph();
@@ -206,6 +262,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
   if (!graph || !currentStep) return <div className="h-full flex items-center justify-center text-slate-400">Loading...</div>;
 
   const showDfsLegend = (algorithm === AlgorithmType.DFS) && currentStep.edgeClassifications && Object.keys(currentStep.edgeClassifications).length > 0;
+  const showColoringLegend = (algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -240,6 +297,37 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
                 height={420} 
                 algorithm={algorithm}
               />
+              
+              {/* Color Legend for Graph Coloring (Positioned above toast) */}
+              {showColoringLegend && (
+                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-slate-900/80 backdrop-blur-sm border border-slate-700 px-4 py-2 rounded-lg flex items-center gap-3">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Colors:</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full" style={{backgroundColor: '#ef4444'}}></div>
+                    <span className="text-[10px] text-slate-300">1</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full" style={{backgroundColor: '#f97316'}}></div>
+                    <span className="text-[10px] text-slate-300">2</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full" style={{backgroundColor: '#eab308'}}></div>
+                    <span className="text-[10px] text-slate-300">3</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full" style={{backgroundColor: '#22c55e'}}></div>
+                    <span className="text-[10px] text-slate-300">4</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full" style={{backgroundColor: '#06b6d4'}}></div>
+                    <span className="text-[10px] text-slate-300">5</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full" style={{backgroundColor: '#3b82f6'}}></div>
+                    <span className="text-[10px] text-slate-300">6</span>
+                  </div>
+                </div>
+              )}
               
               {/* Current Action Toast (Positioned inside graph) */}
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur-md border border-slate-600 shadow-2xl flex items-center justify-center transition-all px-10 py-3 rounded-full gap-4 min-w-[300px]">

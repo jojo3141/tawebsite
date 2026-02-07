@@ -124,6 +124,78 @@ const VisualizerApp: React.FC = () => {
           />
         </motion.div>
       )}
+      
+      {mode === 'EULER' && (
+        <motion.div 
+          key="euler"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <GraphMode 
+             mode={mode} 
+             setMode={(m) => setMode(m)} 
+             onBack={handleBack}
+             initialAlgorithm={AlgorithmType.EULER}
+             availableAlgorithms={[AlgorithmType.EULER]}
+          />
+        </motion.div>
+      )}
+      
+      {mode === 'GREEDY_MATCHING' && (
+        <motion.div 
+          key="greedy_matching"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <GraphMode 
+             mode={mode} 
+             setMode={(m) => setMode(m)} 
+             onBack={handleBack}
+             initialAlgorithm={AlgorithmType.HOPCROFT_KARP}
+             availableAlgorithms={[AlgorithmType.HOPCROFT_KARP, AlgorithmType.GREEDY_MATCHING]}
+          />
+        </motion.div>
+      )}
+
+      {mode === 'GRAPH_COLORING' && (
+        <motion.div 
+          key="graph_coloring"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <GraphMode 
+             mode={mode} 
+             setMode={(m) => setMode(m)} 
+             onBack={handleBack}
+             initialAlgorithm={AlgorithmType.SMALLEST_LAST_COLORING}
+             availableAlgorithms={[AlgorithmType.SMALLEST_LAST_COLORING, AlgorithmType.GREEDY_COLORING]}
+          />
+        </motion.div>
+      )}
+
+      {mode === 'FORD_FULKERSON' && (
+        <motion.div 
+          key="ford_fulkerson"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <GraphMode 
+             mode={mode} 
+             setMode={(m) => setMode(m)} 
+             onBack={handleBack}
+             initialAlgorithm={AlgorithmType.FORD_FULKERSON}
+             availableAlgorithms={[AlgorithmType.FORD_FULKERSON]}
+          />
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 };

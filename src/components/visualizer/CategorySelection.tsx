@@ -5,7 +5,7 @@ import { Share2, ArrowUpDown, Trees, Layers, ArrowRight, ArrowLeft } from 'lucid
 import { clsx } from 'clsx';
 import { useCourse } from '@/context/CourseContext';
 
-export type CategoryType = 'GRAPH' | 'SORTING' | 'TREES' | 'DP' | 'TARJAN';
+export type CategoryType = 'GRAPH' | 'SORTING' | 'TREES' | 'DP' | 'TARJAN' | 'EULER' |'GREEDY_MATCHING' | 'HOPCROFT_KARP' | 'GRAPH_COLORING' | 'FORD_FULKERSON';
 
 interface CategorySelectionProps {
   onSelect: (category: CategoryType) => void;
@@ -71,6 +71,38 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
       icon: Share2,
       color: 'text-pink-400',
       gradient: 'from-pink-500/20 to-red-500/20',
+    },
+    {
+      id: 'EULER',
+      name: 'Euler Tour Algorithm',
+      description: 'Find an Eulerian Circuit in a connected graph where every vertex has an even degree.',
+      icon: Share2,
+      color: 'text-cyan-400',
+      gradient: 'from-cyan-500/20 to-blue-500/20',
+    },
+    {
+      id: 'GREEDY_MATCHING',
+      name: 'Matching Algorithms',
+      description: 'Greedy and Hopcroft-Karp algorithms for finding matchings in graphs.',
+      icon: Share2,
+      color: 'text-violet-400',
+      gradient: 'from-violet-500/20 to-purple-500/20',
+    },
+    {
+      id: 'GRAPH_COLORING',
+      name: 'Graph Coloring Algorithms',
+      description: 'Greedy coloring and Smallest-Last ordering heuristics.',
+      icon: Layers,
+      color: 'text-orange-400',
+      gradient: 'from-orange-500/20 to-red-500/20',
+    },
+    {
+      id: 'FORD_FULKERSON',
+      name: 'Flow Algorithms',
+      description: 'Ford-Fulkerson algorithm for Maximum Flow.',
+      icon: Share2,
+      color: 'text-teal-400',
+      gradient: 'from-teal-500/20 to-emerald-500/20',
     }
   ];
 

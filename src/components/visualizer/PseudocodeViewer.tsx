@@ -1,10 +1,13 @@
+
 import React, { useEffect, useRef } from 'react';
 import { 
     PSEUDOCODE_DIJKSTRA, PSEUDOCODE_DIJKSTRA_UNDIRECTED, 
     PSEUDOCODE_BFS, PSEUDOCODE_BFS_UNDIRECTED,
     PSEUDOCODE_DFS, PSEUDOCODE_DFS_UNDIRECTED,
     PSEUDOCODE_BELLMAN_FORD, PSEUDOCODE_BELLMAN_FORD_UNDIRECTED,
-    PSEUDOCODE_PRIM, PSEUDOCODE_KRUSKAL, PSEUDOCODE_BORUVKA, PSEUDOCODE_TARJAN,
+    PSEUDOCODE_PRIM, PSEUDOCODE_KRUSKAL, PSEUDOCODE_BORUVKA, PSEUDOCODE_TARJAN, PSEUDOCODE_EULER,
+    PSEUDOCODE_GREEDY_MATCHING, PSEUDOCODE_HOPCROFT_KARP,
+    PSEUDOCODE_GREEDY_COLORING, PSEUDOCODE_SMALLEST_LAST_COLORING, PSEUDOCODE_FORD_FULKERSON,
     AlgorithmType 
 } from '@/types/graph';
 import {
@@ -78,6 +81,12 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
       else if (graphAlgo === AlgorithmType.KRUSKAL) lines = PSEUDOCODE_KRUSKAL;
       else if (graphAlgo === AlgorithmType.BORUVKA) lines = PSEUDOCODE_BORUVKA;
       else if (graphAlgo === AlgorithmType.TARJAN) lines = PSEUDOCODE_TARJAN;
+      else if (graphAlgo === AlgorithmType.EULER) lines = PSEUDOCODE_EULER;
+      else if (graphAlgo === AlgorithmType.GREEDY_MATCHING) lines = PSEUDOCODE_GREEDY_MATCHING;
+      else if (graphAlgo === AlgorithmType.HOPCROFT_KARP) lines = PSEUDOCODE_HOPCROFT_KARP;
+      else if (graphAlgo === AlgorithmType.GREEDY_COLORING) lines = PSEUDOCODE_GREEDY_COLORING;
+      else if (graphAlgo === AlgorithmType.SMALLEST_LAST_COLORING) lines = PSEUDOCODE_SMALLEST_LAST_COLORING;
+      else if (graphAlgo === AlgorithmType.FORD_FULKERSON) lines = PSEUDOCODE_FORD_FULKERSON;
   }
   // Sorting Algorithms
   else if (Object.values(SortingAlgorithmType).includes(algorithm as SortingAlgorithmType)) {
@@ -123,7 +132,7 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
       <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 flex justify-between items-center">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
           <Code size={14} />
-          <span>{algorithm.replace(/_/g, ' ')}</span>
+          <span>{algorithm === 'EULER' ? 'EULER TOUR' : algorithm === 'GREEDY_MATCHING' ? 'GREEDY MATCHING' : algorithm === 'HOPCROFT_KARP' ? 'HOPCROFT-KARP' : algorithm.replace(/_/g, ' ')}</span>
         </div>
         <span className="text-xs text-slate-500">CLRS Style</span>
       </div>

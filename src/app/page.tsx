@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { lessons } from "@/data/lessons";
-import { ClockIcon, MapPinIcon, BookOpenIcon } from "@heroicons/react/24/outline";
+import { ClockIcon, MapPinIcon, BookOpenIcon, LanguageIcon } from "@heroicons/react/24/outline";
 import { useCourse } from "@/context/CourseContext";
 
 export default function HomePage() {
@@ -56,6 +56,11 @@ export default function HomePage() {
                 <div className="flex items-center gap-2.5">
                     <MapPinIcon className="w-6 h-6 text-blue-600" />
                     <span className="font-medium text-lg">HG D 5.1</span>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                    <LanguageIcon className="w-6 h-6 text-blue-600" />
+                    <span className="font-medium text-lg">German</span>
                 </div>
             </motion.div>
         </div>

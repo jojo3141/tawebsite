@@ -1380,3 +1380,1604 @@ export const generateTarjanGraph = (width: number, height: number): Graph => {
     hasUniqueWeights: false
   };
 };
+
+// --- EULERIAN GRAPH GENERATOR ---
+// --- EULERIAN GRAPH GENERATOR ---
+export const generateEulerianGraph = (width: number, height: number): Graph => {
+  // 1. Start with Tarjan's layout (User Request)
+  const baseNodes = generateTarjanGraph(width, height).nodes;
+  let validGraph: Graph | null = null;
+
+  // Strategy:
+  // 1. Create a Restricted Graph using Allowed Edges
+  // 2. Goal: Exactly 2 nodes with Degree 4, rest Degree 2 (4-path construction).
+  // 3. Fallback: Hamiltonian Cycle (Degree 2 for all).
+
+  // RESTRICTED ALLOWED EDGES
+  const ALLOWED_EDGES_LIST = [
+    "AB", "AC", "AD", "AF", "BC", "BG", "CE", "CD", "DF", "DE", "DH",
+    "EF", "EH", "EG", "EK", "FJ", "FH", "FL", "GH", "GI", "GK", "GL", "HJ", "IJ",
+    "IL", "IK", "JL", "JK", "KL"
+  ];
+
+  // Helper to check if edge is allowed
+  const isEdgeAllowed = (u: string, v: string) => {
+    const k1 = u + v;
+    const k2 = v + u;
+    return ALLOWED_EDGES_LIST.includes(k1) || ALLOWED_EDGES_LIST.includes(k2);
+  };
+
+  let outerAttempts = 0;
+
+  while (!validGraph && outerAttempts < 30) {
+    outerAttempts++;
+    let attempts = 0;
+    let candidateGraph: Graph | null = null;
+
+    while (!candidateGraph && attempts < 100) {
+      attempts++;
+
+      // 1. Pick two "Hub" nodes u, v
+      const p1Index = Math.floor(Math.random() * baseNodes.length);
+      let p2Index = Math.floor(Math.random() * baseNodes.length);
+      while (p1Index === p2Index) p2Index = Math.floor(Math.random() * baseNodes.length);
+
+      const u = baseNodes[p1Index];
+      const v = baseNodes[p2Index];
+
+      // 2. Identify remaining 10 internal nodes
+      const internalNodes = baseNodes.filter(n => n.id !== u.id && n.id !== v.id);
+
+      // Shuffle internals for randomness
+      for (let i = internalNodes.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [internalNodes[i], internalNodes[j]] = [internalNodes[j], internalNodes[i]];
+      }
+
+      // 3. Partition into 3 or 4 buckets depending on direct edge viability
+      const canDirect = isEdgeAllowed(u.id, v.id);
+      const paths: Node[][] = [];
+
+      // Randomize Strategy: Prefer direct edge if possible to mix it up, but sometimes force 4 internal
+      if (canDirect && Math.random() > 0.3) {
+        // Case A: 1 Direct Path, 3 Internal Paths
+        paths.push([]); // Empty bucket signifies Direct Edge
+
+        // Split 10 nodes into 3 buckets
+        // Random cuts
+        const i = Math.floor(Math.random() * (internalNodes.length - 2)) + 1;
+        const j = Math.floor(Math.random() * (internalNodes.length - 1 - i)) + i + 1;
+
+        paths.push(internalNodes.slice(0, i));
+        paths.push(internalNodes.slice(i, j));
+        paths.push(internalNodes.slice(j));
+      } else {
+        // Case B: 4 Internal Paths
+        const i = Math.floor(Math.random() * (internalNodes.length - 3)) + 1;
+        const j = Math.floor(Math.random() * (internalNodes.length - 2 - i)) + i + 1;
+        const k = Math.floor(Math.random() * (internalNodes.length - 1 - j)) + j + 1;
+
+        paths.push(internalNodes.slice(0, i));
+        paths.push(internalNodes.slice(i, j));
+        paths.push(internalNodes.slice(j, k));
+        paths.push(internalNodes.slice(k));
+      }
+
+      // 4. Try to form valid paths using ONLY allowed edges
+      let validTopology = true;
+      const tempEdges: Edge[] = [];
+      const usedPairs = new Set<string>();
+
+      const findValidPath = (start: string, end: string, nodes: Node[]): Node[] | null => {
+        if (nodes.length === 0) {
+          return isEdgeAllowed(start, end) ? [] : null;
+        }
+
+        // Try each node as next step
+        for (let i = 0; i < nodes.length; i++) {
+          const next = nodes[i];
+          if (isEdgeAllowed(start, next.id)) {
+            const remaining = [...nodes];
+            remaining.splice(i, 1);
+            const subPath = findValidPath(next.id, end, remaining);
+            if (subPath) return [next, ...subPath];
+          }
+        }
+        return null; // No path found
+      };
+
+      for (const pathNodes of paths) {
+        if (pathNodes.length === 0) {
+          // Direct
+          const key = u.id < v.id ? `${u.id}-${v.id}` : `${v.id}-${u.id}`;
+          if (usedPairs.has(key)) { validTopology = false; break; }
+          tempEdges.push({ source: u.id, target: v.id, weight: 1 });
+          usedPairs.add(key);
+          continue;
+        }
+
+        // Find path u -> [nodes] -> v
+        const validSeq = findValidPath(u.id, v.id, pathNodes);
+
+        if (!validSeq) {
+          validTopology = false;
+          break;
+        }
+
+        // Add edges
+        let prev = u;
+        for (const curr of validSeq) {
+          const key = prev.id < curr.id ? `${prev.id}-${curr.id}` : `${curr.id}-${prev.id}`;
+          if (usedPairs.has(key)) { validTopology = false; break; }
+          tempEdges.push({ source: prev.id, target: curr.id, weight: 1 });
+          usedPairs.add(key);
+          prev = curr;
+        }
+        // Final link to v
+        const last = validSeq[validSeq.length - 1]; // Guaranteed non-empty here
+        const key = last.id < v.id ? `${last.id}-${v.id}` : `${v.id}-${last.id}`;
+        if (usedPairs.has(key)) { validTopology = false; break; }
+        tempEdges.push({ source: last.id, target: v.id, weight: 1 });
+        usedPairs.add(key);
+      }
+
+      if (validTopology) {
+        candidateGraph = {
+          nodes: baseNodes,
+          edges: tempEdges,
+          isDirected: false,
+          hasUniqueWeights: false
+        };
+      }
+    }
+
+    // Fallback: If 4-path construction failed
+    if (!candidateGraph) {
+      // Try to find a simple Hamiltonian Cycle
+      let fallbackAttempts = 0;
+      while (!candidateGraph && fallbackAttempts < 200) {
+        fallbackAttempts++;
+        const nodes = [...baseNodes];
+        // Shuffle
+        for (let i = nodes.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [nodes[i], nodes[j]] = [nodes[j], nodes[i]];
+        }
+
+        let cycleEdges: Edge[] = [];
+        let isCycle = true;
+
+        // Try to connect i -> i+1
+        for (let i = 0; i < nodes.length; i++) {
+          const u = nodes[i];
+          const v = nodes[(i + 1) % nodes.length]; // Wrap around for cycle
+          if (isEdgeAllowed(u.id, v.id)) {
+            cycleEdges.push({ source: u.id, target: v.id, weight: 1 });
+          } else {
+            isCycle = false;
+            break;
+          }
+        }
+
+        if (isCycle) {
+          candidateGraph = {
+            nodes: baseNodes,
+            edges: cycleEdges,
+            isDirected: false,
+            hasUniqueWeights: false
+          };
+        }
+      }
+    }
+
+    // Check Constraint: NO DEGREE 1 NODES
+    if (candidateGraph) {
+      const degrees: Record<string, number> = {};
+      baseNodes.forEach(n => degrees[n.id] = 0);
+      candidateGraph.edges.forEach(e => {
+        degrees[e.source] = (degrees[e.source] || 0) + 1;
+        degrees[e.target] = (degrees[e.target] || 0) + 1;
+      });
+
+      const hasDegreeOne = Object.values(degrees).some(d => d === 1);
+
+      // Connectivity Check (BFS)
+      const adj: Record<string, string[]> = {};
+      baseNodes.forEach(n => adj[n.id] = []);
+      candidateGraph.edges.forEach(e => {
+        adj[e.source].push(e.target);
+        adj[e.target].push(e.source);
+      });
+
+      const startNode = baseNodes.find(n => (degrees[n.id] || 0) > 0);
+      let connectedCount = 0;
+
+      if (startNode) {
+        const q = [startNode.id];
+        const visited = new Set([startNode.id]);
+        let head = 0;
+        while (head < q.length) {
+          const curr = q[head++];
+          for (const nbr of adj[curr]) {
+            if (!visited.has(nbr)) {
+              visited.add(nbr);
+              q.push(nbr);
+            }
+          }
+        }
+        connectedCount = visited.size;
+      }
+
+      const activeNodes = Object.values(degrees).filter(d => d > 0).length;
+
+      if (!hasDegreeOne && connectedCount === activeNodes && activeNodes >= 3) {
+        validGraph = candidateGraph;
+      } else {
+        validGraph = null;
+      }
+    }
+  }
+
+  return validGraph || generateTarjanGraph(width, height);
+};
+
+// --- EULER SOLVER ---
+export const calculateEulerSteps = (graph: Graph, startNodeId: string): AlgorithmStep[] => {
+  const steps: AlgorithmStep[] = [];
+
+  // Working Copy of Edges (to track removal)
+  // We need to handle undirected edges. We'll store them as string keys "min-max"
+  const availableEdges = new Set<string>();
+  const edgeObjMap: Record<string, Edge> = {}; // To retrieve the actual edge object for highlighting
+
+  // Track direction of traversal for arrows: "source-target" string
+  const traversedDirectionalEdges = new Set<string>();
+
+  const getEdgeKey = (u: string, v: string) => u < v ? `${u}-${v}` : `${v}-${u}`;
+
+  graph.edges.forEach(e => {
+    const key = getEdgeKey(e.source, e.target);
+    availableEdges.add(key);
+    edgeObjMap[key] = e;
+  });
+
+  let stepCounter = 0;
+  const pushStep = (
+    line: number,
+    desc: string,
+    tour: string[],
+    subTour: string[] | null = null,
+    u: string | null = null, // Current Node focused
+    v: string | null = null, // Neighbor focused
+    activeEdgeKey: string | null = null
+  ) => {
+
+    // Convert traversed set to classifications
+    const classifications: Record<string, EdgeType> = {};
+    traversedDirectionalEdges.forEach(k => {
+      classifications[k] = EdgeType.TREE; // Value doesn't matter, just truthy
+    });
+
+    steps.push({
+      stepId: stepCounter++,
+      lineNumber: line,
+      description: desc,
+      distances: {},
+      parents: {},
+      discoveryTimes: {},
+      finishTimes: {},
+      edgeClassifications: classifications,
+      mstEdges: [],
+      boruvkaMinEdges: [],
+      queue: [],
+      stack: [],
+      processedSet: [],
+      currentNodeId: u,
+      currentNeighborId: v,
+      activeEdge: activeEdgeKey ? edgeObjMap[activeEdgeKey] : null,
+
+      eulerTour: [...tour],
+      eulerSubTour: subTour ? [...subTour] : undefined,
+    });
+  };
+
+  // Helper to sync removed edges to step state (implicitly handled by the logic below? 
+  // No, the step object is a snapshot. We need to pass the state.)
+  // Actually the visualizer needs to know which edges are "removed".
+  // Let's use `edgeClassifications` with a special type "BACK" (or a new type) to mean "Removed/Traversed".
+  // Since we can't change enum easily without updating everything, let's use `EdgeType.TREE` for "In Tour" and `EdgeType.CROSS` for removed?
+  // Use `processedSet` for something?
+  // Let's stick to: The step contains the Tour. The GraphCanvas should probably render the Tour specially.
+  // But wait, the GraphCanvas renders `graph.edges`. Steps usually highlight things.
+  // If we want edges to "disappear", we might need a custom renderer or just highlight them as "Used".
+  // Let's decide: "Used" edges will be highlighted in the Tour color. "Available" edges are neutral.
+
+  // Actually, better: Pass `traversedEdgeKeys` in `edgeClassifications`?
+  // Let's just track the tour in `eulerTour`. The Visualizer can draw the tour.
+  // But we also need to know which edges are still available for traversal in the *Input Graph*.
+  // `availableEdges` set tracks this in logic. We can pass `availableEdges` in a custom field? 
+  // Or just rely on the fact that if an edge is in `eulerTour` or `eulerSubTour`, it is used.
+  // But `eulerTour` is a list of nodes. Multigraphs issue? The graphUtils doesn't support multigraphs well.
+  // Unique edges only. So `u-v` in tour means that edge is used.
+  // Wait, if we traverse `u-v` then later `v-u`, is that allowed in simple graph? No, simple graph edges used once.
+
+  // So: List of nodes in Tour implies edges.
+  // We will assume that strictly sequential pairs in `eulerTour` represent the used edges.
+
+  // Start Algorithm
+  let W: string[] = [];
+
+  // Line 1: W <- RANDOMTOUR(v_start)
+  // We need to run RandomTour first time.
+  pushStep(1, `Start Euler Tour from ${startNodeId}`, W, null, startNodeId);
+
+  // Define RandomTour function capable of recording steps
+  const randomTour = (uStart: string, isMain: boolean): string[] => {
+    const W_temp: string[] = [uStart];
+    let u = uStart;
+
+    // Initial Step of RT
+    pushStep(isMain ? 1 : 5, `Starting Random Tour from ${u}`, W, isMain ? null : W_temp, u);
+    if (!isMain) pushStep(11, `W' initialized with {${u}}`, W, W_temp, u);
+
+    while (true) {
+      // Find neighbors in AVAILABLE edges
+      const neighbors: string[] = [];
+      graph.edges.forEach(e => {
+        const key = getEdgeKey(e.source, e.target);
+        if (availableEdges.has(key)) {
+          if (e.source === u) neighbors.push(e.target);
+          else if (e.target === u) neighbors.push(e.source);
+        }
+      });
+
+      // Use consistent sorting for reproducibility (or user preference?)
+      // Random as per pseudocode "beliebig", but we can just pick random.
+      // Let's sort then random pick to be safe? Or just random.
+      // Pseudocode says "Wähle ... beliebig".
+
+      if (neighbors.length === 0) {
+        pushStep(isMain ? 1 : 12, `Node ${u} has no unused edges. Tour stuck/done.`, isMain ? W_temp : W, isMain ? null : W_temp, u);
+        break;
+      }
+
+      const v = neighbors[Math.floor(Math.random() * neighbors.length)];
+      const key = getEdgeKey(u, v);
+
+      pushStep(isMain ? 1 : 13, `Chose neighbor ${v} from ${neighbors.length} options`, isMain ? W_temp : W, isMain ? null : W_temp, u, v, key);
+
+      availableEdges.delete(key);
+      W_temp.push(v);
+
+      pushStep(isMain ? 1 : 14, `Add ${v} to ${isMain ? "W" : "W'"}`, isMain ? W_temp : W, isMain ? null : W_temp, u, v, key);
+
+      traversedDirectionalEdges.add(`${u}-${v}`); // Record specific direction for visualizer
+
+      pushStep(isMain ? 1 : 15, `Remove edge {${u}, ${v}} from G`, isMain ? W_temp : W, isMain ? null : W_temp, u, v, key); // Highlight removal
+
+      u = v;
+      pushStep(isMain ? 1 : 16, `Advance to ${u}`, isMain ? W_temp : W, isMain ? null : W_temp, u);
+    }
+
+    pushStep(isMain ? 1 : 17, `Return tour of length ${W_temp.length - 1}`, isMain ? W_temp : W, isMain ? null : W_temp, u);
+    return W_temp;
+  };
+
+  // Run initial Random Tour
+  W = randomTour(startNodeId, true);
+  pushStep(1, `Initial Tour W: ${W.join("->")}`, W);
+
+  // Line 2: v_slow = start of W
+  let vSlowIndex = 0;
+
+  // Line 3: While v_slow not last
+  while (vSlowIndex < W.length) { // Actually iterate all, but last one has no exit usually if even degree... wait.
+    // In Eulerian path end might have degree 0 remaining.
+    const vSlow = W[vSlowIndex];
+    pushStep(2, `v_slow points to ${vSlow} (Index ${vSlowIndex})`, W, null, vSlow);
+    pushStep(3, "Check if v_slow is not last node in W", W, null, vSlow);
+
+    // Line 4: Check degree > 0 (Has available edges)
+    const hasEdges = Array.from(availableEdges).some(key => key.startsWith(`${vSlow}-`) || key.endsWith(`-${vSlow}`)); // Quick check, assumes standard formatting logic
+    // More robust:
+    const degreeCurrent = graph.edges.filter(e => {
+      const key = getEdgeKey(e.source, e.target);
+      return availableEdges.has(key) && (e.source === vSlow || e.target === vSlow);
+    }).length;
+
+    pushStep(4, `Check degree of ${vSlow} in remaining G: ${degreeCurrent}`, W, null, vSlow);
+
+    if (degreeCurrent > 0) {
+      // Line 5: W' = RandomTour(v_slow)
+      pushStep(5, `Found unused edges at ${vSlow}! Starting sub-tour W'`, W, null, vSlow);
+      const subTour = randomTour(vSlow, false);
+
+      // Line 6: Merge
+      // W = W[0...i] + W' (minus first char redundant? No tour is u->v->u. W' is u->...->u)
+      // W' starts with vSlow. W has vSlow at vSlowIndex.
+      // We replace W[vSlowIndex] with W'. 
+      // W = [...pre, ...W', ...post]
+      // But W' includes vSlow at start AND end.
+      // W structure: A -> B -> C. vSlow=B. W'=B->D->B.
+      // Result: A -> B -> D -> B -> C.
+      // So we insert W'.slice(1) after vSlowIndex? Or insert W'.slice(0, -1) at vSlowIndex?
+      // Let's splice.
+      // Remove vSlow at vSlowIndex, insert components of W'.
+      // Actually W' is [B, D, B].
+      // We want A, B, D, B, C.
+      // So we keep vSlowIndex as B (Start of W'), insert D, B (rest of W') after it.
+      // W.splice(vSlowIndex + 1, 0, ...subTour.slice(1));
+
+      pushStep(6, `Merge W' into W at index ${vSlowIndex}`, W, subTour, vSlow);
+      W.splice(vSlowIndex + 1, 0, ...subTour.slice(1));
+      pushStep(6, `New W: ${W.join("->")}`, W, null, vSlow);
+    }
+
+    // Line 7: Next node
+    vSlowIndex++;
+    if (vSlowIndex < W.length) {
+      pushStep(7, `Advance v_slow to next node`, W, null, W[vSlowIndex]);
+    }
+  }
+
+  pushStep(8, "Algorithm Complete. Eulerian Circuit Found.", W);
+  return steps;
+};
+
+// =============================================================================
+// GREEDY MATCHING ALGORITHM
+// =============================================================================
+
+export const generateGreedyMatchingGraph = (width: number, height: number): Graph => {
+  const nodes: Node[] = [];
+  const edges: Edge[] = [];
+  const ids = "ABCDEFGHIJKL".split(''); // 12 Nodes (same as Tarjan)
+
+  // Use similar layout as Tarjan for consistency
+  const layout = [
+    { id: 'A', x: 0.10, y: 0.20 },
+    { id: 'B', x: 0.10, y: 0.80 },
+    { id: 'C', x: 0.25, y: 0.60 },
+    { id: 'D', x: 0.35, y: 0.30 },
+    { id: 'E', x: 0.45, y: 0.50 },
+    { id: 'F', x: 0.50, y: 0.20 },
+    { id: 'G', x: 0.50, y: 0.72 },
+    { id: 'H', x: 0.60, y: 0.45 },
+    { id: 'I', x: 0.70, y: 0.50 },
+    { id: 'J', x: 0.80, y: 0.23 },
+    { id: 'K', x: 0.80, y: 0.73 },
+    { id: 'L', x: 0.90, y: 0.50 }
+  ];
+
+  layout.forEach(pos => {
+    nodes.push({
+      id: pos.id,
+      label: pos.id,
+      x: pos.x * width,
+      y: pos.y * height
+    });
+  });
+
+  // Generate a reasonable set of edges for matching
+  // We want enough edges to make the matching interesting
+  const potentialEdges = [
+    ['A', 'B'], ['A', 'C'], ['A', 'D'],
+    ['B', 'C'], ['B', 'G'],
+    ['C', 'D'], ['C', 'E'],
+    ['D', 'E'], ['D', 'F'],
+    ['E', 'F'], ['E', 'G'], ['E', 'H'],
+    ['F', 'H'], ['F', 'J'],
+    ['G', 'H'], ['G', 'K'],
+    ['H', 'I'],
+    ['I', 'J'], ['I', 'K'], ['I', 'L'],
+    ['J', 'L'],
+    ['K', 'L']
+  ];
+
+  // Select a random subset for variety
+  const numEdges = 12 + Math.floor(Math.random() * 4); // 12-15 edges
+  const shuffled = [...potentialEdges].sort(() => Math.random() - 0.5);
+
+  shuffled.slice(0, numEdges).forEach(([source, target]) => {
+    edges.push({ source, target, weight: 1 });
+  });
+
+  return {
+    nodes,
+    edges,
+    isDirected: false,
+    hasUniqueWeights: false
+  };
+};
+
+export const calculateGreedyMatchingSteps = (graph: Graph): AlgorithmStep[] => {
+  const steps: AlgorithmStep[] = [];
+  let stepCounter = 0;
+
+  // Working set of remaining edges
+  const remainingEdges = new Set<string>();
+  const matching: Edge[] = []; // M
+  const removedNodes = new Set<string>(); // Track nodes that have been matched
+
+  // Initialize edge set
+  graph.edges.forEach(e => {
+    const key = e.source < e.target ? `${e.source}-${e.target}` : `${e.target}-${e.source}`;
+    remainingEdges.add(key);
+  });
+
+  const edgeObjMap: Record<string, Edge> = {};
+  graph.edges.forEach(e => {
+    const key = e.source < e.target ? `${e.source}-${e.target}` : `${e.target}-${e.source}`;
+    edgeObjMap[key] = e;
+  });
+
+  const pushStep = (
+    line: number,
+    desc: string,
+    currentEdge: Edge | null = null,
+    highlightNodes: string[] = [],
+    markEdgesRemoved: boolean = false,
+    markNodesRemoved: boolean = false
+  ) => {
+    // Build edge classifications to mark removed edges
+    const classifications: Record<string, EdgeType> = {};
+
+    // Mark all removed edges as "CROSS" (repurposed as "removed")
+    graph.edges.forEach(e => {
+      const key = e.source < e.target ? `${e.source}-${e.target}` : `${e.target}-${e.source}`;
+      const revKey = `${e.target}-${e.source}`;
+
+      if (!remainingEdges.has(key)) {
+        classifications[key] = EdgeType.CROSS;
+        classifications[revKey] = EdgeType.CROSS;
+      }
+    });
+
+    steps.push({
+      stepId: stepCounter++,
+      lineNumber: line,
+      description: desc,
+      distances: {},
+      parents: {},
+      discoveryTimes: {},
+      finishTimes: {},
+      edgeClassifications: classifications,
+      mstEdges: [...matching], // Use mstEdges to show the matching
+      boruvkaMinEdges: [],
+      queue: [],
+      stack: [],
+      processedSet: Array.from(removedNodes), // Track removed nodes
+      currentNodeId: highlightNodes[0] || null,
+      currentNeighborId: highlightNodes[1] || null,
+      activeEdge: currentEdge,
+    });
+  };
+
+  // Line 1: M ← ∅
+  pushStep(1, "Initialize matching M ← ∅");
+
+  // Line 2: while E ≠ ∅ do
+  while (remainingEdges.size > 0) {
+    pushStep(2, `Edge set E has ${remainingEdges.size} remaining edges`);
+
+    // Line 3: wähle eine beliebige Kante e ∈ E
+    const edgeKeys = Array.from(remainingEdges);
+    const chosenKey = edgeKeys[Math.floor(Math.random() * edgeKeys.length)];
+    const chosenEdge = edgeObjMap[chosenKey];
+
+    pushStep(3, `Choose edge e = {${chosenEdge.source}, ${chosenEdge.target}}`, chosenEdge, [chosenEdge.source, chosenEdge.target]);
+
+    // Line 4: M ← M ∪ {e}
+    matching.push(chosenEdge);
+    pushStep(4, `Add edge {${chosenEdge.source}, ${chosenEdge.target}} to matching M`, chosenEdge, [chosenEdge.source, chosenEdge.target]);
+
+    // Line 5: lösche e und alle inzidenten Kanten in G
+    const nodesToRemove = new Set([chosenEdge.source, chosenEdge.target]);
+    const edgesToRemove: string[] = [];
+
+    remainingEdges.forEach(key => {
+      const edge = edgeObjMap[key];
+      if (nodesToRemove.has(edge.source) || nodesToRemove.has(edge.target)) {
+        edgesToRemove.push(key);
+      }
+    });
+
+    edgesToRemove.forEach(key => remainingEdges.delete(key));
+
+    // Mark nodes as removed
+    removedNodes.add(chosenEdge.source);
+    removedNodes.add(chosenEdge.target);
+
+    pushStep(5, `Remove edge {${chosenEdge.source}, ${chosenEdge.target}} and ${edgesToRemove.length - 1} incident edges from G`, null, [chosenEdge.source, chosenEdge.target], true, true);
+  }
+
+  // Final step - show everything
+  pushStep(6, `Algorithm Complete. Greedy Matching found with ${matching.length} edges.`);
+
+  return steps;
+};
+
+// =============================================================================
+// HOPCROFT-KARP ALGORITHM (Maximum Matching in Bipartite Graphs)
+// =============================================================================
+
+export const generateHopcroftKarpGraph = (width: number, height: number): Graph => {
+  const nodes: Node[] = [];
+  const edges: Edge[] = [];
+
+  // Create nodes in a 5x3 grid layout
+  // 8 nodes from A (partition 1) and 7 nodes from B (partition 2)
+  // Total: 15 nodes arranged in 3 rows of 5 nodes each
+
+  const totalNodes = 15;
+  const totalA = 8;
+  const totalB = 7;
+  const rows = 3;
+  const cols = 5;
+
+  // Calculate spacing
+  const horizontalSpacing = width / (cols + 1);
+  const verticalSpacing = height / (rows + 1);
+
+  // Create alternating pattern: A, B, A, B, A, B, ...
+  // Since we have 8 A's and 7 B's, we'll distribute them evenly across the grid
+  const pattern: ('A' | 'B')[] = [];
+  let aCount = 0;
+  let bCount = 0;
+
+  // Distribute nodes alternating as evenly as possible
+  for (let i = 0; i < totalNodes; i++) {
+    if (aCount < totalA && (bCount >= totalB || i % 2 === 0)) {
+      pattern.push('A');
+      aCount++;
+    } else {
+      pattern.push('B');
+      bCount++;
+    }
+  }
+
+  // Reset counters for actual node creation
+  aCount = 0;
+  bCount = 0;
+
+  // Create nodes in grid positions
+  for (let i = 0; i < totalNodes; i++) {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+
+    const x = (col + 1) * horizontalSpacing;
+    const y = (row + 1) * verticalSpacing - 50;
+
+    if (pattern[i] === 'A') {
+      const id = `A${aCount}`;
+      nodes.push({ id, label: id, x, y });
+      aCount++;
+    } else {
+      const id = `B${bCount}`;
+      nodes.push({ id, label: id, x, y });
+      bCount++;
+    }
+  }
+
+  const topCount = 8;
+  const bottomCount = 7;
+
+  // Determine potential edges based on Grid Adjacency to avoid crossing nodes
+  // A node at (row, col) can only connect to immediate neighbors (row-1..row+1, col-1..col+1)
+  const potentialEdgesSet = new Set<string>();
+
+  nodes.forEach((node1, idx1) => {
+    // Reverse engineer grid position from index
+    // Note: 'nodes' array was pushed in order of grid iteration (row-major), so idx matches loop i
+    const r1 = Math.floor(idx1 / cols);
+    const c1 = idx1 % cols;
+    const type1 = pattern[idx1];
+
+    if (type1 === 'A') {
+      // Look for B neighbors
+      nodes.forEach((node2, idx2) => {
+        // Optimization: indices are sorted, so we could limit range, but N=15 is small enough.
+        if (idx1 === idx2) return;
+
+        const type2 = pattern[idx2];
+        if (type2 === 'B') {
+          const r2 = Math.floor(idx2 / cols);
+          const c2 = idx2 % cols;
+
+          const dr = Math.abs(r1 - r2);
+          const dc = Math.abs(c1 - c2);
+
+          // User Rule:
+          // 1. If in same line (dr == 0), only allow direct neighbor (dc == 1).
+          // 2. If not in same line (dr > 0), allow ANY edge.
+
+          const isSameRow = dr === 0;
+          const isAllowed = isSameRow ? (dc === 1) : true;
+
+          if (isAllowed) {
+            potentialEdgesSet.add(`${node1.id}-${node2.id}`);
+          }
+        }
+      });
+    }
+  });
+
+  const potentialEdges = Array.from(potentialEdgesSet).map(s => s.split('-') as [string, string]);
+
+  // Select random edges from VALID candidates
+  // Since we restricted connectivity heavily, we should try to include many of them to ensure good matching exists.
+  // 15 nodes ~ 20-25 internal borders. 
+  // Let's aim for ~14-18 edges if possible, or 70% of potential.
+
+  const numEdges = Math.min(potentialEdges.length, 14 + Math.floor(Math.random() * 5));
+  const shuffled = potentialEdges.sort(() => Math.random() - 0.5);
+
+  shuffled.slice(0, numEdges).forEach(([source, target]) => {
+    edges.push({ source, target, weight: 1 });
+  });
+
+  return {
+    nodes,
+    edges,
+    isDirected: false,
+    hasUniqueWeights: false
+  };
+};
+
+export const calculateHopcroftKarpSteps = (graph: Graph): AlgorithmStep[] => {
+  const steps: AlgorithmStep[] = [];
+  let stepCounter = 0;
+
+  // Identify partitions A and B (nodes starting with A vs B)
+  const partitionA = graph.nodes.filter(n => n.id.startsWith('A')).map(n => n.id);
+  const partitionB = graph.nodes.filter(n => n.id.startsWith('B')).map(n => n.id);
+
+  // Initialize matching with an arbitrary edge
+  let matching: Edge[] = [];
+  const matchedNodes = new Set<string>();
+
+  const pushStep = (
+    line: number,
+    desc: string,
+    layers: Record<number, string[]> = {},
+    currentEdge: Edge | null = null,
+    highlightNodes: string[] = [],
+    visited: Set<string> = new Set(),
+    augmentingPaths: string[][] = [],
+    currentAugmentingPath: string[] | undefined = undefined
+  ) => {
+    steps.push({
+      stepId: stepCounter++,
+      lineNumber: line,
+      description: desc,
+      distances: {},
+      parents: {},
+      discoveryTimes: {},
+      finishTimes: {},
+      edgeClassifications: {},
+      mstEdges: [...matching],
+      boruvkaMinEdges: [],
+      queue: [],
+      stack: [],
+      processedSet: Array.from(visited),
+      currentNodeId: highlightNodes[0] || null,
+      currentNeighborId: highlightNodes[1] || null,
+      activeEdge: currentEdge,
+      hopcroftLayers: JSON.parse(JSON.stringify(layers)),
+      augmentingPathsSet: augmentingPaths.length > 0 ? [...augmentingPaths] : undefined,
+      currentAugmentingPath: currentAugmentingPath ? [...currentAugmentingPath] : undefined
+    });
+  };
+
+  // Helper: Get neighbors via matching edges
+  const getMatchingNeighbors = (node: string): string[] => {
+    const neighbors: string[] = [];
+    for (const edge of matching) {
+      if (edge.source === node) neighbors.push(edge.target);
+      else if (edge.target === node) neighbors.push(edge.source);
+    }
+    return neighbors;
+  };
+
+  // Helper: Get neighbors via non-matching edges
+  const getNonMatchingNeighbors = (node: string): string[] => {
+    const neighbors: string[] = [];
+    for (const edge of graph.edges) {
+      const isMatching = matching.some(m =>
+        (m.source === edge.source && m.target === edge.target) ||
+        (m.source === edge.target && m.target === edge.source)
+      );
+      if (!isMatching) {
+        if (edge.source === node) neighbors.push(edge.target);
+        else if (edge.target === node) neighbors.push(edge.source);
+      }
+    }
+    return neighbors;
+  };
+
+  // Helper: Find augmenting paths using BFS (returns set S of disjoint paths or null)
+  const findAugmentingPaths = (): string[][] | null => {
+    const visited = new Set<string>();
+    const layers: Record<number, string[]> = {};
+    const predecessors: Record<string, string[]> = {}; // Store ALL parents for backtracking DFS
+    const nodeLevels: Record<string, number> = {};
+
+    // Line 11: L0 := {unüberdeckte Knoten in A}
+    layers[0] = partitionA.filter(node => !matchedNodes.has(node));
+    pushStep(11, `L₀ := {${layers[0].join(', ')}}`, layers, null, [], new Set(layers[0]));
+
+    // Line 12: Mark all nodes from L0 as visited
+    layers[0].forEach(node => {
+      visited.add(node);
+      nodeLevels[node] = 0;
+    });
+    pushStep(12, `Markiere alle Knoten aus L₀ als besucht`, layers, null, [], visited);
+
+    // Line 13: if L0 = ∅ then return ∅
+    if (layers[0].length === 0) {
+      pushStep(13, `L₀ = ∅, return ∅ (M ist maximal)`, layers, null, [], visited);
+      return null;
+    }
+
+    // Line 14: for i = 1 to n do
+    let foundAugmentingPath = false;
+    let targetNodes: string[] = [];
+
+    for (let i = 1; i <= graph.nodes.length && !foundAugmentingPath; i++) {
+      layers[i] = [];
+
+      pushStep(14, `Iteration i = ${i}`, layers, null, [], visited);
+
+      // Line 15-18: Build layer i
+      const isOdd = i % 2 === 1; // Odd levels (1, 3...) are E \ M edges
+
+      const prevLayer = layers[i - 1];
+      const nextLayerSet = new Set<string>(); // avoid duplicates in current layer
+
+      if (isOdd) {
+        // Line 16: Li := {unbesuchte Nachbarn von Li-1 via E \ M}
+        pushStep(15, `i = ${i} ist ungerade`, layers, null, [], visited);
+
+        for (const node of prevLayer) {
+          const neighbors = getNonMatchingNeighbors(node);
+          for (const neighbor of neighbors) {
+            // Add if neighbor is not visited OR if it's in the current layer (multiple parents allowed)
+            if (!visited.has(neighbor)) {
+              if (!nextLayerSet.has(neighbor)) {
+                layers[i].push(neighbor);
+                nextLayerSet.add(neighbor);
+                nodeLevels[neighbor] = i;
+              }
+              // Add predecessor if it is from the previous layer
+              if (!predecessors[neighbor]) predecessors[neighbor] = [];
+              predecessors[neighbor].push(node);
+            } else if (nodeLevels[neighbor] === i) {
+              // Already visited in THIS layer, so this is another valid parent
+              if (!predecessors[neighbor]) predecessors[neighbor] = [];
+              predecessors[neighbor].push(node);
+            }
+          }
+        }
+        const currentVisited = new Set([...visited, ...layers[i]]);
+        pushStep(16, `L₁ := {unbesuchte Nachbarn von L₀ via E \\ M} = {${layers[i].join(', ')}}`, layers, null, [], currentVisited);
+      } else {
+        // Line 18: Li := {unbesuchte Nachbarn von Li-1 via M}
+        pushStep(17, `i = ${i} ist gerade (else)`, layers, null, [], visited);
+
+        for (const node of prevLayer) {
+          const neighbors = getMatchingNeighbors(node);
+          for (const neighbor of neighbors) {
+            if (!visited.has(neighbor)) {
+              if (!nextLayerSet.has(neighbor)) {
+                layers[i].push(neighbor);
+                nextLayerSet.add(neighbor);
+                nodeLevels[neighbor] = i;
+              }
+              if (!predecessors[neighbor]) predecessors[neighbor] = [];
+              predecessors[neighbor].push(node);
+            } else if (nodeLevels[neighbor] === i) {
+              if (!predecessors[neighbor]) predecessors[neighbor] = [];
+              predecessors[neighbor].push(node);
+            }
+          }
+        }
+        const currentVisited = new Set([...visited, ...layers[i]]);
+        pushStep(18, `L₂ := {unbesuchte Nachbarn von L₁ via M} = {${layers[i].join(', ')}}`, layers, null, [], currentVisited);
+      }
+
+      // Line 19: Mark all nodes from Li as visited (globally)
+      // Note: we effectively did this via nodeLevels check, but officially update visited set now
+      layers[i].forEach(n => visited.add(n));
+
+      pushStep(19, `Markiere alle Knoten aus L₁ als besucht`, layers, null, [], visited);
+
+      // Line 20: if Li contains uncovered nodes then
+      if (isOdd) {
+        for (const node of layers[i]) {
+          if (partitionB.includes(node) && !matchedNodes.has(node)) {
+            targetNodes.push(node);
+            foundAugmentingPath = true;
+          }
+        }
+        if (targetNodes.length > 0) {
+          pushStep(20, `Lᵢ enthält ${targetNodes.length} unüberdeckte Knoten: {${targetNodes.join(', ')}}`, layers, null, targetNodes, visited);
+        }
+      }
+
+      if (layers[i].length === 0) {
+        pushStep(23, `Lᵢ = ∅, return ∅ (M ist bereits maximal)`, layers, null, [], visited);
+        return null;
+      }
+
+      if (foundAugmentingPath) break;
+    }
+
+    if (!foundAugmentingPath || targetNodes.length === 0) {
+      pushStep(28, `Kein augmentierender Pfad gefunden, return ∅`, layers, null, [], visited);
+      return null;
+    }
+
+    // Line 21: S := ∅
+    const pathSet: string[][] = [];
+    pushStep(21, `S := ∅`, layers, null, [], visited, [...pathSet]);
+    const usedNodes = new Set<string>();
+
+    // Helper DFS for Backtracking
+    const findDisjointPathDFS = (current: string, path: string[]): boolean => {
+      if (usedNodes.has(current)) return false;
+
+      // Base case: we reached L0
+      if (nodeLevels[current] === 0) {
+        path.unshift(current);
+        return true;
+      }
+
+      const parents = predecessors[current] || [];
+      for (const p of parents) {
+        if (!usedNodes.has(p)) {
+          // Try this parent
+          if (findDisjointPathDFS(p, path)) {
+            path.push(current); // Post-order add
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    // Line 22-26: Find multiple vertex-disjoint paths
+    pushStep(22, `for all unüberdeckte v ∈ Lᵢ do`, layers, null, targetNodes, visited, [...pathSet]);
+
+    for (const targetNode of targetNodes) {
+      // Line 23: Check if node not in used paths
+      if (usedNodes.has(targetNode)) {
+        continue;
+      }
+
+      pushStep(23, `Prüfe Knoten ${targetNode}: nicht in verwendeten Pfaden`, layers, null, [targetNode], visited, [...pathSet]);
+
+      // Line 24: Find path P from L0 to v through backtracking (DFS)
+      pushStep(24, `Finde Pfad P von L₀ nach ${targetNode} durch backtracking`, layers, null, [targetNode], visited, [...pathSet]);
+
+      const potentialPath: string[] = [];
+      const success = findDisjointPathDFS(targetNode, potentialPath);
+
+      if (success) {
+        // Correct path order is from recursive calls pushing 'current' after 'p'. 
+        // L0 added at unshift. 
+        // Order: L0 -> L1 -> ... -> Target.
+        // wait... findDisjointPathDFS(targetNode):
+        //   calls findDisjointPathDFS(parent)
+        //     ...
+        //       calls findDisjointPathDFS(L0_node) -> unshift(L0_node) -> return true
+        //     path.push(parent) -> return true
+        //   path.push(targetNode) -> return true
+        // So path is [L0_node, parent, ..., targetNode].  Correct.
+
+        // Line 25: S := S ∪ {P}
+        pathSet.push(potentialPath);
+        pushStep(25, `S := S ∪ {P}, Pfad: ${potentialPath.join(' → ')}`, layers, null, potentialPath, visited, [...pathSet]);
+
+        // Line 26: Mark nodes in P as used
+        potentialPath.forEach(node => usedNodes.add(node));
+        pushStep(26, `Markiere Knoten in P als verwendet`, layers, null, potentialPath, visited, [...pathSet]);
+      } else {
+        pushStep(24, `Kein disjunkter Pfad gefunden (überschneidet sich mit bereits gefundenen Pfaden)`, layers, null, [targetNode], visited, [...pathSet]);
+      }
+    }
+
+    // Line 27: return S
+    pushStep(27, `return S mit |S| = ${pathSet.length} Pfaden`, layers, null, [], visited, [...pathSet]);
+    return pathSet.length > 0 ? pathSet : null;
+  };
+
+  // Line 1: HOPCROFT-KARP(G = (A ⊎ B, E))
+  pushStep(1, `HOPCROFT-KARP(G = (A ⊎ B, E)) mit |A| = ${partitionA.length}, |B| = ${partitionB.length}`, {});
+
+  // Line 2: M := {e} für irgendeine Kante e ∈ E
+  if (graph.edges.length > 0) {
+    const firstEdge = graph.edges[0];
+    matching.push(firstEdge);
+    matchedNodes.add(firstEdge.source);
+    matchedNodes.add(firstEdge.target);
+    pushStep(2, `M := {${firstEdge.source}, ${firstEdge.target}}`, {}, firstEdge, [firstEdge.source, firstEdge.target]);
+  } else {
+    matching = [];
+    pushStep(2, `M := ∅ (keine Kanten verfügbar)`, {});
+  }
+
+  // Main loop: while there are augmenting paths
+  let iteration = 0;
+  const maxIterations = 10; // Safety limit
+
+  while (iteration < maxIterations) {
+    iteration++;
+
+    // Line 3: while es gibt noch augmentierende Pfade do
+    pushStep(3, `Iteration ${iteration}: Prüfe auf augmentierende Pfade`, {});
+
+    // Line 4: S := FIND-AUGMENTING-PATHS(G, M)
+    pushStep(4, `Rufe FIND-AUGMENTING-PATHS(G, M) auf`, {});
+    pushStep(10, `FIND-AUGMENTING-PATHS(G, M):`, {});
+
+    const pathSet = findAugmentingPaths();
+
+    // Line 5: if S = ∅ then return M
+    if (!pathSet || pathSet.length === 0) {
+      pushStep(5, `S = ∅, return M (Matching ist maximal)`, {});
+      break;
+    }
+
+    pushStep(5, `S enthält ${pathSet.length} Pfad(e)`, {}, null, [], new Set(), pathSet);
+
+    // Line 6-7: for all P ∈ S do: M := M ⊕ P
+    pushStep(6, `for all P ∈ S do`, {}, null, [], new Set(), pathSet);
+
+    // Augment along all paths in S
+    for (let pathIdx = 0; pathIdx < pathSet.length; pathIdx++) {
+      const path = pathSet[pathIdx];
+
+      // Step 1: Show the path to be augmented
+      pushStep(7, `Wähle Pfad P${pathIdx + 1}: ${path.join(' → ')}. Markiere zur Augmentierung.`,
+        {}, null, path, new Set(), pathSet, path);
+
+      const pathEdges: Edge[] = [];
+
+      for (let i = 0; i < path.length - 1; i++) {
+        const u = path[i];
+        const v = path[i + 1];
+        pathEdges.push({ source: u, target: v, weight: 1 });
+      }
+
+      // M ⊕ P: symmetric difference
+      const newMatching: Edge[] = [];
+
+      // Remove matching edges that are in the path
+      for (const edge of matching) {
+        const isInPath = pathEdges.some(pe =>
+          (pe.source === edge.source && pe.target === edge.target) ||
+          (pe.source === edge.target && pe.target === edge.source)
+        );
+        if (!isInPath) {
+          newMatching.push(edge);
+        }
+      }
+
+      // Add non-matching edges from the path
+      for (const edge of pathEdges) {
+        const isInMatching = matching.some(m =>
+          (m.source === edge.source && m.target === edge.target) ||
+          (m.source === edge.target && m.target === edge.source)
+        );
+        if (!isInMatching) {
+          newMatching.push(edge);
+        }
+      }
+
+      matching = newMatching;
+
+      matchedNodes.clear();
+      matching.forEach(e => {
+        matchedNodes.add(e.source);
+        matchedNodes.add(e.target);
+      });
+
+      // Step 2: Apply the augmentation (Show updated matching)
+      pushStep(7, `Augmentiere entlang P${pathIdx + 1}: M := M ⊕ P. Neues |M| = ${matching.length}`,
+        {}, null, path, new Set(), pathSet, path);
+    }
+  }
+
+  // Line 8: return M
+  pushStep(8, `return M (Maximales Matching mit ${matching.length} Kanten gefunden)`, {});
+
+  return steps;
+};
+
+// =============================================================================
+// GRAPH COLORING ALGORITHMS
+// =============================================================================
+
+export const generateColoringGraph = (width: number, height: number): Graph => {
+  const nodes: Node[] = [];
+  const edges: Edge[] = [];
+
+  // Create nodes in a 3x5 grid layout
+  // 15 nodes arranged in 3 rows of 5 nodes each
+  // Labeled A through O alphabetically
+
+  const totalNodes = 15;
+  const rows = 3;
+  const cols = 5;
+  const ids = "ABCDEFGHIJKLMNO".split(''); // 15 nodes A-O
+
+  // Calculate spacing
+  const horizontalSpacing = width / (cols + 1);
+  const verticalSpacing = height / (rows + 1);
+
+  // Create nodes in grid positions
+  for (let i = 0; i < totalNodes; i++) {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+
+    const x = (col + 1) * horizontalSpacing;
+    const y = (row + 1) * verticalSpacing - 50;
+
+    nodes.push({
+      id: ids[i],
+      label: ids[i],
+      x,
+      y
+    });
+  }
+
+  // Generate edges - use a mix of adjacent and diagonal connections
+  // for interesting coloring challenges
+  const potentialEdges: [string, string][] = [];
+
+  // Add horizontal adjacencies
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols - 1; col++) {
+      const idx1 = row * cols + col;
+      const idx2 = row * cols + col + 1;
+      potentialEdges.push([ids[idx1], ids[idx2]]);
+    }
+  }
+
+  // Add vertical adjacencies
+  for (let row = 0; row < rows - 1; row++) {
+    for (let col = 0; col < cols; col++) {
+      const idx1 = row * cols + col;
+      const idx2 = (row + 1) * cols + col;
+      potentialEdges.push([ids[idx1], ids[idx2]]);
+    }
+  }
+
+  // Add some diagonal connections for more interesting coloring
+  for (let row = 0; row < rows - 1; row++) {
+    for (let col = 0; col < cols - 1; col++) {
+      const idx1 = row * cols + col;
+      const idx2 = (row + 1) * cols + col + 1;
+      const idx3 = row * cols + col + 1;
+      const idx4 = (row + 1) * cols + col;
+
+      // Add both diagonals with some probability
+      if (Math.random() > 0.3) {
+        potentialEdges.push([ids[idx1], ids[idx2]]);
+      }
+      if (Math.random() > 0.3) {
+        potentialEdges.push([ids[idx3], ids[idx4]]);
+      }
+    }
+  }
+
+  // Select a subset of edges (not too dense, not too sparse)
+  const numEdges = 18 + Math.floor(Math.random() * 6); // 18-23 edges
+  const shuffled = [...potentialEdges].sort(() => Math.random() - 0.5);
+
+  shuffled.slice(0, numEdges).forEach(([source, target]) => {
+    edges.push({ source, target, weight: 1 });
+  });
+
+  return {
+    nodes,
+    edges,
+    isDirected: false,
+    hasUniqueWeights: false
+  };
+};
+
+export const calculateGreedyColoringSteps = (graph: Graph): AlgorithmStep[] => {
+  const steps: AlgorithmStep[] = [];
+  let stepCounter = 0;
+  const nodeColors: Record<string, number> = {};
+
+  // Sort nodes alphabetically for "Arbitrary Order"
+  const nodes = [...graph.nodes].sort((a, b) => a.id.localeCompare(b.id));
+  const nodeIds = nodes.map(n => n.id);
+
+  const pushStep = (line: number, desc: string, u: string | null = null) => {
+    steps.push({
+      stepId: stepCounter++,
+      lineNumber: line,
+      description: desc,
+      distances: {}, parents: {}, discoveryTimes: {}, finishTimes: {}, edgeClassifications: {}, mstEdges: [], boruvkaMinEdges: [], queue: [], stack: nodeIds, processedSet: [],
+      currentNodeId: u, currentNeighborId: null, activeEdge: null,
+      nodeColors: { ...nodeColors }
+    });
+  };
+
+  // Line 1: Arbitrary Order
+  pushStep(1, `Wähle Reihenfolge V = {${nodeIds.join(', ')}}`);
+
+  // Line 2: c[v1] = 1
+  const first = nodeIds[0];
+  nodeColors[first] = 1;
+  pushStep(2, `Setze Farbe c[${first}] ← 1`, first);
+
+  // Line 3: Loop
+  for (let i = 1; i < nodeIds.length; i++) {
+    const v = nodeIds[i];
+    pushStep(3, `Betrachte Knoten v_${i + 1} = ${v}`, v);
+
+    // Line 4: Find min color
+    const neighbors = graph.edges
+      .filter(e => e.source === v || e.target === v)
+      .map(e => e.source === v ? e.target : e.source);
+
+    // Check colors of neighbors in {v1...vi-1}
+    const usedColors = new Set<number>();
+    const prevNodes = new Set(nodeIds.slice(0, i));
+
+    for (const nbr of neighbors) {
+      if (prevNodes.has(nbr) && nodeColors[nbr]) {
+        usedColors.add(nodeColors[nbr]);
+      }
+    }
+
+    let c = 1;
+    while (usedColors.has(c)) {
+      c++;
+    }
+
+    nodeColors[v] = c;
+    pushStep(4, `Weise Farbe ${c} zu (Nachbarfarben: {${Array.from(usedColors).sort((a, b) => a - b).join(',')}})`, v);
+  }
+
+  return steps;
+};
+
+export const calculateSmallestLastColoringSteps = (graph: Graph): AlgorithmStep[] => {
+  const steps: AlgorithmStep[] = [];
+  let stepCounter = 0;
+
+  // Data structs for Algorithm
+  const currentDegree: Record<string, number> = {};
+  const activeNodes = new Set<string>();
+  graph.nodes.forEach(n => {
+    activeNodes.add(n.id);
+    currentDegree[n.id] = 0;
+  });
+
+  graph.edges.forEach(e => {
+    currentDegree[e.source]++;
+    currentDegree[e.target]++;
+  });
+
+  const ordering: string[] = []; // This will store v_n, v_{n-1}, ..., v_1 in this order
+  const nodeColors: Record<string, number> = {};
+  const n = graph.nodes.length;
+
+  const pushStep = (line: number, desc: string, u: string | null = null, removedNodes: string[] = []) => {
+    // Display the ordering in forward order (v_1, v_2, ..., v_n) for the UI
+    const displayOrder = [...ordering].reverse();
+    steps.push({
+      stepId: stepCounter++,
+      lineNumber: line,
+      description: desc,
+      distances: {}, parents: {}, discoveryTimes: {}, finishTimes: {}, edgeClassifications: {}, mstEdges: [], boruvkaMinEdges: [], queue: [], stack: displayOrder,
+      processedSet: removedNodes, // Use processedSet to track hidden nodes for this algo
+      currentNodeId: u, currentNeighborId: null, activeEdge: null,
+      nodeColors: { ...nodeColors }
+    });
+  };
+
+  // Phase 1: Determine ordering (lines 1-3)
+  // We select vertices from v_n down to v_1 (in reverse order)
+  for (let i = n; i >= 1; i--) {
+    if (i === n) {
+      pushStep(1, `Beginne Schleife: i = ${i} bis 1`, null, [...ordering]);
+    }
+
+    // Find min degree in CURRENT graph (active nodes)
+    let minDeg = Infinity;
+    let minNode: string | null = null;
+
+    // Sort for deterministic tie-breaking (Alphabetic)
+    const candidates = Array.from(activeNodes).sort();
+
+    for (const node of candidates) {
+      // Calculate degree in induced subgraph
+      let d = 0;
+      graph.edges.forEach(e => {
+        if ((e.source === node && activeNodes.has(e.target)) ||
+          (e.target === node && activeNodes.has(e.source))) {
+          d++;
+        }
+      });
+
+      if (d < minDeg) {
+        minDeg = d;
+        minNode = node;
+      }
+    }
+
+    if (minNode) {
+      pushStep(2, `v${i} ← ${minNode} (Minimalgrad ${minDeg} im Restgraphen)`, minNode, [...ordering]);
+
+      activeNodes.delete(minNode);
+      ordering.push(minNode); // Store v_i (this builds v_n, v_{n-1}, ..., v_1)
+      pushStep(3, `Entferne v${i} = ${minNode} und inzidente Kanten`, minNode, [...ordering]);
+    }
+  }
+
+  // Phase 2: Coloring (lines 4-6)
+  const coloringOrder = [...ordering].reverse(); // Now in order v_1, v_2, ..., v_n
+
+  // Line 4: c[v_1] = 1
+  const v1 = coloringOrder[0];
+  nodeColors[v1] = 1;
+  // Phase 2: Show all nodes (empty removedNodes list)
+  pushStep(4, `Setze c[v₁] = c[${v1}] ← 1`, v1, []);
+
+  // Lines 5-6: Greedy coloring for i = 2 to n
+  for (let i = 1; i < coloringOrder.length; i++) {
+    const v = coloringOrder[i];
+
+    if (i === 1) {
+      pushStep(5, `Beginne Färbung: i = 2 bis ${n}`, v, []);
+    }
+
+    const neighbors = graph.edges
+      .filter(e => e.source === v || e.target === v)
+      .map(e => e.source === v ? e.target : e.source);
+
+    const usedColors = new Set<number>();
+
+    // Check colors of previously colored neighbors (v_1, ..., v_{i-1})
+    const prevNodes = new Set(coloringOrder.slice(0, i));
+
+    for (const nbr of neighbors) {
+      if (prevNodes.has(nbr) && nodeColors[nbr]) {
+        usedColors.add(nodeColors[nbr]);
+      }
+    }
+
+    let c = 1;
+    while (usedColors.has(c)) {
+      c++;
+    }
+
+    nodeColors[v] = c;
+    const usedColorsStr = usedColors.size > 0 ? `{${Array.from(usedColors).sort((a, b) => a - b).join(',')}}` : '∅';
+    pushStep(6, `c[v${i + 1}] = c[${v}] ← ${c} (Nachbarfarben: ${usedColorsStr})`, v, []);
+  }
+
+  return steps;
+};
+
+// =============================================================================
+// FORD-FULKERSON ALGORITHM
+// =============================================================================
+
+export const generateFordFulkersonGraph = (width: number, height: number): Graph => {
+  const nodes: Node[] = [];
+  const edges: Edge[] = [];
+
+  const xStart = 50;
+  const xEnd = width - 50;
+  const gridXStart = 150;
+  const gridXEnd = width - 150;
+  const gridWidth = gridXEnd - gridXStart;
+  const colSpacing = gridWidth / 2;
+  const yStart = 70; // Adjusted start down
+  const yEnd = height - 120; // Adjusted end up strongly to leave room for legend
+  const ySpacing = (yEnd - yStart) / 2;
+
+  nodes.push({ id: 's', label: 's', x: xStart, y: (yStart + yEnd) / 2 });
+  nodes.push({ id: 't', label: 't', x: xEnd, y: (yStart + yEnd) / 2 });
+
+  const gridLabels = [['a', 'b', 'c'], ['d', 'e', 'f'], ['g', 'h', 'i']];
+
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 3; c++) {
+      const id = gridLabels[r][c];
+      const x = gridXStart + c * colSpacing;
+      const y = yStart + r * ySpacing;
+      nodes.push({ id, label: id, x, y });
+    }
+  }
+
+  const addEdge = (u: string, v: string, capMin: number, capMax: number) => {
+    edges.push({
+      source: u,
+      target: v,
+      weight: 1,
+      capacity: Math.floor(Math.random() * (capMax - capMin + 1)) + capMin,
+      flow: 0
+    });
+  };
+
+  addEdge('s', 'a', 5, 15);
+  addEdge('s', 'd', 5, 15);
+  addEdge('s', 'g', 5, 15);
+
+  addEdge('c', 't', 5, 15);
+  addEdge('f', 't', 5, 15);
+  addEdge('i', 't', 5, 15);
+
+  addEdge('a', 'b', 3, 10); addEdge('b', 'c', 3, 10);
+  addEdge('d', 'e', 3, 10); addEdge('e', 'f', 3, 10);
+  addEdge('g', 'h', 3, 10); addEdge('h', 'i', 3, 10);
+
+  addEdge('a', 'd', 2, 8); addEdge('d', 'g', 2, 8);
+  addEdge('e', 'b', 2, 8); addEdge('e', 'h', 2, 8);
+  addEdge('c', 'f', 2, 8); addEdge('f', 'i', 2, 8);
+
+  // Cross edges
+  addEdge('d', 'b', 2, 6);
+  addEdge('e', 'c', 2, 6);
+  addEdge('h', 'f', 2, 6);
+
+  return { nodes, edges, isDirected: true, hasUniqueWeights: false };
+};
+
+export const calculateFordFulkersonSteps = (graph: Graph): AlgorithmStep[] => {
+  const steps: AlgorithmStep[] = [];
+  let stepCounter = 0;
+
+  // Working state - use explicit flow tracking
+  // We recreate the edge list to track mutable flow
+  interface FlowEdge { source: string, target: string, capacity: number, flow: number }
+  const edges: FlowEdge[] = graph.edges.map(e => ({
+    source: e.source,
+    target: e.target,
+    capacity: e.capacity || 0,
+    flow: 0
+  }));
+
+  const calculateTotalFlow = () => {
+    // Total flow is the sum of flow on edges leaving source 's' minus flow entering 's'
+    // For Ford-Fulkerson simple graphs, just summing flow out of 's' is usually sufficient unless there are incoming edges to 's'
+    return edges
+      .filter(e => e.source === 's')
+      .reduce((sum, e) => sum + e.flow, 0);
+  };
+
+  const pushStep = (line: number, desc: string, residualEdges: any[] = [], path: string[] = [], bottleneck: number = 0, u: string | null = null, minCutSetS?: string[]) => {
+    const edgeFlows: Record<string, number> = {};
+    edges.forEach(e => {
+      edgeFlows[`${e.source}-${e.target}`] = e.flow;
+    });
+
+    steps.push({
+      stepId: stepCounter++,
+      lineNumber: line,
+      description: desc,
+      distances: {}, parents: {}, discoveryTimes: {}, finishTimes: {}, edgeClassifications: {}, mstEdges: [], boruvkaMinEdges: [], queue: [], stack: [], processedSet: [],
+      currentNodeId: u, currentNeighborId: null, activeEdge: null,
+      residualEdges: residualEdges,
+      path: path.length > 0 ? path : undefined,
+      bottleneck: bottleneck,
+      edgeFlows: edgeFlows,
+      totalFlow: calculateTotalFlow(),
+      minCutSetS: minCutSetS
+    });
+  };
+
+  const buildResidualGraph = () => {
+    const resEdges: { source: string, target: string, capacity: number, flow: number, isBackward: boolean }[] = [];
+    edges.forEach(e => {
+      const remaining = e.capacity - e.flow;
+      if (remaining > 0) {
+        resEdges.push({ source: e.source, target: e.target, capacity: remaining, flow: 0, isBackward: false });
+      }
+      if (e.flow > 0) {
+        resEdges.push({ source: e.target, target: e.source, capacity: e.flow, flow: 0, isBackward: true });
+      }
+    });
+    return resEdges;
+  };
+
+  pushStep(1, "Initialize f(u, v) = 0 for all edges", buildResidualGraph());
+
+  while (true) {
+    const resEdges = buildResidualGraph();
+
+    // BFS on Residual Graph
+    const adj: Record<string, { target: string, cap: number }[]> = {};
+    graph.nodes.forEach(n => adj[n.id] = []);
+    resEdges.forEach(e => {
+      if (adj[e.source]) adj[e.source].push({ target: e.target, cap: e.capacity });
+    });
+
+    const q = ['s'];
+    const parent: Record<string, string> = { 's': 's' };
+    const visited = new Set(['s']);
+    let targetFound = false;
+    let head = 0;
+
+    while (head < q.length) {
+      const u = q[head++];
+      if (u === 't') {
+        targetFound = true;
+        break;
+      }
+      for (const edge of adj[u]) {
+        if (!visited.has(edge.target)) {
+          visited.add(edge.target);
+          parent[edge.target] = u;
+          q.push(edge.target);
+        }
+      }
+      if (targetFound) break;
+    }
+
+    if (!targetFound) {
+      // Calculate S, T cut
+      // S is already the 'visited' set from our failed BFS
+      const setS = Array.from(visited);
+      const allNodes = graph.nodes.map(n => n.id);
+      const setT = allNodes.filter(id => !visited.has(id));
+
+      const cutCapacity = edges
+        .filter(e => visited.has(e.source) && !visited.has(e.target))
+        .reduce((sum, e) => sum + e.capacity, 0);
+
+      pushStep(9, `Max flow reached. S = {${setS.join(', ')}}, T = {${setT.join(', ')}}. Cut Capacity = ${cutCapacity}. val(f) = ${cutCapacity}`, resEdges, [], 0, null, setS);
+      break;
+    }
+
+    const path: string[] = [];
+    let p = 't';
+    while (p !== 's') {
+      path.push(p);
+      p = parent[p];
+    }
+    path.push('s');
+    path.reverse();
+
+    pushStep(2, `Found s-t path P: ${path.join(' → ')}`, resEdges, path);
+
+    let minCap = Infinity;
+    for (let i = 0; i < path.length - 1; i++) {
+      const u = path[i];
+      const v = path[i + 1];
+      const edge = resEdges.find(e => e.source === u && e.target === v);
+      if (edge) minCap = Math.min(minCap, edge.capacity);
+    }
+
+    pushStep(3, `Bottleneck capacity ε = ${minCap}`, resEdges, path, minCap);
+
+    for (let i = 0; i < path.length - 1; i++) {
+      const u = path[i];
+      const v = path[i + 1];
+
+      const forwardEdge = edges.find(e => e.source === u && e.target === v);
+      const backwardEdge = edges.find(e => e.source === v && e.target === u);
+
+      if (forwardEdge) {
+        forwardEdge.flow += minCap;
+        pushStep(6, `Augment forward edge (${u}, ${v}) by ε=${minCap}. New Flow: ${forwardEdge.flow}/${forwardEdge.capacity}`, buildResidualGraph(), path.slice(i + 1), minCap, u);
+      } else if (backwardEdge) {
+        backwardEdge.flow -= minCap;
+        pushStep(8, `Augment backward edge (${u}, ${v}) by reducing flow on (${v}, ${u}) by ε=${minCap}. New Flow: ${backwardEdge.flow}/${backwardEdge.capacity}`, buildResidualGraph(), path.slice(i + 1), minCap, u);
+      }
+    }
+
+    // Final check for this iteration
+    pushStep(2, `Updated Flow. Check for new path.`, buildResidualGraph());
+  }
+
+  return steps;
+};

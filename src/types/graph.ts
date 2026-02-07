@@ -9,6 +9,8 @@ export interface Edge {
   source: string;
   target: string;
   weight: number;
+  capacity?: number;
+  flow?: number;
 }
 
 export interface Graph {
@@ -27,6 +29,12 @@ export enum AlgorithmType {
   KRUSKAL = 'KRUSKAL',
   BORUVKA = 'BORUVKA',
   TARJAN = 'TARJAN',
+  EULER = 'EULER',
+  GREEDY_MATCHING = 'GREEDY_MATCHING',
+  HOPCROFT_KARP = 'HOPCROFT_KARP',
+  GREEDY_COLORING = 'GREEDY_COLORING',
+  SMALLEST_LAST_COLORING = 'SMALLEST_LAST_COLORING',
+  FORD_FULKERSON = 'FORD_FULKERSON',
 }
 
 export enum EdgeType {
@@ -70,6 +78,15 @@ export interface AlgorithmStep {
   // Kruskal Specific
   unionFindMembers?: Record<string, string[]>; // members[rep[v]]
 
+  // Euler Specific
+  eulerTour?: string[]; // The main tour W
+  eulerSubTour?: string[]; // The current random tour W'
+
+  // Hopcroft-Karp Specific
+  hopcroftLayers?: Record<number, string[]>; // Layers L0, L1, L2, ... stored as {0: [...], 1: [...], ...}
+  augmentingPathsSet?: string[][]; // Set S of vertex-disjoint augmenting paths
+  currentAugmentingPath?: string[]; // The specific path being augmented in the current step
+
   // Data Structures
   queue: PriorityQueueItem[]; // Used for Dijkstra (PQ) and BFS (FIFO)
   stack: string[]; // Used for DFS (Recursion Stack)
@@ -79,6 +96,15 @@ export interface AlgorithmStep {
   currentNodeId: string | null; // u
   currentNeighborId: string | null; // v
   activeEdge: { source: string; target: string } | null;
+  nodeColors?: Record<string, number>; // Maps nodeId to Color Index (1, 2, 3...)
+
+  // Ford-Fulkerson Specific
+  residualEdges?: { source: string, target: string, capacity: number, flow: number, isBackward?: boolean }[]; // Edges in the residual network
+  path?: string[]; // Augmenting path in residual network
+  bottleneck?: number; // Bottleneck capacity of the path
+  edgeFlows?: Record<string, number>; // Map "source-target" -> current flow
+  totalFlow?: number; // Current total flow value
+  minCutSetS?: string[]; // S set from min-cut at the end (for S-T cut visualization)
 }
 
 export const PSEUDOCODE_DIJKSTRA = [
@@ -255,4 +281,95 @@ export const PSEUDOCODE_TARJAN = [
   { line: 9, text: "TARJAN(v, u)", indent: 6 },
   { line: 10, text: "low[u] ← min(low[u], low[v])", indent: 6 },
 ];
+
+export const PSEUDOCODE_EULER = [
+  { line: 1, text: "W ← RANDOMTOUR(v_start)", indent: 0 },
+  { line: 2, text: "v_slow ← start node of W", indent: 0 },
+  { line: 3, text: "while v_slow is not last node in W do", indent: 0 },
+  { line: 4, text: "if Degree(v_slow) > 0 then", indent: 2 },
+  { line: 5, text: "W' ← RANDOMTOUR(v_slow)", indent: 4 },
+  { line: 6, text: "W ← Merge W and W' at v_slow", indent: 4 },
+  { line: 7, text: "v_slow ← next node in W", indent: 2 },
+  { line: 8, text: "return W", indent: 0 },
+  { line: 9, text: "", indent: 0 },
+  { line: 10, text: "RANDOMTOUR(u):", indent: 0 },
+  { line: 11, text: "W_temp ← <u>", indent: 2 },
+  { line: 12, text: "while u has neighbors do", indent: 2 },
+  { line: 13, text: "Pick v in Neighbors(u)", indent: 4 },
+  { line: 14, text: "Add v to W_temp", indent: 4 },
+  { line: 15, text: "Remove edge {u, v}", indent: 4 },
+  { line: 16, text: "u ← v", indent: 4 },
+  { line: 17, text: "return W_temp", indent: 2 },
+];
+
+export const PSEUDOCODE_GREEDY_MATCHING = [
+  { line: 1, text: "M ← ∅", indent: 0 },
+  { line: 2, text: "while E ≠ ∅ do", indent: 0 },
+  { line: 3, text: "wähle eine beliebige Kante e ∈ E", indent: 2 },
+  { line: 4, text: "M ← M ∪ {e}", indent: 2 },
+  { line: 5, text: "lösche e und alle inzidenten Kanten in G", indent: 2 },
+];
+
+export const PSEUDOCODE_HOPCROFT_KARP = [
+  { line: 1, text: "HOPCROFT-KARP(G = (A ⊎ B, E)):", indent: 0 },
+  { line: 2, text: "M := {e} für irgendeine Kante e ∈ E", indent: 2 },
+  { line: 3, text: "while es gibt noch augmentierende Pfade do", indent: 2 },
+  { line: 4, text: "S := FIND-AUGMENTING-PATHS(G, M)", indent: 4 },
+  { line: 5, text: "if S = ∅ then return M", indent: 4 },
+  { line: 6, text: "for all P ∈ S do", indent: 4 },
+  { line: 7, text: "M := M ⊕ P  // augmentiere entlang P", indent: 6 },
+  { line: 8, text: "return M", indent: 2 },
+  { line: 9, text: "", indent: 0 },
+  { line: 10, text: "FIND-AUGMENTING-PATHS(G, M):", indent: 0 },
+  { line: 11, text: "L₀ := {unüberdeckte Knoten in A}", indent: 2 },
+  { line: 12, text: "Markiere alle Knoten aus L₀ als besucht", indent: 2 },
+  { line: 13, text: "if L₀ = ∅ then return ∅", indent: 2 },
+  { line: 14, text: "for i = 1 to n do", indent: 2 },
+  { line: 15, text: "if i ungerade then", indent: 4 },
+  { line: 16, text: "Lᵢ := {unbesuchte Nachbarn von Lᵢ₋₁ via E\\M}", indent: 6 },
+  { line: 17, text: "else", indent: 4 },
+  { line: 18, text: "Lᵢ := {unbesuchte Nachbarn von Lᵢ₋₁ via M}", indent: 6 },
+  { line: 19, text: "Markiere alle Knoten aus Lᵢ als besucht", indent: 4 },
+  { line: 20, text: "if Lᵢ enthält unüberdeckte Knoten then", indent: 4 },
+  { line: 21, text: "S := ∅", indent: 6 },
+  { line: 22, text: "for all unüberdeckte v ∈ Lᵢ do", indent: 6 },
+  { line: 23, text: "if v nicht in verwendeten Pfaden then", indent: 8 },
+  { line: 24, text: "P := Pfad von L₀ nach v durch backtracking", indent: 10 },
+  { line: 25, text: "S := S ∪ {P}", indent: 10 },
+  { line: 26, text: "Markiere Knoten in P als verwendet", indent: 10 },
+  { line: 27, text: "return S", indent: 6 },
+  { line: 28, text: "return ∅  // M ist bereits maximal", indent: 2 },
+];
+
+export const PSEUDOCODE_GREEDY_COLORING = [
+  { line: 1, text: "wähle eine beliebige Reihenfolge der Knoten: V = {v₁, ..., vₙ}", indent: 0 },
+  { line: 2, text: "c[v₁] ← 1", indent: 0 },
+  { line: 3, text: "for i = 2 to n do", indent: 0 },
+  { line: 4, text: "c[vᵢ] ← min{k ∈ ℕ | k ≠ c(u) ∀u ∈ N(vᵢ) ∩ {v₁, ..., vᵢ₋₁}}", indent: 2 },
+];
+
+export const PSEUDOCODE_SMALLEST_LAST_COLORING = [
+  { line: 1, text: "for i = n down to 1 do", indent: 0 },
+  { line: 2, text: "vᵢ ← vertex with minimum degree in current G", indent: 2 },
+  { line: 3, text: "Remove vᵢ and incident edges from G", indent: 2 },
+  { line: 4, text: "c[v₁] ← 1", indent: 0 },
+  { line: 5, text: "for i = 2 to n do", indent: 0 },
+  { line: 6, text: "c[vᵢ] ← min{k ∈ ℕ | k ≠ c(u) ∀u ∈ N(vᵢ) ∩ {v₁, ..., vᵢ₋₁}}", indent: 2 },
+];
+
+export const PSEUDOCODE_FORD_FULKERSON = [
+  { line: 1, text: "for each edge (u, v) ∈ A do f(u, v) ← 0", indent: 0 },
+  { line: 2, text: "while there exists an s-t path P in residual network do", indent: 0 },
+  { line: 3, text: "ε ← min{res_cap(u, v) | (u, v) ∈ P}", indent: 2 },
+  { line: 4, text: "for each edge (u, v) ∈ P do", indent: 2 },
+  { line: 5, text: "if (u, v) ∈ A then", indent: 4 },
+  { line: 6, text: "f(u, v) ← f(u, v) + ε", indent: 6 },
+  { line: 7, text: "else", indent: 4 },
+  { line: 8, text: "f(u, v) ← f(u, v) - ε", indent: 6 },
+  { line: 9, text: "S ← {v ∈ V | exists s-v path in residual network}; T ← V \\ S", indent: 0 },
+];
+
+
+
+
 
