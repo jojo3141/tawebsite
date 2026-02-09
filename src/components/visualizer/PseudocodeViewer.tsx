@@ -7,7 +7,7 @@ import {
     PSEUDOCODE_BELLMAN_FORD, PSEUDOCODE_BELLMAN_FORD_UNDIRECTED,
     PSEUDOCODE_PRIM, PSEUDOCODE_KRUSKAL, PSEUDOCODE_BORUVKA, PSEUDOCODE_TARJAN, PSEUDOCODE_EULER,
     PSEUDOCODE_GREEDY_MATCHING, PSEUDOCODE_HOPCROFT_KARP,
-    PSEUDOCODE_GREEDY_COLORING, PSEUDOCODE_SMALLEST_LAST_COLORING, PSEUDOCODE_FORD_FULKERSON,
+    PSEUDOCODE_GREEDY_COLORING, PSEUDOCODE_SMALLEST_LAST_COLORING, PSEUDOCODE_FORD_FULKERSON, PSEUDOCODE_LONG_PATH, PSEUDOCODE_HAMILTON_PATH, PSEUDOCODE_MIN_EDGE_CUT, PSEUDOCODE_SMALLEST_ENCLOSING_DISK, PSEUDOCODE_JARVIS_WRAP, PSEUDOCODE_LOCAL_REPAIR,
     AlgorithmType 
 } from '@/types/graph';
 import {
@@ -32,7 +32,7 @@ import 'katex/dist/katex.min.css';
 import { InlineMath } from 'react-katex';
 
 interface PseudocodeViewerProps {
-  activeLine: number;
+  activeLine: number | number[];
   algorithm: AlgorithmType | SortingAlgorithmType | DPAlgorithmType;
   isDirected?: boolean;
   dpApproach?: DPApproach;
@@ -62,6 +62,8 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
             container.scrollTop += (activeRect.bottom - containerRect.bottom);
         }
     }
+    // Deep compare or simple length check for array dependency might be needed, 
+    // but usually reference change is enough if new array created key-step
   }, [activeLine, algorithm, dpApproach]);
 
   let lines: { line: number, text: string, indent: number }[] = [];
@@ -87,6 +89,12 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
       else if (graphAlgo === AlgorithmType.GREEDY_COLORING) lines = PSEUDOCODE_GREEDY_COLORING;
       else if (graphAlgo === AlgorithmType.SMALLEST_LAST_COLORING) lines = PSEUDOCODE_SMALLEST_LAST_COLORING;
       else if (graphAlgo === AlgorithmType.FORD_FULKERSON) lines = PSEUDOCODE_FORD_FULKERSON;
+      else if (graphAlgo === AlgorithmType.LONG_PATH) lines = PSEUDOCODE_LONG_PATH;
+      else if (graphAlgo === AlgorithmType.HAMILTON_PATH) lines = PSEUDOCODE_HAMILTON_PATH;
+      else if (graphAlgo === AlgorithmType.MINIMUM_EDGE_CUT) lines = PSEUDOCODE_MIN_EDGE_CUT;
+      else if (graphAlgo === AlgorithmType.SMALLEST_ENCLOSING_DISK) lines = PSEUDOCODE_SMALLEST_ENCLOSING_DISK;
+      else if (graphAlgo === AlgorithmType.JARVIS_WRAP) lines = PSEUDOCODE_JARVIS_WRAP;
+      else if (graphAlgo === AlgorithmType.LOCAL_REPAIR) lines = PSEUDOCODE_LOCAL_REPAIR;
   }
   // Sorting Algorithms
   else if (Object.values(SortingAlgorithmType).includes(algorithm as SortingAlgorithmType)) {
@@ -132,21 +140,23 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
       <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 flex justify-between items-center">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
           <Code size={14} />
-          <span>{algorithm === 'EULER' ? 'EULER TOUR' : algorithm === 'GREEDY_MATCHING' ? 'GREEDY MATCHING' : algorithm === 'HOPCROFT_KARP' ? 'HOPCROFT-KARP' : algorithm.replace(/_/g, ' ')}</span>
+          <span>{algorithm === 'EULER' ? 'EULER TOUR' : algorithm === 'GREEDY_MATCHING' ? 'GREEDY MATCHING' : algorithm === 'HOPCROFT_KARP' ? 'HOPCROFT-KARP' : algorithm === 'HAMILTON_PATH' ? 'HAMILTON CYCLE' : algorithm.replace(/_/g, ' ')}</span>
         </div>
         <span className="text-xs text-slate-500">CLRS Style</span>
       </div>
       <div className="p-4 overflow-auto flex-1" ref={containerRef}>
         <div className="font-mono text-sm space-y-0.5">
           {lines.map((item, index) => {
-            const isActive = item.line === activeLine;
+            const isActive = Array.isArray(activeLine) ? activeLine.includes(item.line) : item.line === activeLine;
+            // Ref for the first active line to handle scrolling
+            const isFirstActive = Array.isArray(activeLine) ? activeLine[0] === item.line : item.line === activeLine;
             // For empty lines (spacers)
             if (!item.text) return <div key={index} className="h-4" />;
             
             return (
               <div
                 key={index}
-                ref={isActive ? activeRef : null}
+                ref={isFirstActive ? activeRef : null}
                 className={clsx(
                   "px-2 py-1 rounded transition-colors duration-200",
                   isActive ? "bg-yellow-900/60 text-yellow-200 border-l-2 border-yellow-500" : "text-slate-400 hover:bg-slate-700/30",

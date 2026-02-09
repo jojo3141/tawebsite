@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { generateRandomGraph, generateTarjanGraph, generateEulerianGraph, generateGreedyMatchingGraph, generateHopcroftKarpGraph, generateColoringGraph, generateFordFulkersonGraph, calculateDijkstraSteps, calculateBFSSteps, calculateDFSSteps, calculateBellmanFordSteps, calculatePrimSteps, calculateKruskalSteps, calculateBoruvkaSteps, calculateTarjanSteps, calculateEulerSteps, calculateGreedyMatchingSteps, calculateHopcroftKarpSteps, calculateGreedyColoringSteps, calculateSmallestLastColoringSteps, calculateFordFulkersonSteps } from '@/utils/graphUtils';
+import { generateRandomGraph, generateTarjanGraph, generateEulerianGraph, generateGreedyMatchingGraph, generateHopcroftKarpGraph, generateColoringGraph, generateFordFulkersonGraph, generateLongPathGraph, generateHamiltonPathGraph, generateMinEdgeCutGraph, calculateDijkstraSteps, calculateBFSSteps, calculateDFSSteps, calculateBellmanFordSteps, calculatePrimSteps, calculateKruskalSteps, calculateBoruvkaSteps, calculateTarjanSteps, calculateEulerSteps, calculateGreedyMatchingSteps, calculateHopcroftKarpSteps, calculateGreedyColoringSteps, calculateSmallestLastColoringSteps, calculateFordFulkersonSteps, calculateLongPathSteps, calculateHamiltonPathSteps, calculateMinEdgeCutSteps } from '@/utils/graphUtils';
+import { generateSmallestEnclosingDiskGraph, calculateSmallestEnclosingDiskSteps } from '@/utils/sedUtils';
+import { generateJarvisWrapGraph, calculateJarvisWrapSteps, calculateLocalRepairSteps } from '@/utils/hullUtils';
 import { AnimatePresence, motion } from 'framer-motion';
 import GraphCanvas from '@/components/visualizer/GraphCanvas';
 import PseudocodeViewer from '@/components/visualizer/PseudocodeViewer';
@@ -27,7 +29,8 @@ const DEFAULT_ALGORITHMS = [
     AlgorithmType.PRIM,
     AlgorithmType.KRUSKAL,
     AlgorithmType.BORUVKA,
-    AlgorithmType.EULER
+    AlgorithmType.EULER,
+    AlgorithmType.MINIMUM_EDGE_CUT
 ];
 
 const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlgorithm, availableAlgorithms }) => {
@@ -58,7 +61,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
   const isTarjan = (algo: AlgorithmType) => algo === AlgorithmType.TARJAN;
   
   // Helper: These algorithms support the toggle (Exclude MST, Bellman-Ford, Tarjan, Euler, Matching, and Coloring algorithms)
-  const supportsDirectionToggle = (algo: AlgorithmType) => !isMstAlgo(algo) && !isTarjan(algo) && algo !== AlgorithmType.BELLMAN_FORD && algo !== AlgorithmType.EULER && algo !== AlgorithmType.GREEDY_MATCHING && algo !== AlgorithmType.HOPCROFT_KARP && algo !== AlgorithmType.GREEDY_COLORING && algo !== AlgorithmType.SMALLEST_LAST_COLORING && algo !== AlgorithmType.FORD_FULKERSON;
+  const supportsDirectionToggle = (algo: AlgorithmType) => !isMstAlgo(algo) && !isTarjan(algo) && algo !== AlgorithmType.BELLMAN_FORD && algo !== AlgorithmType.EULER && algo !== AlgorithmType.GREEDY_MATCHING && algo !== AlgorithmType.HOPCROFT_KARP && algo !== AlgorithmType.GREEDY_COLORING && algo !== AlgorithmType.SMALLEST_LAST_COLORING && algo !== AlgorithmType.FORD_FULKERSON && algo !== AlgorithmType.LONG_PATH && algo !== AlgorithmType.HAMILTON_PATH && algo !== AlgorithmType.MINIMUM_EDGE_CUT && algo !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algo !== AlgorithmType.JARVIS_WRAP && algo !== AlgorithmType.LOCAL_REPAIR;
 
   // Memoized solver to be stable for useEffect deps
   const solveGraph = useCallback((g: Graph, algo: AlgorithmType) => {
@@ -94,6 +97,18 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
       solutionSteps = calculateSmallestLastColoringSteps(g);
     } else if (algo === AlgorithmType.FORD_FULKERSON) {
       solutionSteps = calculateFordFulkersonSteps(g);
+    } else if (algo === AlgorithmType.LONG_PATH) {
+      solutionSteps = calculateLongPathSteps(g);
+    } else if (algo === AlgorithmType.HAMILTON_PATH) {
+      solutionSteps = calculateHamiltonPathSteps(g);
+    } else if (algo === AlgorithmType.MINIMUM_EDGE_CUT) {
+      solutionSteps = calculateMinEdgeCutSteps(g);
+    } else if (algo === AlgorithmType.SMALLEST_ENCLOSING_DISK) {
+      solutionSteps = calculateSmallestEnclosingDiskSteps(g);
+    } else if (algo === AlgorithmType.JARVIS_WRAP) {
+      solutionSteps = calculateJarvisWrapSteps(g);
+    } else if (algo === AlgorithmType.LOCAL_REPAIR) {
+      solutionSteps = calculateLocalRepairSteps(g);
     }
     
     setSteps(solutionSteps);
@@ -154,6 +169,46 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
         return;
     }
 
+    // LONG_PATH Specific Graph
+    if (algorithm === AlgorithmType.LONG_PATH) {
+        const newGraph = generateLongPathGraph(width, height);
+        setGraph(newGraph);
+        solveGraph(newGraph, algorithm);
+        return;
+    }
+
+    // HAMILTON_PATH Specific Graph
+    if (algorithm === AlgorithmType.HAMILTON_PATH) {
+        const newGraph = generateHamiltonPathGraph(width, height);
+        setGraph(newGraph);
+        solveGraph(newGraph, algorithm);
+        return;
+    }
+
+    // SMALLEST_ENCLOSING_DISK Specific Graph
+    if (algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK) {
+        const newGraph = generateSmallestEnclosingDiskGraph(width, height);
+        setGraph(newGraph);
+        solveGraph(newGraph, algorithm);
+        return;
+    }
+
+    // JARVIS_WRAP / LOCAL_REPAIR Specific Graph
+    if (algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR) {
+        const newGraph = generateJarvisWrapGraph(width, height);
+        setGraph(newGraph);
+        solveGraph(newGraph, algorithm);
+        return;
+    }
+
+    // MINIMUM_EDGE_CUT Specific Graph
+    if (algorithm === AlgorithmType.MINIMUM_EDGE_CUT) {
+        const newGraph = generateMinEdgeCutGraph(width, height);
+        setGraph(newGraph);
+        solveGraph(newGraph, algorithm);
+        return;
+    }
+
     // Determine settings based on current state
     const uniqueWeights = algorithm === AlgorithmType.BORUVKA;
     
@@ -191,7 +246,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
        const isHopcroftKarp = algorithm === AlgorithmType.HOPCROFT_KARP;
        const graphHasUniqueWeights = graph.hasUniqueWeights === true;
        
-       const shouldBeDirected = (isMstAlgo(algorithm) || isTarjan || isEuler || isGreedyMatching || isHopcroftKarp || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING) ? false : (algorithm === AlgorithmType.BELLMAN_FORD || algorithm === AlgorithmType.FORD_FULKERSON ? true : userPreferredDirected);
+       const shouldBeDirected = (isMstAlgo(algorithm) || isTarjan || isEuler || isGreedyMatching || isHopcroftKarp || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING || algorithm === AlgorithmType.LONG_PATH || algorithm === AlgorithmType.HAMILTON_PATH || algorithm === AlgorithmType.MINIMUM_EDGE_CUT || algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK || algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR) ? false : (algorithm === AlgorithmType.BELLMAN_FORD || algorithm === AlgorithmType.FORD_FULKERSON ? true : userPreferredDirected);
        const graphIsDirected = graph.isDirected !== false; // Default to true if undefined
 
        const isBellmanFord = algorithm === AlgorithmType.BELLMAN_FORD;
@@ -202,7 +257,11 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
        // Expected node count: 15 for Hopcroft-Karp (8+7), 12 for Tarjan/Euler/Greedy/Coloring; 9 for others
        const isColoring = algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING;
        const isFlow = algorithm === AlgorithmType.FORD_FULKERSON;
-       const expectedNodeCount = (isHopcroftKarp || isColoring) ? 15 : (isTarjan || isEuler || isGreedyMatching) ? 12 : (isFlow ? 11 : 9); // FF uses 11 nodes
+       const isLongPath = algorithm === AlgorithmType.LONG_PATH;
+       const isMinEdgeCut = algorithm === AlgorithmType.MINIMUM_EDGE_CUT;
+       const isSED = algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK;
+       const isJarvisWrap = algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR;
+       const expectedNodeCount = isSED ? 40 : isJarvisWrap ? 10 : (isHopcroftKarp || isColoring) ? 15 : (isTarjan || isEuler || isGreedyMatching || isLongPath || isMinEdgeCut) ? 12 : (isFlow ? 11 : 9);
 
        if (isBoruvka && !graphHasUniqueWeights) {
            generateNewGraph();
@@ -235,6 +294,18 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
     }
     return () => clearInterval(interval);
   }, [isAutoPlaying, currentStepIndex, steps.length]);
+
+  // Auto Advance Logic (for multi-stage animations)
+  useEffect(() => {
+    if (steps[currentStepIndex]?.autoAdvance) {
+      const timeout = setTimeout(() => {
+        if (currentStepIndex < steps.length - 1) {
+          setCurrentStepIndex(prev => prev + 1);
+        }
+      }, 700); // Wait 700ms for animation to complete
+      return () => clearTimeout(timeout);
+    }
+  }, [currentStepIndex, steps]);
 
   const handleNext = () => {
     if (currentStepIndex < steps.length - 1) {
@@ -333,7 +404,17 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur-md border border-slate-600 shadow-2xl flex items-center justify-center transition-all px-10 py-3 rounded-full gap-4 min-w-[300px]">
                  <div className="flex items-center gap-3 shrink-0">
                      <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                     <span className="text-sm font-medium text-white whitespace-nowrap">{currentStep.description}</span>
+                     <span className="text-sm font-medium text-white whitespace-nowrap flex items-center gap-1">
+                         {currentStep.description.split(/({{color:\d+}})/g).map((part, i) => {
+                             const match = part.match(/{{color:(\d+)}}/);
+                             if (match) {
+                                 const colorIndex = parseInt(match[1]);
+                                 const colorHex = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4'][colorIndex - 1] || '#94a3b8';
+                                 return <div key={i} className="w-3 h-3 rounded-full border border-slate-400 inline-block mx-0.5 align-middle" style={{backgroundColor: colorHex}} />;
+                             }
+                             return <span key={i}>{part}</span>;
+                         })}
+                     </span>
                  </div>
                  
                  {showDfsLegend && (
@@ -363,7 +444,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
             </div>
 
             {/* Playback Controls Section */}
-            <div className="border-t border-slate-800 p-2 bg-slate-900/50 flex items-center justify-between">
+            <div className="border-t border-slate-800 p-2 bg-slate-900/50 flex items-center justify-between relative z-20">
               <div className="flex items-center gap-1">
                 <button 
                   onClick={handlePrev}

@@ -196,6 +196,94 @@ const VisualizerApp: React.FC = () => {
           />
         </motion.div>
       )}
+
+      {mode === 'LONG_PATH' && (
+        <motion.div 
+          key="long_path"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <GraphMode 
+             mode={mode} 
+             setMode={(m) => setMode(m)} 
+             onBack={handleBack}
+             initialAlgorithm={AlgorithmType.LONG_PATH}
+             availableAlgorithms={[AlgorithmType.LONG_PATH]}
+          />
+        </motion.div>
+      )}
+      
+      {mode === 'HAMILTON_PATH' && (
+        <motion.div 
+          key="hamilton_path"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <GraphMode 
+             mode={mode} 
+             setMode={(m) => setMode(m)} 
+             onBack={handleBack}
+             initialAlgorithm={AlgorithmType.HAMILTON_PATH}
+             availableAlgorithms={[AlgorithmType.HAMILTON_PATH]}
+          />
+        </motion.div>
+      )}
+
+      {mode === 'MINIMUM_EDGE_CUT' && (
+        <motion.div 
+          key="minimum_edge_cut"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <GraphMode 
+             mode={mode} 
+             setMode={(m) => setMode(m)} 
+             onBack={handleBack}
+             initialAlgorithm={AlgorithmType.MINIMUM_EDGE_CUT}
+             availableAlgorithms={[AlgorithmType.MINIMUM_EDGE_CUT]}
+          />
+        </motion.div>
+      )}
+      {mode === 'SMALLEST_ENCLOSING_DISK' && (
+        <motion.div 
+          key="smallest_enclosing_disk"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <GraphMode 
+             mode={mode} 
+             setMode={(m) => setMode(m)} 
+             onBack={handleBack}
+             initialAlgorithm={AlgorithmType.SMALLEST_ENCLOSING_DISK}
+             availableAlgorithms={[AlgorithmType.SMALLEST_ENCLOSING_DISK]}
+          />
+        </motion.div>
+      )}
+      {mode === 'JARVIS_WRAP' && (
+        <motion.div 
+          key="jarvis_wrap"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <GraphMode 
+             mode={mode} 
+             setMode={(m) => setMode(m)} 
+             onBack={handleBack}
+             initialAlgorithm={AlgorithmType.JARVIS_WRAP}
+             availableAlgorithms={[AlgorithmType.JARVIS_WRAP, AlgorithmType.LOCAL_REPAIR]}
+          />
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 };

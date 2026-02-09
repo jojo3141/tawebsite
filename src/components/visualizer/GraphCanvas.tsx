@@ -11,21 +11,62 @@ interface GraphCanvasProps {
   algorithm: AlgorithmType;
 }
 
-const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, height, algorithm }) => {
+const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentStep, width, height, algorithm }) => {
   
+  // For MINIMUM_EDGE_CUT, use the step's graph state snapshot for animation
+  const graph = React.useMemo(() => {
+    return (algorithm === AlgorithmType.MINIMUM_EDGE_CUT && currentStep.minCutGraphState) 
+      ? { ...currentStep.minCutGraphState, isDirected: false } as Graph
+      : initialGraph;
+  }, [algorithm, currentStep.minCutGraphState, initialGraph]);
+
   // Constants for styling
-  const NODE_RADIUS = (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || algorithm === AlgorithmType.FORD_FULKERSON) ? 14 : 18;
+  const NODE_RADIUS = (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || algorithm === AlgorithmType.FORD_FULKERSON || algorithm === AlgorithmType.HAMILTON_PATH) ? 14 : 18;
   const showArrows = graph.isDirected !== false;
   const isMstAlgo = algorithm === AlgorithmType.PRIM || algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA;
   const isNodeHighlightDisabled = algorithm === AlgorithmType.KRUSKAL;
   const isFordFulkerson = algorithm === AlgorithmType.FORD_FULKERSON;
 
-  // Helper for Bezier Math
-  const getPointOnBezier = (t: number, p0: number, p1: number, p2: number) => {
-    return (1 - t) * (1 - t) * p0 + 2 * (1 - t) * t * p1 + t * t * p2;
+  const getNodeRadius = (node: { id: string, label: string }) => {
+    if (algorithm === AlgorithmType.MINIMUM_EDGE_CUT && node.label) {
+         const count = node.label.split(',').length;
+         return 18 + 4.25 * (count - 1);
+    }
+    if (algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK && currentStep.pointWeights) {
+         return 4;
+    }
+    if (algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR) {
+         return 6;
+    }
+    return NODE_RADIUS;
   };
 
   // Determine colors based on state
+  const multiEdgeInfo = React.useMemo(() => {
+    if (algorithm !== AlgorithmType.MINIMUM_EDGE_CUT) return null;
+    const counts = new Map<string, number>();
+    
+    // First pass: count total edges between pairs
+    graph.edges.forEach(e => {
+        const key = [e.source, e.target].sort().join('-');
+        counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    
+    // Second pass: assign index
+    const info = new Map<number, { index: number, total: number }>();
+    const currentCounts = new Map<string, number>();
+    
+    graph.edges.forEach((e, i) => {
+        const key = [e.source, e.target].sort().join('-');
+        const k = currentCounts.get(key) || 0;
+        currentCounts.set(key, k + 1);
+        const total = counts.get(key) || 1;
+        info.set(i, { index: k, total });
+    });
+    
+    return info;
+  }, [graph, algorithm]);
+
   const getNodeColor = (nodeId: string) => {
     // KRUSKAL: Nodes never highlight
     if (isNodeHighlightDisabled) return '#64748b'; // Slate-500 (Default)
@@ -98,10 +139,40 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
             return colors[(colorIndex - 1) % colors.length];
         }
         
-        // Highlight active node (being colored) in Yellow
-        if (currentStep.currentNodeId === nodeId) return '#eab308'; // Yellow-500
+
         
         return '#64748b'; // Slate-500 (Uncolored)
+    }
+
+    // LONG PATH ALGORITHM
+    if (algorithm === AlgorithmType.LONG_PATH) {
+        if (currentStep.nodeColors && currentStep.nodeColors[nodeId]) {
+            const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4']; // Red, Orange, Yellow, Green, Cyan
+            return colors[currentStep.nodeColors[nodeId] - 1] || '#64748b';
+        }
+        return '#64748b';
+    }
+    
+    // SMALLEST ENCLOSING DISK
+    if (algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK) {
+         if (currentStep.sedOutliers?.includes(nodeId)) return '#ef4444'; // Red
+         if (currentStep.sedSampleQ?.includes(nodeId)) return '#06b6d4'; // Cyan
+         return '#64748b';
+    }
+
+    if (algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR) {
+         if (currentStep.currentPoint === nodeId) return '#ef4444'; // Red
+         if (currentStep.nextPointCandidate === nodeId) return '#a855f7'; // Purple
+         if (currentStep.checkingPoint === nodeId) return '#eab308'; // Yellow
+         if (currentStep.hull?.includes(nodeId)) return '#22c55e'; // Green
+         return '#64748b';
+    }
+
+    // HAMILTON PATH
+    if (algorithm === AlgorithmType.HAMILTON_PATH) {
+        if (currentStep.currentNodeId === nodeId) return '#eab308'; // Yellow
+        if (currentStep.currentNeighborId === nodeId) return '#3b82f6'; // Blue
+        return '#64748b';
     }
 
     if (currentStep.currentNodeId === nodeId) return '#eab308'; // Yellow-500 (Current u)
@@ -124,12 +195,23 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
     return '#64748b'; // Slate-500 (Unvisited) - BRIGHTER
   };
 
-  const getEdgeColor = (source: string, target: string) => {
-    let isActive = currentStep.activeEdge?.source === source && currentStep.activeEdge?.target === target;
+  const getEdgeColor = (source: string, target: string, edgeId?: string) => {
+    let isActive = false;
     
-    // Bidirectional check for Undirected graphs
-    if (!isActive && graph.isDirected === false) {
-        isActive = currentStep.activeEdge?.source === target && currentStep.activeEdge?.target === source;
+    // Check ID first if available (for precise multi-edge highlighting)
+    if (currentStep.activeEdge?.id) {
+        // STRICT MODE: If an ID is provided, we MUST match it.
+        // If edgeId is missing from the prop, it fails (correct).
+        // If edgeId differs, it fails (correct).
+        isActive = (!!edgeId && currentStep.activeEdge.id === edgeId);
+    } else {
+        // Fallback to source/target matching (Legacy / No ID provided)
+        isActive = currentStep.activeEdge?.source === source && currentStep.activeEdge?.target === target;
+        
+        // Bidirectional check for Undirected graphs
+        if (!isActive && graph.isDirected === false) {
+            isActive = currentStep.activeEdge?.source === target && currentStep.activeEdge?.target === source;
+        }
     }
 
     if (isActive && algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.EULER && algorithm !== AlgorithmType.GREEDY_MATCHING && algorithm !== AlgorithmType.HOPCROFT_KARP && algorithm !== AlgorithmType.FORD_FULKERSON) {
@@ -154,6 +236,39 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
              }
          }
          return '#94a3b8';
+    }
+
+    // LONG PATH HIGHLIGHT
+    if (algorithm === AlgorithmType.LONG_PATH) {
+        if (currentStep.path) {
+            for (let i = 0; i < currentStep.path.length - 1; i++) {
+                 // Undirected check
+                 if ((currentStep.path[i] === source && currentStep.path[i+1] === target) ||
+                     (currentStep.path[i] === target && currentStep.path[i+1] === source)) {
+                     return '#a855f7'; // Purple Path
+                 }
+            }
+        }
+        // Extended paths highlight during calculation
+        if (currentStep.longPathExtendedPaths) {
+             for (const path of currentStep.longPathExtendedPaths) {
+                 for (let i = 0; i < path.length - 1; i++) {
+                     if ((path[i] === source && path[i+1] === target) ||
+                         (path[i] === target && path[i+1] === source)) {
+                         return '#a855f7'; // Purple Path (during extension)
+                     }
+                 }
+             }
+        }
+    }
+
+    // HAMILTON PATH HIGHLIGHT
+    if (algorithm === AlgorithmType.HAMILTON_PATH && currentStep.path) {
+         for (let i = 0; i < currentStep.path.length - 1; i++) {
+             // Directed graph usually for Hamilton Path but check isDirected
+             if (currentStep.path[i] === source && currentStep.path[i+1] === target) return '#a855f7'; // Purple
+             if (graph.isDirected === false && currentStep.path[i] === target && currentStep.path[i+1] === source) return '#a855f7';
+         }
     }
 
     // TARJAN BRIDGE HIGHLIGHT (Persistent)
@@ -250,10 +365,35 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
         }
     }
 
+    // MINIMUM_EDGE_CUT
+    if (algorithm === AlgorithmType.MINIMUM_EDGE_CUT) {
+        if (currentStep.activeEdge) {
+            // Use ID match if available (for precise multi-edge highlighting)
+            if (currentStep.activeEdge.id) {
+                if (edgeId && currentStep.activeEdge.id === edgeId) {
+                    return '#ef4444'; // Red for the specific active edge
+                }
+            } else {
+                // Fallback to source/target match if no ID
+                if ((currentStep.activeEdge.source === source && currentStep.activeEdge.target === target) ||
+                    (currentStep.activeEdge.source === target && currentStep.activeEdge.target === source)) {
+                    return '#ef4444'; // Red for active edge
+                }
+            }
+        }
+        // If graph is contracted to 2 nodes, all remaining edges are cut edges
+        if (graph.nodes.length <= 2) {
+            return '#a855f7'; // Purple for cut edges
+        }
+    }
+
     return '#94a3b8'; // Slate-400 (Default edge) - BRIGHTER
   };
 
   const getEdgeStrokeWidth = (source: string, target: string) => {
+    // For MINIMUM_EDGE_CUT, always keep default stroke width
+    if (algorithm === AlgorithmType.MINIMUM_EDGE_CUT) return 1.5;
+
     let isActive = currentStep.activeEdge?.source === source && currentStep.activeEdge?.target === target;
     // Bidirectional check for stroke width
     if (!isActive && graph.isDirected === false) {
@@ -317,7 +457,41 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
         }
     }
 
-    return isActive || isParent || isInF || isClassified || isEuler || isInMatching || isFFPath || isFFCutEdge ? 3 : 1.5;
+    // Long Path Bold Logic
+    let isLongPathEdge = false;
+    if (algorithm === AlgorithmType.LONG_PATH) {
+        if (currentStep.path) {
+            for (let i = 0; i < currentStep.path.length - 1; i++) {
+                 // Undirected check
+                 if ((currentStep.path[i] === source && currentStep.path[i+1] === target) ||
+                     (currentStep.path[i] === target && currentStep.path[i+1] === source)) {
+                     isLongPathEdge = true;
+                 }
+            }
+        }
+        if (currentStep.longPathExtendedPaths) {
+             for (const path of currentStep.longPathExtendedPaths) {
+                 for (let i = 0; i < path.length - 1; i++) {
+                     if ((path[i] === source && path[i+1] === target) ||
+                         (path[i] === target && path[i+1] === source)) {
+                         isLongPathEdge = true;
+                     }
+                 }
+             }
+        }
+    }
+
+    // Hamilton Path Bold Logic
+    let isHamiltonPathEdge = false;
+    if (algorithm === AlgorithmType.HAMILTON_PATH && currentStep.path) {
+        for (let i = 0; i < currentStep.path.length - 1; i++) {
+            if (currentStep.path[i] === source && currentStep.path[i+1] === target) isHamiltonPathEdge = true;
+            if (graph.isDirected === false && currentStep.path[i] === target && currentStep.path[i+1] === source) isHamiltonPathEdge = true;
+        }
+    }
+
+
+    return isActive || isParent || isInF || isClassified || isEuler || isInMatching || isFFPath || isFFCutEdge || isLongPathEdge || isHamiltonPathEdge ? 3 : 1.5;
   };
 
   const showWeights = algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD || isMstAlgo || isFordFulkerson;
@@ -356,65 +530,209 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
             </g>
         )}
 
+        {/* Smallest Enclosing Disk - The Disk */}
+        {algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK && currentStep.sedDisk && (
+            <motion.circle
+                cx={currentStep.sedDisk.x}
+                cy={currentStep.sedDisk.y}
+                r={currentStep.sedDisk.r}
+                fill="rgba(14, 165, 233, 0.1)" // Sky-500 optimized opacity
+                stroke="#0ea5e9" // Sky-500
+                strokeWidth={2}
+                initial={{ opacity: 0 }}
+                animate={{ 
+                    cx: currentStep.sedDisk.x, 
+                    cy: currentStep.sedDisk.y, 
+                    r: currentStep.sedDisk.r, 
+                    opacity: 1 
+                }}
+                transition={{ duration: 0.5 }}
+            />
+        )}
+
+        {/* Jarvis Wrap Lines - Drawn before nodes */}
+        {(algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR) && (
+            <g>
+                {/* Local Repair: Sorted Path Lines (Background) */}
+                {algorithm === AlgorithmType.LOCAL_REPAIR && currentStep.localRepairSortedPath?.map((line, i) => {
+                     const start = graph.nodes.find(n => n.id === line.from);
+                     const end = graph.nodes.find(n => n.id === line.to);
+                     if (!start || !end) return null;
+                     return (
+                         <motion.line
+                             key={`sorted-line-${i}`}
+                             initial={{ opacity: 0 }}
+                             animate={{ opacity: 0.5 }}
+                             x1={start.x} y1={start.y}
+                             x2={end.x} y2={end.y}
+                             stroke="#94a3b8" // Slate-400
+                             strokeWidth={2}
+                             strokeDasharray="6,4"
+                         />
+                     );
+                })}
+
+                {/* Hull Lines */}
+                {currentStep.hullLines?.map((line, i) => {
+                     const start = graph.nodes.find(n => n.id === line.from);
+                     const end = graph.nodes.find(n => n.id === line.to);
+                     if (!start || !end) return null;
+                     return (
+                         <motion.line
+                             key={`hull-line-${i}`}
+                             x1={start.x} y1={start.y}
+                             x2={end.x} y2={end.y}
+                             stroke="#22c55e" strokeWidth={3}
+                             initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
+                         />
+                     );
+                })}
+                {/* Scan Line (Current -> Candidate or Current -> Checking) */}
+                {currentStep.scanLine && (
+                     (() => {
+                         const start = graph.nodes.find(n => n.id === currentStep.scanLine!.from);
+                         const end = graph.nodes.find(n => n.id === currentStep.scanLine!.to);
+                         if (!start || !end) return null;
+                         return (
+                             <motion.line
+                                 x1={start.x} y1={start.y}
+                                 x2={end.x} y2={end.y}
+                                 stroke="#eab308" strokeWidth={2} strokeDasharray="5,5" // Dashed Yellow
+                                 animate={{ x2: end.x, y2: end.y }}
+                             />
+                         );
+                     })()
+                )}
+            </g>
+        )}
+
+
         {/* Edges as Quadratic Bezier Curves */}
         <g>
           {graph.edges.map((edge, i) => {
             const start = graph.nodes.find(n => n.id === edge.source)!;
             const end = graph.nodes.find(n => n.id === edge.target)!;
-            const color = getEdgeColor(edge.source, edge.target);
+            const color = getEdgeColor(edge.source, edge.target, edge.id);
             const strokeWidth = getEdgeStrokeWidth(edge.source, edge.target);
             
             // Check for reverse edge to increase curve curvature (only relevant for directed)
             const hasReverse = graph.isDirected !== false && graph.edges.some(e => e.source === edge.target && e.target === edge.source);
             
-            // Calculate control point for quadratic bezier (start -> control -> end)
+            // Bezier Control Point Logic
             // Midpoint
             const midX = (start.x + end.x) / 2;
             const midY = (start.y + end.y) / 2;
             
-            // Vector from start to end
-            const dx = end.x - start.x;
-            const dy = end.y - start.y;
-            const len = Math.hypot(dx, dy);
-            
-            // Normal vector (rotated 90 degrees)
-            const nx = -dy / len;
-            const ny = dx / len;
+            // Perpendicular Vector (dy, -dx)
+            const deltaX = end.x - start.x;
+            const deltaY = end.y - start.y;
+            const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
             
             // Offset amount
-            let baseOffset = hasReverse ? 70 : 50;
-            if (algorithm === AlgorithmType.HOPCROFT_KARP || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING || algorithm === AlgorithmType.FORD_FULKERSON) {
-              baseOffset = 0; // Straight lines
+            let offset = 0;
+            if (graph.isDirected !== false && hasReverse) offset = 20; // Separates two directions
+
+            // Curved Edges (Random 50/50 but stable)
+            if (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.LONG_PATH || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.BFS || algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD || algorithm === AlgorithmType.BORUVKA || algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.PRIM) {
+                // Deterministic random based on edge IDs to strictly avoid jitter on re-render
+                // Simple hash of source + target
+                const sum = (edge.source + edge.target).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                offset = (sum % 2 === 0) ? 25 : -25;
             }
-            const offset = Math.min(baseOffset, len * 0.25);
             
-            // Control point coordinates
-            const cpX = midX + nx * offset;
-            const cpY = midY + ny * offset;
+            // MIN EDGE CUT MULTI-EDGE HANDLING
+            if (algorithm === AlgorithmType.MINIMUM_EDGE_CUT && multiEdgeInfo) {
+                const info = multiEdgeInfo.get(i);
+                if (info && info.total > 1) {
+                    // Spread curves
+                    // If 2 edges: -20, +20
+                    // If 3 edges: -30, 0, +30
+                    const spacing = 40;
+                    offset = (info.index - (info.total - 1) / 2) * spacing;
 
-            // Path definition
-            const pathD = `M ${start.x} ${start.y} Q ${cpX} ${cpY} ${end.x} ${end.y}`;
+                    if (edge.source > edge.target) {
+                        offset = -offset;
+                    }
+                }
+            }
 
-            // Calculate Label Position (Shifted to t=0.7 to avoid arrow overlap)
-            const labelT = 0.7;
-            const labelX = getPointOnBezier(labelT, start.x, cpX, end.x);
-            const labelY = getPointOnBezier(labelT, start.y, cpY, end.y);
-
-            // Arrow Placement
-            const arrowT = 0.5;
-            const arrowX = getPointOnBezier(arrowT, start.x, cpX, end.x);
-            const arrowY = getPointOnBezier(arrowT, start.y, cpY, end.y);
+            const perpX = -deltaY / (dist || 1); // Normalize
+            const perpY = deltaX / (dist || 1);
             
-            const arrowAngle = Math.atan2(end.y - start.y, end.x - start.x) * (180 / Math.PI);
+            const cx = midX + perpX * offset;
+            const cy = midY + perpY * offset;
+            
+            const pathD = `M ${start.x} ${start.y} Q ${cx} ${cy} ${end.x} ${end.y}`;
+            
+            // Label Position (t=0.5 for Q Bezier)
+            // B(t) = (1-t)^2 P0 + 2(1-t)t P1 + t^2 P2
+            const labelX = 0.25 * start.x + 0.5 * cx + 0.25 * end.x;
+            const labelY = 0.25 * start.y + 0.5 * cy + 0.25 * end.y;
+            
+            // For arrows: calculate angle at end? 
+            // Derivative B'(t) = 2(1-t)(P1-P0) + 2t(P2-P1)
+            // At t=1: 2(P2-P1). Vector from Control to End.
+            const arrowVectorX = end.x - cx;
+            const arrowVectorY = end.y - cy;
+            let arrowAngle = Math.atan2(arrowVectorY, arrowVectorX) * 180 / Math.PI;
+            
+            // Adjust arrow position slightly back from node radius
+            // Node radius ~ 18.
+            const arrDist = Math.sqrt(arrowVectorX * arrowVectorX + arrowVectorY * arrowVectorY);
+            // Move back by node radius
+            
+            // We want arrow tip at node surface.
+            // B(t) closest to node surface? 
+            // Simple approx: standard arrow placement logic usually works if straight line.
+            // For bezier, we might need accurate t. 
+            // For now, simple vector subtract from end point is decent.
+            let arrowX = end.x - (end.x - cx) / (arrDist || 1) * NODE_RADIUS;
+            let arrowY = end.y - (end.y - cy) / (arrDist || 1) * NODE_RADIUS;
+            
+            // Middle Arrow Logic for Directed Algorithms
+            const isMidArrowAlgo = [AlgorithmType.DFS, AlgorithmType.BFS, AlgorithmType.DIJKSTRA, AlgorithmType.BELLMAN_FORD, AlgorithmType.TARJAN, AlgorithmType.EULER, AlgorithmType.FORD_FULKERSON].includes(algorithm);
+            if (isMidArrowAlgo) {
+                 const hasLabel = showWeights || isFordFulkerson; 
+                 // If label exists (weights/flow), move to t=0.65 to avoid overlap. Else t=0.5 (perfect middle).
+                 const t = hasLabel ? 0.65 : 0.5;
 
-            // TARJAN DIRECTION LOGIC
-            const tNormalClass = currentStep.edgeClassifications?.[`${edge.source}-${edge.target}`];
-            const tRevClass = currentStep.edgeClassifications?.[`${edge.target}-${edge.source}`];
-            const tNormalParent = currentStep.parents[edge.target] === edge.source; 
-            const tRevParent = currentStep.parents[edge.source] === edge.target;
+                 const oneMinusT = 1 - t;
+                 const tSq = t * t;
 
+                 // Bezier Point B(t)
+                 arrowX = oneMinusT * oneMinusT * start.x + 2 * oneMinusT * t * cx + tSq * end.x;
+                 arrowY = oneMinusT * oneMinusT * start.y + 2 * oneMinusT * t * cy + tSq * end.y;
+
+                 // Tangent B'(t)
+                 const tx = 2 * oneMinusT * (cx - start.x) + 2 * t * (end.x - cx);
+                 const ty = 2 * oneMinusT * (cy - start.y) + 2 * t * (end.y - cy);
+
+                 arrowAngle = Math.atan2(ty, tx) * 180 / Math.PI;
+            }
+            
+            // TARJAN LOGIC
             let showTarjanArrow = false;
             let tarjanReverse = false;
+            let tNormalClass, tRevClass, tNormalParent, tRevParent;
+
+            if (algorithm === AlgorithmType.TARJAN) {
+                tNormalClass = currentStep.edgeClassifications?.[`${edge.source}-${edge.target}`];
+                tRevClass = currentStep.edgeClassifications?.[`${edge.target}-${edge.source}`];
+                tNormalParent = currentStep.parents[edge.target] === edge.source;
+                tRevParent = currentStep.parents[edge.source] === edge.target;
+            } else if (algorithm === AlgorithmType.EULER) {
+                // Euler check logic similar...
+                tNormalClass = isInLoop(currentStep.eulerTour, edge.source, edge.target) || isInLoop(currentStep.eulerSubTour, edge.source, edge.target);
+                tRevClass = isInLoop(currentStep.eulerTour, edge.target, edge.source) || isInLoop(currentStep.eulerSubTour, edge.target, edge.source);
+            }
+
+            function isInLoop(tour: string[] | undefined, u: string, v: string) {
+                if (!tour) return false;
+                for(let k=0; k<tour.length-1; k++) {
+                    if(tour[k] === u && tour[k+1] === v) return true;
+                }
+                return false;
+            }
 
             // EULER DIRECTION LOGIC
             let showEulerArrow = false;
@@ -462,13 +780,12 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
             }
 
             return (
-              <g key={`${edge.source}-${edge.target}-${i}`}>
+              <g key={edge.id || `${edge.source}-${edge.target}-${i}`}>
                 {/* The Edge Line */}
                 <motion.path
                   initial={false}
-                  d={pathD}
-                  animate={{ stroke: color, strokeWidth: strokeWidth, opacity: opacity }}
-                  transition={{ duration: 0.3 }}
+                  animate={{ d: pathD, stroke: color, strokeWidth: strokeWidth, opacity: opacity }}
+                  transition={{ duration: 0.5 }}
                   fill="none"
                   strokeLinecap="round"
                 />
@@ -522,7 +839,11 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
             let badgeText = distLabel.toString();
             let showBadge = true;
             
-            if (algorithm === AlgorithmType.DFS) {
+            if (algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK) {
+                const w = currentStep.pointWeights?.[node.id] || 1;
+                badgeText = w.toString();
+                showBadge = w > 1;
+            } else if (algorithm === AlgorithmType.DFS) {
                // ... DFS logic
                const d = currentStep.discoveryTimes[node.id];
                const f = currentStep.finishTimes[node.id];
@@ -532,7 +853,9 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
                const d = currentStep.discoveryTimes[node.id];
                const low = currentStep.lowLinks?.[node.id];
                if (d) badgeText = `${d}/${low !== undefined ? low : '?'}`; else showBadge = false;
-            } else if (isMstAlgo || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING || isFordFulkerson) {
+            } else if (algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR) {
+                 showBadge = false;
+            } else if (isMstAlgo || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING || isFordFulkerson || algorithm === AlgorithmType.LONG_PATH || algorithm === AlgorithmType.HAMILTON_PATH || algorithm === AlgorithmType.MINIMUM_EDGE_CUT) {
                 showBadge = false;
             }
 
@@ -552,6 +875,8 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
                 <motion.circle
                   initial={false}
                   animate={{ 
+                    cx: node.x,
+                    cy: node.y,
                     fill: bgColor, 
                     stroke: (() => {
                       if (isNodeHighlightDisabled) return 'none';
@@ -560,44 +885,81 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph, currentStep, width, he
                         const isEndpoint = node.id === currentStep.activeEdge.source || node.id === currentStep.activeEdge.target;
                         return isEndpoint ? '#fff' : 'none';
                       }
+                      // Long Path Extended Nodes
+                      if (algorithm === AlgorithmType.LONG_PATH && currentStep.longPathExtendedPaths) {
+                          const isInExtendedPath = currentStep.longPathExtendedPaths.some(p => p.includes(node.id));
+                          if (isInExtendedPath) return '#a855f7'; // Purple border
+                      }
+                      
                       if (algorithm === AlgorithmType.HOPCROFT_KARP) {
                           const isMatched = currentStep.mstEdges?.some(e => e.source === node.id || e.target === node.id);
                           if (isMatched) return '#a855f7'; 
                       }
+                      
+                      if (algorithm === AlgorithmType.SMALLEST_LAST_COLORING && currentStep.minDegreeNode === node.id) {
+                          return '#eab308'; // Yellow-500 border
+                      }
+                      
+                      // Hamilton Path Stroke
+                      if (algorithm === AlgorithmType.HAMILTON_PATH && currentStep.path?.includes(node.id)) {
+                          // Exclude current node and neighbor which have their own fills/strokes usually?
+                          // But here we want the "purple border" for the path.
+                          // Current node is yellow fill, Neighbor is blue fill.
+                          // If we add purple stroke, it helps.
+                          return '#a855f7'; 
+                      }
+
                       return 'none';
                     })(),
                     strokeWidth: (() => {
+                      if (algorithm === AlgorithmType.LONG_PATH && currentStep.longPathExtendedPaths) {
+                          const isInExtendedPath = currentStep.longPathExtendedPaths.some(p => p.includes(node.id));
+                          if (isInExtendedPath) return 3;
+                      }
                       if (algorithm === AlgorithmType.HOPCROFT_KARP) {
                           const isMatched = currentStep.mstEdges?.some(e => e.source === node.id || e.target === node.id);
                           const isActiveEndpoint = currentStep.activeEdge && (node.id === currentStep.activeEdge.source || node.id === currentStep.activeEdge.target);
                           if (isMatched && !isActiveEndpoint) return 4;
                       }
+                      if (algorithm === AlgorithmType.SMALLEST_LAST_COLORING && currentStep.minDegreeNode === node.id) {
+                          return 4; // Bolder border for min degree node
+                      }
+                      
+                      if (algorithm === AlgorithmType.HAMILTON_PATH && currentStep.path?.includes(node.id)) {
+                          return 3;
+                      }
+                      
                       return 2;
                     })()
                   }}
-                  cx={node.x}
-                  cy={node.y}
-                  r={NODE_RADIUS}
-                  className="transition-all duration-300"
+                  r={getNodeRadius(node)}
+                  transition={{ duration: 0.5 }}
                 />
-                <text
-                  x={node.x}
-                  y={node.y}
+                
+                {algorithm !== AlgorithmType.SMALLEST_ENCLOSING_DISK && (
+                <motion.text
+                  initial={false}
+                  animate={{ x: node.x, y: node.y }}
+                  transition={{ duration: 0.5 }}
                   dy=".35em"
                   textAnchor="middle"
                   className="text-xs font-bold fill-white pointer-events-none select-none"
                   style={{ fontSize: (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || isFordFulkerson) ? '10px' : '12px' }}
                 >
                   {node.label}
-                </text>
+                </motion.text>
+                )}
                 
                 {showBadge && (
-                  <g transform={`translate(${node.x + (algorithm === AlgorithmType.TARJAN ? 8 : 12)}, ${node.y - (algorithm === AlgorithmType.TARJAN ? 10 : 12)})`}>
+                  <motion.g 
+                    initial={false}
+                    animate={{ x: node.x + (algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK ? 6 : (algorithm === AlgorithmType.TARJAN ? 8 : 12)), y: node.y - (algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK ? 8 : (algorithm === AlgorithmType.TARJAN ? 10 : 12)) }}
+                  >
                     <rect x="0" y="-10" width={algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.TARJAN ? 34 : 24} height="14" rx="4" fill="#0f172a" stroke="#334155" strokeWidth="1" />
                     <text x={algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.TARJAN ? 17 : 12} y="-1" textAnchor="middle" className="text-[9px] fill-white font-mono">
                       {badgeText}
                     </text>
-                  </g>
+                  </motion.g>
                 )}
               </g>
             );

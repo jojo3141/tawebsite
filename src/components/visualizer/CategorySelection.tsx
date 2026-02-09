@@ -1,11 +1,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Share2, ArrowUpDown, Trees, Layers, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Share2, ArrowUpDown, Trees, Layers, ArrowRight, ArrowLeft, GitGraph, Scissors, Disc, Hexagon } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useCourse } from '@/context/CourseContext';
 
-export type CategoryType = 'GRAPH' | 'SORTING' | 'TREES' | 'DP' | 'TARJAN' | 'EULER' |'GREEDY_MATCHING' | 'HOPCROFT_KARP' | 'GRAPH_COLORING' | 'FORD_FULKERSON';
+export type CategoryType = 'GRAPH' | 'SORTING' | 'TREES' | 'DP' | 'TARJAN' | 'EULER' |'GREEDY_MATCHING' | 'HOPCROFT_KARP' | 'GRAPH_COLORING' | 'FORD_FULKERSON' | 'LONG_PATH' | 'HAMILTON_PATH' | 'MINIMUM_EDGE_CUT' | 'SMALLEST_ENCLOSING_DISK' | 'JARVIS_WRAP';
 
 interface CategorySelectionProps {
   onSelect: (category: CategoryType) => void;
@@ -98,11 +98,50 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
     },
     {
       id: 'FORD_FULKERSON',
-      name: 'Flow Algorithms',
+      name: 'Max Flow Algorithm',
       description: 'Ford-Fulkerson algorithm for Maximum Flow.',
       icon: Share2,
       color: 'text-teal-400',
       gradient: 'from-teal-500/20 to-emerald-500/20',
+    },
+    {
+      id: 'LONG_PATH',
+      name: 'Long Path',
+      description: 'Find a path of length k using randomized color coding.',
+      icon: Layers,      color: 'text-fuchsia-400',
+      gradient: 'from-fuchsia-500/20 to-pink-500/20',
+    },
+    {
+        id: 'HAMILTON_PATH',
+        name: 'Hamilton Cycle',
+        description: 'Find a Hamilton Cycle using Dynamic Programming.',
+        icon: GitGraph,
+        color: 'text-indigo-400',
+        gradient: 'from-indigo-500/20 to-violet-500/20',
+    },
+    {
+        id: 'MINIMUM_EDGE_CUT',
+        name: 'Minimum Edge Cut',
+        description: 'Find the minimum edge cut of a multigraph using a randomized algorithm.',
+        icon: Scissors,
+        color: 'text-pink-400',
+        gradient: 'from-pink-500/20 to-rose-500/20',
+    },
+    {
+        id: 'JARVIS_WRAP',
+        name: 'Convex Hull',
+        description: 'Compute the convex hull of a set of points.',
+        icon: Hexagon,
+        color: 'text-orange-400',
+        gradient: 'from-orange-500/20 to-amber-500/20',
+    },
+    {
+        id: 'SMALLEST_ENCLOSING_DISK',
+        name: 'Smallest Enclosing Disk',
+        description: 'Find the smallest enclosing disk of a set of points.',
+        icon: Disc,
+        color: 'text-sky-400',
+        gradient: 'from-sky-500/20 to-blue-500/20',
     }
   ];
 
@@ -162,7 +201,12 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
             </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 auto-rows-fr max-w-4xl mx-auto w-full">
+        <div className={clsx(
+            "grid gap-6 auto-rows-fr mx-auto w-full",
+            course === 'AD' 
+                ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-2 max-w-4xl" 
+                : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl" // A&W: 3 cols, wider container
+        )}>
             {categories.map((category, index) => {
                 let initialPos = {};
                 if (course === 'AD') {
@@ -189,24 +233,33 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
                         }}
                         onClick={() => onSelect(category.id)}
                         className={clsx(
-                            "group relative flex flex-col p-8 rounded-3xl border border-slate-800 text-left transition-colors duration-300 hover:border-slate-600 hover:shadow-2xl overflow-hidden bg-slate-900/40 backdrop-blur-sm",
-                            // Center single item if needed, but grid handles it reasonably well usually. 
-                            course === 'AW' && "col-span-full md:col-span-2 lg:col-span-2 max-w-lg mx-auto w-full" 
+                            "group relative flex flex-col rounded-3xl border border-slate-800 text-left transition-colors duration-300 hover:border-slate-600 hover:shadow-2xl overflow-hidden bg-slate-900/40 backdrop-blur-sm",
+                            course === 'AD' ? "p-8" : "p-5" // Smaller padding for A&W
                         )}
                     >
                         <div className={clsx("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500", category.gradient)} />
                         
                         <div className="relative z-10 flex flex-col gap-4 h-full">
-                            <div className={clsx("w-14 h-14 rounded-2xl flex items-center justify-center bg-slate-800/80 group-hover:bg-slate-800/50 transition-colors border border-slate-700 group-hover:border-slate-600", category.color)}>
-                                <category.icon size={28} />
+                            <div className={clsx(
+                                "flex items-center justify-center bg-slate-800/80 group-hover:bg-slate-800/50 transition-colors border border-slate-700 group-hover:border-slate-600",
+                                category.color,
+                                course === 'AD' ? "w-14 h-14 rounded-2xl" : "w-10 h-10 rounded-xl" // Smaller icon box for A&W
+                            )}>
+                                <category.icon size={course === 'AD' ? 28 : 20} />
                             </div>
                             
                             <div className="flex flex-col gap-2 mt-auto">
-                                <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                                <h3 className={clsx(
+                                    "font-bold text-white flex items-center gap-2",
+                                    course === 'AD' ? "text-2xl" : "text-lg" // Smaller title for A&W
+                                )}>
                                     {category.name}
-                                    <ArrowRight size={20} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 text-slate-400" />
+                                    <ArrowRight size={course === 'AD' ? 20 : 16} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 text-slate-400" />
                                 </h3>
-                                <p className="text-slate-400 text-sm font-medium leading-relaxed">
+                                <p className={clsx(
+                                    "text-slate-400 font-medium leading-relaxed",
+                                    course === 'AD' ? "text-sm" : "text-xs" // Smaller description for A&W
+                                )}>
                                     {category.description}
                                 </p>
                             </div>

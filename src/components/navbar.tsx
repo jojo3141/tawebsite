@@ -5,17 +5,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
   
 import { clsx } from "clsx";
+import { FlaskConical } from "lucide-react";
 import { useCourse } from "@/context/CourseContext";
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { course, setCourse } = useCourse();
-  
-  const navItems = [
-    { name: "Algorithm Lab", href: "/algorithms" },
-    { name: "Contact & Questions", href: "/contact" },
-  ];
   
   const isAlgorithms = pathname === "/algorithms";
 
@@ -70,20 +66,30 @@ export default function Navbar() {
 
           {/* Right Side: Navigation Items */}
           <div className="flex items-center gap-4 relative">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
+            {/* Contact Link */}
+            <Link
+                href="/contact"
                 className={clsx(
-                    "relative font-medium px-3 py-2 transition-colors",
-                    pathname === item.href 
+                    "relative font-medium px-3 py-2 transition-colors duration-200",
+                    pathname === "/contact" 
                         ? "text-purple-700" 
-                        : "text-gray-700 hover:text-purple-600"
+                        : "text-gray-600 hover:text-purple-600"
                 )}
-              >
-                {item.name}
-              </Link>
-            ))}
+            >
+                Contact & Questions
+            </Link>
+
+            {/* Algorithm Lab CTA */}
+            <Link
+                href="/algorithms"
+                className="group relative inline-flex items-center justify-center"
+            >
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg blur opacity-30 group-hover:opacity-100 transition duration-200"></div>
+                <div className="relative inline-flex items-center gap-2 px-5 py-2.5 bg-slate-950 rounded-lg text-white font-bold text-sm tracking-wide transition-all duration-200 group-hover:bg-slate-900 group-hover:scale-[1.02]">
+                    <FlaskConical className="w-4 h-4 text-purple-400 group-hover:text-purple-300 transition-colors" />
+                    <span>Algorithm Lab</span>
+                </div>
+            </Link>
           </div>
         </div>
       </div>

@@ -11,6 +11,7 @@ export interface Edge {
   weight: number;
   capacity?: number;
   flow?: number;
+  id?: string;
 }
 
 export interface Graph {
@@ -35,6 +36,12 @@ export enum AlgorithmType {
   GREEDY_COLORING = 'GREEDY_COLORING',
   SMALLEST_LAST_COLORING = 'SMALLEST_LAST_COLORING',
   FORD_FULKERSON = 'FORD_FULKERSON',
+  LONG_PATH = 'LONG_PATH',
+  HAMILTON_PATH = 'HAMILTON_PATH',
+  MINIMUM_EDGE_CUT = 'MINIMUM_EDGE_CUT',
+  SMALLEST_ENCLOSING_DISK = 'SMALLEST_ENCLOSING_DISK',
+  JARVIS_WRAP = 'JARVIS_WRAP',
+  LOCAL_REPAIR = 'LOCAL_REPAIR',
 }
 
 export enum EdgeType {
@@ -51,8 +58,9 @@ export interface PriorityQueueItem {
 
 export interface AlgorithmStep {
   stepId: number;
-  lineNumber: number; // Corresponds to pseudocode line
+  lineNumber: number | number[]; // Corresponds to pseudocode line
   description: string;
+  autoAdvance?: boolean;
 
   // Snapshot of data
   distances: Record<string, number>; // d[v] for Dijkstra/BFS
@@ -95,7 +103,7 @@ export interface AlgorithmStep {
   // Highlight state
   currentNodeId: string | null; // u
   currentNeighborId: string | null; // v
-  activeEdge: { source: string; target: string } | null;
+  activeEdge: { source: string, target: string, id?: string } | null;
   nodeColors?: Record<string, number>; // Maps nodeId to Color Index (1, 2, 3...)
 
   // Ford-Fulkerson Specific
@@ -105,7 +113,117 @@ export interface AlgorithmStep {
   edgeFlows?: Record<string, number>; // Map "source-target" -> current flow
   totalFlow?: number; // Current total flow value
   minCutSetS?: string[]; // S set from min-cut at the end (for S-T cut visualization)
+
+  // Long Path Specific
+  longPathIteration?: number; // 1 or 2
+  longPathLength?: number; // i (0 to 4)
+  longPathDP?: Record<string, string[]>; // Map nodeId -> list of color sets (as strings like "{1,2}")
+  longPathDPPrev?: Record<string, string[]>; // Previous iteration sets (P_{i-1})
+  longPathContributingSets?: Record<string, string[]>; // Map nodeId -> list of contributing sets from previous iteration
+  longPathExtendedPaths?: string[][]; // List of paths (node IDs) that were extended in this step
+
+  // Smallest Last Coloring Specific
+  // Smallest Last Coloring Specific
+  minDegreeNode?: string; // Node selected as having minimum degree
+
+  // Hamilton Path Specific
+  hamiltonPathSubsetSize?: number; // s
+  hamiltonPathDP?: Record<string, string[]>; // Map nodeId -> list of sets (S) e.g. "{1,2}"
+  hamiltonPathDPPrev?: Record<string, string[]>; // Previous size sets
+  hamiltonPathActiveSets?: Record<string, string[]>; // Sets to highlight (current S)
+  hamiltonPathPrevActiveSets?: Record<string, string[]>; // Previous sets to highlight (prev S\x)
+
+  // Smallest Enclosing Disk Specific
+  sedDisk?: { x: number, y: number, r: number } | null;
+  sedSampleQ?: string[];
+  sedOutliers?: string[];
+  pointWeights?: Record<string, number>;
+
+  // Convex Hull Specific
+  hull?: string[]; // IDs of points in hull
+  currentPoint?: string; // p_now
+  nextPointCandidate?: string; // q_next
+  checkingPoint?: string; // p
+  hullLines?: { from: string, to: string }[];
+  scanLine?: { from: string, to: string }; // The line being checked (q -> p) or (q -> q_next)
+  localRepairSortedPath?: { from: string, to: string }[]; // Connects sorted points P1 -> P2 -> ... -> Pn
+
+  // Minimum Edge Cut Specific
+  minCutGraphState?: { nodes: Node[], edges: Edge[] }; // Snapshot of the graph structure (for contraction)
+  minCutIteration?: number; // Current iteration (1 to 3)
+  minCutVal?: number; // Current min cut value found
+  overallMinCutVal?: number; // Overall min cut value so far
+  contractedNodeA?: string; // Node being kept (or merged into)
+  contractedNodeB?: string; // Node being removed
 }
+
+export const PSEUDOCODE_MIN_EDGE_CUT = [
+  { line: 0, text: "min_cut ← ∞", indent: 0 },
+  { line: 1, text: "repeat 3 times:  //repeat more often for higher probability", indent: 0 },
+  { line: 2, text: "G' ← G", indent: 2 },
+  { line: 3, text: "while |V| > 2 do", indent: 2 },
+  { line: 4, text: "e ← uniformly random edge", indent: 4 },
+  { line: 5, text: "contract e", indent: 4 },
+  { line: 6, text: "cut ← count edges in G'", indent: 2 },
+  { line: 7, text: "min_cut ← min(min_cut, cut)", indent: 2 },
+  { line: 8, text: "return min_cut", indent: 0 },
+];
+
+export const PSEUDOCODE_SMALLEST_ENCLOSING_DISK = [
+  { line: 1, text: "P' ← P", indent: 0 },
+  { line: 2, text: "while true do", indent: 0 },
+  { line: 3, text: "choose Q ⊆ P' with |Q| = 11 uniformly at random", indent: 2 },
+  { line: 4, text: "determine C(Q)", indent: 2 },
+  { line: 5, text: "if P ⊆ C(Q) then return C(Q)", indent: 2 },
+  { line: 6, text: "else double all points of P' that are outside C(Q)", indent: 2 },
+];
+
+export const PSEUDOCODE_JARVIS_WRAP = [
+  { line: 1, text: "JARVIS_WRAP(P):", indent: 0, bold: true },
+  { line: 2, text: "h ← 0", indent: 2 },
+  { line: 3, text: "p_now ← Point in P with smallest x-coordinate", indent: 2 },
+  { line: 4, text: "repeat", indent: 2 },
+  { line: 5, text: "q_h ← p_now", indent: 4 },
+  { line: 6, text: "p_now ← FIND_NEXT(q_h)", indent: 4 },
+  { line: 7, text: "h ← h + 1", indent: 4 },
+  { line: 8, text: "until p_now = q_0", indent: 2 },
+  { line: 9, text: "return (q_0, q_1, ..., q_{h-1})", indent: 2 },
+  { line: 10, text: "", indent: 0 },
+  { line: 11, text: "FIND_NEXT(q):", indent: 0, bold: true },
+  { line: 12, text: "Choose p_0 ∈ P \\ {q} arbitrarily", indent: 2 },
+  { line: 13, text: "q_next ← p_0", indent: 2 },
+  { line: 14, text: "for all p ∈ P \\ {q, p_0} do", indent: 2 },
+  { line: 15, text: "if p is right of q -> q_next then q_next ← p", indent: 4 },
+  { line: 16, text: "return q_next", indent: 2 },
+];
+
+export const PSEUDOCODE_LOCAL_REPAIR = [
+  { line: 1, text: "q_0 ← p_1", indent: 0 },
+  { line: 2, text: "h ← 0", indent: 0 },
+  { line: 3, text: "for i ← 2 to n do", indent: 0 },
+  { line: 4, text: "while h > 0 and q_h left of q_{h-1}p_i do", indent: 2 },
+  { line: 5, text: "h ← h - 1", indent: 4 },
+  { line: 6, text: "h ← h + 1", indent: 2 },
+  { line: 7, text: "q_h ← p_i", indent: 2 },
+  { line: 8, text: "h' ← h", indent: 0 },
+  { line: 9, text: "for i ← n - 1 downto 1 do", indent: 0 },
+  { line: 10, text: "while h > h' and q_h left of q_{h-1}p_i do", indent: 2 },
+  { line: 11, text: "h ← h - 1", indent: 4 },
+  { line: 12, text: "h ← h + 1", indent: 2 },
+  { line: 13, text: "q_h ← p_i", indent: 2 },
+  { line: 14, text: "return (q_0, q_1, ..., q_{h-1})", indent: 0 }
+];
+
+export const PSEUDOCODE_HAMILTON_PATH = [
+  { line: 0, text: "for all S with |S| = 2 do", indent: 0 },
+  { line: 1, text: "P[S,x] = true if S = {1,x} and {1,x} ∈ E", indent: 2 },
+  { line: 2, text: "for all s = 3 to n do", indent: 0 },
+  { line: 3, text: "for all S ⊆ [n] with 1 ∈ S and |S| = s do", indent: 2 },
+  { line: 4, text: "for all x ∈ S, x ≠ 1 do", indent: 4 },
+  { line: 5, text: "P[S,x] = ∃x'∈ (S ∩ N(x)) such that x'≠ 1 and P[S\\{x}, x']", indent: 6 },
+  { line: 6, text: "if P[[n],x] for some x ∈ N(1) then return true", indent: 0 },
+  { line: 7, text: "else return false", indent: 0 },
+];
 
 export const PSEUDOCODE_DIJKSTRA = [
   { line: 1, text: "for each v ∈ V\\{s} do", indent: 0 },
@@ -367,6 +485,19 @@ export const PSEUDOCODE_FORD_FULKERSON = [
   { line: 7, text: "else", indent: 4 },
   { line: 8, text: "f(u, v) ← f(u, v) - ε", indent: 6 },
   { line: 9, text: "S ← {v ∈ V | exists s-v path in residual network}; T ← V \\ S", indent: 0 },
+];
+
+export const PSEUDOCODE_LONG_PATH = [
+  { line: 1, text: "for iteration = 1 to 2 do  //repeat more often for higher probability", indent: 0 },
+  { line: 2, text: "Color graph randomly with k=5 colors", indent: 2 },
+  { line: 3, text: "for all v ∈ V do P₀(v) ← {{γ(v)}}", indent: 2 },
+  { line: 4, text: "for i = 1 to k-1 do", indent: 2 },
+  { line: 5, text: "for all v ∈ V do", indent: 4 },
+  { line: 6, text: "Pᵢ(v) ← ∅", indent: 6 },
+  { line: 7, text: "for all x ∈ N(v) do", indent: 6 },
+  { line: 8, text: "for all R ∈ Pᵢ₋₁(x) mit γ(v) ∉ R do", indent: 8 },
+  { line: 9, text: "Pᵢ(v) ← Pᵢ(v) ∪ {R ∪ {γ(v)}}", indent: 10 },
+  { line: 10, text: "if ∃v, P₄(v) ≠ ∅ return Path", indent: 2 },
 ];
 
 

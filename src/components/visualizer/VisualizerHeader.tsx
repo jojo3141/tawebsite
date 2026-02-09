@@ -5,7 +5,7 @@ import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
 
-export type VisualizerMode = 'GRAPH' | 'SORTING' | 'DP' | 'TREES' | 'TARJAN' | 'EULER' | 'GREEDY_MATCHING' | 'HOPCROFT_KARP' | 'GRAPH_COLORING' | 'FORD_FULKERSON';
+export type VisualizerMode = 'GRAPH' | 'SORTING' | 'DP' | 'TREES' | 'TARJAN' | 'EULER' | 'GREEDY_MATCHING' | 'HOPCROFT_KARP' | 'GRAPH_COLORING' | 'FORD_FULKERSON' | 'LONG_PATH' | 'HAMILTON_PATH' | 'MINIMUM_EDGE_CUT' | 'SMALLEST_ENCLOSING_DISK' | 'JARVIS_WRAP';
 
 interface VisualizerHeaderProps {
   mode: VisualizerMode;
@@ -75,7 +75,7 @@ const VisualizerHeader: React.FC<VisualizerHeaderProps> = ({
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                       />
                     )}
-                    {algo === 'EULER' ? 'EULER TOUR' : algo === 'GREEDY_MATCHING' ? 'GREEDY MATCHING' : algo === 'HOPCROFT_KARP' ? 'HOPCROFT-KARP' : algo.replace(/_/g, ' ')}
+                    {algo === 'EULER' ? 'EULER TOUR' : algo === 'GREEDY_MATCHING' ? 'GREEDY MATCHING' : algo === 'HOPCROFT_KARP' ? 'HOPCROFT-KARP' : algo === 'HAMILTON_PATH' ? 'HAMILTON CYCLE' : algo.replace(/_/g, ' ')}
                 </button>
               );
             })}
@@ -118,7 +118,7 @@ const VisualizerHeader: React.FC<VisualizerHeaderProps> = ({
                   className="flex items-center gap-2 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-700 whitespace-nowrap"
                >
                  <RotateCcw size={16} /> 
-                 {['GRAPH', 'TARJAN', 'EULER', 'GREEDY_MATCHING', 'HOPCROFT_KARP', 'GRAPH_COLORING', 'FORD_FULKERSON'].includes(mode) ? 'New Graph' : 'New Data'}
+                  {['GRAPH', 'TARJAN', 'EULER', 'GREEDY_MATCHING', 'HOPCROFT_KARP', 'GRAPH_COLORING', 'FORD_FULKERSON', 'LONG_PATH', 'HAMILTON_PATH', 'MINIMUM_EDGE_CUT'].includes(mode) ? 'New Graph' : 'New Data'}
                </button>
            )}
       </div>
