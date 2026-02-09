@@ -250,6 +250,7 @@ const VisualizerApp: React.FC = () => {
           />
         </motion.div>
       )}
+
       {mode === 'SMALLEST_ENCLOSING_DISK' && (
         <motion.div 
           key="smallest_enclosing_disk"
@@ -281,6 +282,23 @@ const VisualizerApp: React.FC = () => {
              onBack={handleBack}
              initialAlgorithm={AlgorithmType.JARVIS_WRAP}
              availableAlgorithms={[AlgorithmType.JARVIS_WRAP, AlgorithmType.LOCAL_REPAIR]}
+          />
+        </motion.div>
+      )}
+      {mode === 'FINDING_DUPLICATES_HASH' && (
+        <motion.div 
+          key="finding_duplicates_hash"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <GraphMode 
+             mode={mode} 
+             setMode={(m) => setMode(m)} 
+             onBack={handleBack}
+             initialAlgorithm={AlgorithmType.FINDING_DUPLICATES_HASH}
+             availableAlgorithms={[AlgorithmType.FINDING_DUPLICATES_HASH, AlgorithmType.BLOOM_FILTER]}
           />
         </motion.div>
       )}

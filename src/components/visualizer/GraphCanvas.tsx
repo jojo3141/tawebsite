@@ -20,7 +20,223 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
       : initialGraph;
   }, [algorithm, currentStep.minCutGraphState, initialGraph]);
 
-  // Constants for styling
+  // SPECIAL RENDERER: FINDING DUPLICATES
+  if (algorithm === AlgorithmType.FINDING_DUPLICATES_HASH) {
+    const dataset = currentStep.findingDuplicatesDataset || [];
+    const tuples = currentStep.findingDuplicatesTuples || [];
+    const activeIndex = currentStep.findingDuplicatesActiveIndex ?? -1;
+    const compareIndices = currentStep.findingDuplicatesCompareIndices;
+    const duplicates = currentStep.processedSet || [];
+
+    return (
+      <div 
+        className="w-full p-6 flex flex-col gap-8 overflow-y-auto"
+        style={{ height }}
+      >
+        {/* Dataset View */}
+        <div>
+           <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider">Dataset D</h3>
+           <div className="flex gap-2 overflow-x-auto pb-2 pt-2 px-2">
+              {dataset.map((s, i) => {
+                 const isDuplicate = duplicates.includes(i.toString());
+                 const isActive = activeIndex === i;
+                 // Highlight if this specific index is involved in a comparison AND we are at the string comparison step (Line 7)
+                 const isBeingCompared = compareIndices && currentStep.lineNumber === 7 && (currentStep.findingDuplicatesTuples?.[compareIndices[0]]?.originalIndex === i || currentStep.findingDuplicatesTuples?.[compareIndices[1]]?.originalIndex === i);
+                 
+                 return (
+                   <div 
+                      key={i} 
+                      className={`relative p-1 pt-3 rounded-md border flex flex-col items-center shadow-sm transition-all duration-300 min-w-[2.5rem] shrink-0
+                        ${isDuplicate ? 'bg-emerald-500/20 border-emerald-500 text-emerald-200' : 
+                          isActive ? 'bg-indigo-500/30 border-indigo-400 text-indigo-100 scale-105' :
+                          isBeingCompared ? 'bg-yellow-500/20 border-yellow-500 text-yellow-200' :
+                          'bg-slate-800 border-slate-700 text-slate-300'}
+                      `}
+                   >
+                      <span className="text-[9px] absolute top-0.5 left-1 text-slate-500 font-mono leading-none">{i}</span>
+                      <span className="text-xs font-bold font-mono tracking-wider">{s}</span>
+                   </div>
+                 );
+              })}
+           </div>
+        </div>
+
+        {/* Tuples View (L) */}
+        <div className="flex-1 flex flex-col">
+            <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider flex justify-between">
+                <span>List L: (Hash, Index)</span>
+            </h3>
+            
+            {tuples.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center text-slate-600 italic">
+                    List L is empty
+                </div>
+            ) : (
+                <div className="flex flex-wrap gap-1 content-start">
+                    {tuples.map((t, idx) => {
+                        // Check if this tuple is being compared
+                        const isComparing = compareIndices && (compareIndices.includes(idx));
+                        const isActive = activeIndex === t.originalIndex; // Only true during creation phase really
+                        // Check if this tuple represents a found duplicate
+                        const isConfirmedDuplicate = duplicates.includes(t.originalIndex.toString());
+
+                        return (
+                            <motion.div 
+                                layout
+                                key={`${t.originalIndex}-${t.hash}`} // Key stability important for sort animation
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className={`
+                                    flex items-center gap-0 px-1 py-1 rounded border font-mono text-xs min-w-[40px] justify-center transition-colors duration-300
+                                    ${isComparing ? 'bg-yellow-500/20 border-yellow-500 text-yellow-100 ring-1 ring-yellow-500/50' : 
+                                      isConfirmedDuplicate ? 'bg-emerald-500/20 border-emerald-500 text-emerald-200' :
+                                      isActive ? 'bg-indigo-500/30 border-indigo-400 text-white' : 
+                                      'bg-slate-800 border-slate-700 text-slate-300'}
+                                `}
+                            >
+                                <span className="text-slate-400">(</span>
+                                <span className="font-bold text-sky-400">{t.hash}</span>
+                                <span className="text-slate-400">,</span>
+                                <span className="text-slate-400 ml-0.5">{t.originalIndex}</span>
+                                <span className="text-slate-400">)</span>
+                            </motion.div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+      </div>
+    );
+  }
+
+  // SPECIAL RENDERER: BLOOM FILTER
+  if (algorithm === AlgorithmType.BLOOM_FILTER) {
+    const dataset = currentStep.findingDuplicatesDataset || [];
+    const bitVector = currentStep.bloomFilterBitVector || new Array(16).fill(0);
+    const potentialDuplicates = currentStep.bloomFilterPotentialDuplicates || [];
+    const activeHashes = currentStep.bloomFilterActiveHashes || [];
+    const currentIndex = currentStep.bloomFilterCurrentElementIndex ?? -1;
+    const confirmedDuplicates = currentStep.processedSet || []; // IDs of real duplicates
+    // We need to track false positives too, but processedSet only stores confirmed ones?
+    // In my logic above, confirmedDuplicates are stored as indices in processedSet.
+    // That works. For false positives, we might need to infer or check description?
+    // Actually, let's just use the current step description or some state to know if we are verifying.
+    // Or simpler: Color them based on verification status if verification has happened.
+    // If we are at the end (L7+), we can deduce status.
+    // Simplified: If currentStep.lineNumber >= 7, we can check.
+    
+    // For visualization consistency, let's just reuse the dataset display logic partially.
+    
+    return (
+        <div 
+          className="w-full p-6 flex flex-col gap-6 overflow-y-auto"
+          style={{ height }}
+        >
+            {/* 1. Dataset D */}
+            <div>
+                <h3 className="text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Dataset D</h3>
+                <div className="flex gap-2 overflow-x-auto pb-2 pt-2 px-2">
+                    {dataset.map((s, i) => {
+                        const isActive = currentIndex === i;
+                        // Use confirmedDuplicates (indices) to mark real ones green? Or maybe mark them as "Processed"?
+                        // Let's mark the "Verified Real Duplicates" in the end.
+                        // User Request: Highlight ALL occurrences of a duplicate in green, not just the second one.
+                        // logic: Get the string values that are confirmed duplicates, then check if current s is one of them.
+                        const confirmedDuplicateValues = confirmedDuplicates.map(idx => dataset[parseInt(idx)]);
+                        const isConfirmedReal = confirmedDuplicateValues.includes(s);
+                        
+                        return (
+                            <div 
+                                key={i} 
+                                className={`relative p-1 pt-3 rounded-md border flex flex-col items-center shadow-sm transition-all duration-300 min-w-[2.5rem] shrink-0
+                                    ${isActive ? 'bg-indigo-500/30 border-indigo-400 text-indigo-100 scale-105 ring-2 ring-indigo-500/50' : 
+                                      isConfirmedReal ? 'bg-emerald-500/20 border-emerald-500 text-emerald-200' :
+                                      'bg-slate-800 border-slate-700 text-slate-300'}
+                                `}
+                            >
+                                <span className="text-[9px] absolute top-0.5 left-1 text-slate-500 font-mono leading-none">{i}</span>
+                                <span className="text-xs font-bold font-mono tracking-wider">{s}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* 2. Bit Vector M */}
+            <div>
+                <h3 className="text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider flex justify-between">
+                    <span>Bit Vector M</span>
+                </h3>
+                <div className="flex gap-1 overflow-x-auto pb-2 pt-2 px-2">
+                    {bitVector.map((bit, i) => {
+                        const isActiveHash = activeHashes.includes(i);
+                        // If it is 1, is it newly set?
+                        // We can't easily tell "newly set" without prev step, but activeHash + bit=1 usually implies it.
+                        
+                         return (
+                            <div 
+                                key={i}
+                                className={`
+                                    relative w-7 h-9 flex items-center justify-center rounded border transition-all duration-300
+                                    ${isActiveHash ? 'ring-2 ring-yellow-400 z-10 scale-110' : ''}
+                                    ${bit === 1 
+                                        ? (isActiveHash ? 'bg-yellow-500/40 border-yellow-400 text-yellow-100' : 'bg-blue-600/30 border-blue-500 text-blue-100') 
+                                        : 'bg-slate-800 border-slate-700 text-slate-500'}
+                                `}
+                            >
+                                <span className="text-[9px] absolute top-0.5 left-1 opacity-50 font-mono leading-none">{i}</span>
+                                <span className="text-sm font-bold font-mono">{bit}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* 3. List L (Potential Duplicates) */}
+             <div className="flex-1 flex flex-col">
+                <h3 className="text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">
+                    List L (Potential Duplicates)
+                </h3>
+                
+                {potentialDuplicates.length === 0 ? (
+                    <div className="flex-1 flex items-center justify-center text-slate-600 italic border border-dashed border-slate-800 rounded-lg h-24">
+                        List L is empty
+                    </div>
+                ) : (
+                    <div className="flex flex-wrap gap-2 content-start">
+                        {potentialDuplicates.map((s, idx) => {
+                            // Determine status if in verification phase
+                            // We need access to the original index of this potential duplicate to verify against processedSet.
+                            // The string 's' is not unique enough if we have identical strings.
+                            // We might need to store {string, originalIndex} in potentialDuplicates list too?
+                            // In my hashUtils implementation, I pushed just the string `s`.
+                            // Let's rely on the fact that we iterate consecutively.
+                            // But for visualization, it's better to verify correctly.
+                            // VISUAL TRICK: 
+                            // If we are at Step 8 (verification), let's check the description?
+                            // Or simpler: Just render them. The "Verified" boxes will appear in description.
+                            // Actually, I can check if this specific string (at this L-index) is confirmed.
+                            // But I don't have the original index mappings easily here without modifying state.
+                            // Let's just render the strings simply for now.
+                            
+                            return (
+                                <motion.div 
+                                    layout
+                                    key={`${idx}-${s}`}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="flex items-center justify-center px-3 py-1.5 rounded border border-slate-600 bg-slate-800 text-slate-200 font-mono text-xs min-w-[3rem]"
+                                >
+                                    {s}
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+  }
   const NODE_RADIUS = (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || algorithm === AlgorithmType.FORD_FULKERSON || algorithm === AlgorithmType.HAMILTON_PATH) ? 14 : 18;
   const showArrows = graph.isDirected !== false;
   const isMstAlgo = algorithm === AlgorithmType.PRIM || algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA;

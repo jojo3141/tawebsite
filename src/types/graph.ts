@@ -42,6 +42,8 @@ export enum AlgorithmType {
   SMALLEST_ENCLOSING_DISK = 'SMALLEST_ENCLOSING_DISK',
   JARVIS_WRAP = 'JARVIS_WRAP',
   LOCAL_REPAIR = 'LOCAL_REPAIR',
+  FINDING_DUPLICATES_HASH = 'FINDING_DUPLICATES_HASH',
+  BLOOM_FILTER = 'BLOOM_FILTER',
 }
 
 export enum EdgeType {
@@ -155,6 +157,18 @@ export interface AlgorithmStep {
   overallMinCutVal?: number; // Overall min cut value so far
   contractedNodeA?: string; // Node being kept (or merged into)
   contractedNodeB?: string; // Node being removed
+
+  findingDuplicatesDataset?: string[]; // The 12 strings
+  findingDuplicatesTuples?: { hash: number, originalIndex: number, originalString: string }[]; // The list of tuples
+  findingDuplicatesActiveIndex?: number; // Index in the tuple list being processed/highlighted
+  findingDuplicatesCompareIndices?: [number, number]; // Indices of tuples currently
+
+  // Bloom Filter Specific
+  bloomFilterBitVector?: (0 | 1)[]; // Array of 16 bits
+  bloomFilterPotentialDuplicates?: string[]; // List L
+  bloomFilterActiveHashes?: number[]; // [x1, x2, x3]
+  bloomFilterCurrentElementIndex?: number; // Index in dataset currently being processed
+  bloomFilterHashParams?: { a: number, b: number }[]; // Parameters for the 3 hash functions being compared
 }
 
 export const PSEUDOCODE_MIN_EDGE_CUT = [
@@ -400,6 +414,18 @@ export const PSEUDOCODE_TARJAN = [
   { line: 10, text: "low[u] ← min(low[u], low[v])", indent: 6 },
 ];
 
+export const PSEUDOCODE_BLOOM_FILTER = [
+  { line: 0, text: "M ← bit array (all zeros); h₁, h₂, h₃ ← random hash functions", indent: 0 },
+  { line: 1, text: "L ← empty list", indent: 0 },
+  { line: 2, text: "for each s in Dataset do", indent: 0 },
+  { line: 3, text: "x₁ ← h₁(s), x₂ ← h₂(s), x₃ ← h₃(s)", indent: 2 },
+  { line: 4, text: "if M[x₁]==1 and M[x₂]==1 and M[x₃]==1 then", indent: 2 },
+  { line: 5, text: "add s to L", indent: 4 },
+  { line: 6, text: "M[x₁] ← 1; M[x₂] ← 1; M[x₃] ← 1", indent: 2 },
+  { line: 7, text: "for each s in L do", indent: 0 },
+  { line: 8, text: "verify if s is a real duplicate", indent: 2 },
+];
+
 export const PSEUDOCODE_EULER = [
   { line: 1, text: "W ← RANDOMTOUR(v_start)", indent: 0 },
   { line: 2, text: "v_slow ← start node of W", indent: 0 },
@@ -498,6 +524,18 @@ export const PSEUDOCODE_LONG_PATH = [
   { line: 8, text: "for all R ∈ Pᵢ₋₁(x) mit γ(v) ∉ R do", indent: 8 },
   { line: 9, text: "Pᵢ(v) ← Pᵢ(v) ∪ {R ∪ {γ(v)}}", indent: 10 },
   { line: 10, text: "if ∃v, P₄(v) ≠ ∅ return Path", indent: 2 },
+];
+
+export const PSEUDOCODE_FINDING_DUPLICATES_HASH = [
+  { line: 0, text: "L ← empty list; h ← random hash function", indent: 0 },
+  { line: 1, text: "for each s in Dataset do", indent: 0 },
+  { line: 2, text: "h ← hash(s)", indent: 2 },
+  { line: 3, text: "add (h, index(s)) to L", indent: 2 },
+  { line: 4, text: "Sort L by hash value", indent: 0 },
+  { line: 5, text: "for k = 0 to |L|-2 do", indent: 0 },
+  { line: 6, text: "if L[k].hash == L[k+1].hash then", indent: 2 },
+  { line: 7, text: "if Dataset[L[k].index] == Dataset[L[k+1].index] then", indent: 4 },
+  { line: 8, text: "mark s as duplicate", indent: 6 },
 ];
 
 

@@ -5,7 +5,7 @@ import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
 
-export type VisualizerMode = 'GRAPH' | 'SORTING' | 'DP' | 'TREES' | 'TARJAN' | 'EULER' | 'GREEDY_MATCHING' | 'HOPCROFT_KARP' | 'GRAPH_COLORING' | 'FORD_FULKERSON' | 'LONG_PATH' | 'HAMILTON_PATH' | 'MINIMUM_EDGE_CUT' | 'SMALLEST_ENCLOSING_DISK' | 'JARVIS_WRAP';
+export type VisualizerMode = 'GRAPH' | 'SORTING' | 'DP' | 'TREES' | 'TARJAN' | 'EULER' | 'GREEDY_MATCHING' | 'HOPCROFT_KARP' | 'GRAPH_COLORING' | 'FORD_FULKERSON' | 'LONG_PATH' | 'HAMILTON_PATH' | 'MINIMUM_EDGE_CUT' | 'SMALLEST_ENCLOSING_DISK' | 'JARVIS_WRAP' | 'FINDING_DUPLICATES_HASH';
 
 interface VisualizerHeaderProps {
   mode: VisualizerMode;

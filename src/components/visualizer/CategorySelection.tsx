@@ -5,7 +5,7 @@ import { Share2, ArrowUpDown, Trees, Layers, ArrowRight, ArrowLeft, GitGraph, Sc
 import { clsx } from 'clsx';
 import { useCourse } from '@/context/CourseContext';
 
-export type CategoryType = 'GRAPH' | 'SORTING' | 'TREES' | 'DP' | 'TARJAN' | 'EULER' |'GREEDY_MATCHING' | 'HOPCROFT_KARP' | 'GRAPH_COLORING' | 'FORD_FULKERSON' | 'LONG_PATH' | 'HAMILTON_PATH' | 'MINIMUM_EDGE_CUT' | 'SMALLEST_ENCLOSING_DISK' | 'JARVIS_WRAP';
+export type CategoryType = 'GRAPH' | 'SORTING' | 'TREES' | 'DP' | 'TARJAN' | 'EULER' |'GREEDY_MATCHING' | 'HOPCROFT_KARP' | 'GRAPH_COLORING' | 'FORD_FULKERSON' | 'LONG_PATH' | 'HAMILTON_PATH' | 'MINIMUM_EDGE_CUT' | 'SMALLEST_ENCLOSING_DISK' | 'JARVIS_WRAP' | 'FINDING_DUPLICATES_HASH' | 'BLOOM_FILTER';
 
 interface CategorySelectionProps {
   onSelect: (category: CategoryType) => void;
@@ -142,6 +142,14 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
         icon: Disc,
         color: 'text-sky-400',
         gradient: 'from-sky-500/20 to-blue-500/20',
+    },
+    {
+        id: 'FINDING_DUPLICATES_HASH',
+        name: 'Finding Duplicates',
+        description: 'Find duplicates in a dataset using hashing.',
+        icon: Share2,
+        color: 'text-indigo-400',
+        gradient: 'from-indigo-500/20 to-violet-500/20',
     }
   ];
 
