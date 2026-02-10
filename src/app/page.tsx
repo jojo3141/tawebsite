@@ -34,9 +34,24 @@ export default function HomePage() {
               className="text-5xl md:text-7xl font-extrabold text-slate-900 tracking-tight mb-8 leading-[1.1]"
             >
               Welcome to <br className="hidden md:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-indigo-600 md:whitespace-nowrap">
+              <motion.span 
+                initial={{ backgroundPosition: '100% 50%' }}
+                animate={{ backgroundPosition: ['100% 50%', '0% 50%'] }}
+                transition={{
+                    backgroundPosition: {
+                        duration: 3.5,
+                        repeat: Infinity,
+                        ease: "linear"
+                    }
+                }}
+                style={{
+                    backgroundImage: 'linear-gradient(90deg, #8248deee, #3d35e4ff, #8248deee, #3d35e4ff, #8248deee)',
+                    backgroundSize: '200% auto',
+                }}
+                className="text-transparent bg-clip-text md:whitespace-nowrap"
+              >
                 {courseTitle}
-              </span>
+              </motion.span>
             </motion.h1>
 
 

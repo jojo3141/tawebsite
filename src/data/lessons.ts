@@ -101,15 +101,9 @@ export const lessonsAW: Lesson[] = [
   {
     week: 1,
     title: "Graphs Repetition",
-    description: "Summary of Graphs",
+    description: "Repeating Graph basics from A&D",
     pdf: "/lessons/AuW_FS26/week-1.pdf",
-  },
-  {
-    week: 2,
-    title: "Bridges and Articulation Points",
-    description: "Tarjan's Algorithm, Bridges, Articulation Points, Strongly Connected Components",
-    pdf: "/lessons/AuW_FS26/week-2.pdf",
-  },
+  }
 ];
 
 export const lessons: Record<Course, Lesson[]> = {

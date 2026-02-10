@@ -28,7 +28,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
       description: 'DFS, BFS, Dijkstra, MST, ect.',
       icon: Share2,
       color: 'text-indigo-400',
-      gradient: 'from-indigo-500/20 to-purple-500/20',
+      gradient: 'from-indigo-500/20 to-fuchsia-500/20',
     },
     {
       id: 'SORTING',
@@ -36,7 +36,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
       description: 'Bubble, Merge, Quick, Heap, ect.',
       icon: ArrowUpDown,
       color: 'text-emerald-400',
-      gradient: 'from-emerald-500/20 to-teal-500/20',
+      gradient: 'from-emerald-500/20 to-cyan-500/20',
     },
     {
       id: 'TREES',
@@ -44,7 +44,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
       description: '2-3 Trees, Binary Search Trees, Max-Heaps.',
       icon: Trees,
       color: 'text-amber-400',
-      gradient: 'from-amber-500/20 to-orange-500/20',
+      gradient: 'from-amber-500/20 to-red-500/20',
     },
     {
       id: 'DP',
@@ -52,7 +52,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
       description: 'Fibonacci, Max Subarray Sum, etc.',
       icon: Layers,
       color: 'text-rose-400',
-      gradient: 'from-rose-500/20 to-pink-500/20',
+      gradient: 'from-rose-500/20 to-violet-500/20',
     }
   ];
 
@@ -69,76 +69,76 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
       name: 'Tarjan',
       icon: GitGraph,
       color: 'text-pink-400',
-      gradient: 'from-pink-500/20 to-red-500/20',
+      gradient: 'from-pink-500/20 to-rose-600/20',
     },
     {
       id: 'EULER',
       name: 'Euler Tour',
       icon: RefreshCw,
-      color: 'text-cyan-400',
-      gradient: 'from-cyan-500/20 to-blue-500/20',
+      color: 'text-green-400',
+      gradient: 'from-green-500/20 to-indigo-500/20',
     },
     {
         id: 'HAMILTON_PATH',
         name: 'Hamilton Cycle',
         icon: VectorSquare,
         color: 'text-indigo-400',
-        gradient: 'from-indigo-500/20 to-violet-500/20',
+        gradient: 'from-indigo-500/20 to-pink-500/20',
     },
     {
       id: 'GREEDY_MATCHING',
       name: 'Matchings',
       icon: Users,
       color: 'text-yellow-400',
-      gradient: 'from-yellow-500/20 to-orange-500/20',
+      gradient: 'from-yellow-500/20 to-red-500/20',
     },
     {
       id: 'GRAPH_COLORING',
       name: 'Colorings',
       icon: Palette,
       color: 'text-orange-400',
-      gradient: 'from-orange-500/20 via-red-500/20 to-yellow-500/20',
+      gradient: 'from-orange-500/20 via-red-500/20 to-purple-600/20',
     },
     {
         id: 'FINDING_DUPLICATES_HASH',
         name: 'Duplicates',
         icon: Copy,
         color: 'text-indigo-400',
-        gradient: 'from-indigo-500/20 to-violet-500/20',
+        gradient: 'from-indigo-500/20 to-fuchsia-500/20',
     },
     {
       id: 'LONG_PATH',
       name: 'Long Path',
       icon: Waypoints,      color: 'text-fuchsia-400',
-      gradient: 'from-fuchsia-500/20 to-pink-500/20',
+      gradient: 'from-fuchsia-500/20 to-indigo-600/20',
     },
     {
       id: 'FORD_FULKERSON',
       name: 'Max Flow',
       icon: Waves,
       color: 'text-blue-400',
-      gradient: 'from-blue-500/20 to-emerald-500/20',
+      gradient: 'from-blue-500/20 to-teal-400/20',
     },
     {
         id: 'MINIMUM_EDGE_CUT',
         name: 'Minimum Edge Cut',
         icon: Scissors,
         color: 'text-pink-400',
-        gradient: 'from-pink-500/20 to-rose-500/20',
+        gradient: 'from-pink-500/20 to-indigo-500/20',
     },
     {
         id: 'SMALLEST_ENCLOSING_DISK',
         name: 'Smallest Enclosing Disk',
         icon: Disc,
         color: 'text-sky-400',
-        gradient: 'from-sky-500/20 to-blue-500/20',
+        gradient: 'from-sky-500/20 to-indigo-500/20',
     },
     {
         id: 'JARVIS_WRAP',
         name: 'Convex Hull',
         icon: Hexagon,
         color: 'text-orange-400',
-        gradient: 'from-orange-500/20 to-amber-500/20',
+        gradient: 'from-orange-500/20 to-yellow-600/20',
     }
   ];
 
@@ -161,9 +161,26 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
       <div className="max-w-6xl w-full z-10 flex flex-col gap-12">
         <div className="flex flex-col gap-8 items-center text-center">
              <motion.h1 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-4xl md:text-6xl pb-2 font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400"
+                initial={{ opacity: 0, y: -20, backgroundPosition: '0% 50%' }}
+                animate={{ 
+                    opacity: 1, 
+                    y: 0, 
+                    backgroundPosition: ['100% 50%', '0% 50%'] 
+                }}
+                transition={{
+                    opacity: { duration: 0.5 },
+                    y: { duration: 0.5 },
+                    backgroundPosition: {
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "linear"
+                    }
+                }}
+                style={{
+                    backgroundImage: 'linear-gradient(90deg, #7244ffff, #c084fc, #f472b6, #7244ffff, #c084fc, #f472b6, #7244ffff)',
+                    backgroundSize: '200% auto',
+                }}
+                className="text-4xl md:text-6xl pb-2 font-bold text-transparent bg-clip-text"
              >
                 Algorithm Lab
              </motion.h1>
@@ -261,7 +278,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
                                 damping: 20 
                             }}
                             onClick={() => onSelect(category.id)}
-                            className="group relative flex flex-col items-center justify-center rounded-2xl border border-slate-800/50 text-center transition-all duration-300 hover:border-slate-600 hover:shadow-lg hover:-translate-y-1 overflow-hidden bg-slate-900/30 backdrop-blur-sm p-6 gap-4"
+                            className="group relative flex flex-col items-center justify-center rounded-2xl border border-slate-600/50 text-center transition-all duration-300 hover:border-slate-600 hover:shadow-lg hover:-translate-y-1 overflow-hidden bg-slate-900/30 backdrop-blur-sm p-6 gap-4"
                         >
                             <div className={clsx("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500", category.gradient)} />
                             
@@ -274,7 +291,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
                                     <category.icon size={24} />
                                 </div>
                                 
-                                <h3 className="font-bold text-slate-200 group-hover:text-white text-base transition-colors">
+                                <h3 className="font-bold text-slate-200 group-hover:text-white text-[19px] transition-colors">
                                     {category.name}
                                 </h3>
                             </div>
