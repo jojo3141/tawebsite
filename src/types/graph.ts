@@ -44,6 +44,7 @@ export enum AlgorithmType {
   LOCAL_REPAIR = 'LOCAL_REPAIR',
   FINDING_DUPLICATES_HASH = 'FINDING_DUPLICATES_HASH',
   BLOOM_FILTER = 'BLOOM_FILTER',
+  FINDING_DUPLICATES_FLOYD = 'FINDING_DUPLICATES_FLOYD',
 }
 
 export enum EdgeType {
@@ -169,6 +170,16 @@ export interface AlgorithmStep {
   bloomFilterActiveHashes?: number[]; // [x1, x2, x3]
   bloomFilterCurrentElementIndex?: number; // Index in dataset currently being processed
   bloomFilterHashParams?: { a: number, b: number }[]; // Parameters for the 3 hash functions being compared
+
+  // Floyd Cycle Finding Specific
+  findingDuplicatesFloyd?: {
+    igel: number; // Node ID (1-15)
+    hase: number; // Node ID (1-15)
+    i?: number;   // Node ID (1-15)
+    j?: number;   // Node ID (1-15)
+    array: number[]; // The underlying array A (size 15, values 1-14)
+    phase: 1 | 2; // 1 = Cycle Detection, 2 = Find Start
+  };
 }
 
 export const PSEUDOCODE_MIN_EDGE_CUT = [
@@ -536,6 +547,17 @@ export const PSEUDOCODE_FINDING_DUPLICATES_HASH = [
   { line: 6, text: "if L[k].hash == L[k+1].hash then", indent: 2 },
   { line: 7, text: "if Dataset[L[k].index] == Dataset[L[k+1].index] then", indent: 4 },
   { line: 8, text: "mark s as duplicate", indent: 6 },
+];
+
+export const PSEUDOCODE_FINDING_DUPLICATES_FLOYD = [
+  { line: 1, text: "igel = a[n]; hase = a[a[n]]; i := 1", indent: 0 },
+  { line: 2, text: "while (igel ≠ hase)", indent: 0 },
+  { line: 3, text: "igel = a[igel]; hase = a[a[hase]]; i := i + 1", indent: 2 },
+  { line: 4, text: "hase = n;", indent: 0 },
+  { line: 5, text: "while (igel ≠ hase)", indent: 0 },
+  { line: 6, text: "i := igel; j := hase;", indent: 2 },
+  { line: 7, text: "igel = a[igel]; hase := a[hase];", indent: 2 },
+  { line: 8, text: "return i, j", indent: 0 },
 ];
 
 

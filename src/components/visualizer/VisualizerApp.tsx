@@ -298,7 +298,7 @@ const VisualizerApp: React.FC = () => {
              setMode={(m) => setMode(m)} 
              onBack={handleBack}
              initialAlgorithm={AlgorithmType.FINDING_DUPLICATES_HASH}
-             availableAlgorithms={[AlgorithmType.FINDING_DUPLICATES_HASH, AlgorithmType.BLOOM_FILTER]}
+             availableAlgorithms={[AlgorithmType.FINDING_DUPLICATES_HASH, AlgorithmType.BLOOM_FILTER, AlgorithmType.FINDING_DUPLICATES_FLOYD]}
           />
         </motion.div>
       )}
