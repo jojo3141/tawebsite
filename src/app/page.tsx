@@ -65,12 +65,12 @@ export default function HomePage() {
             >
                 <div className="flex items-center gap-2.5">
                     <ClockIcon className="w-6 h-6 text-blue-600" />
-                    <span className="font-medium text-lg">Monday, 9:15am</span>
+                    <span className="font-medium text-lg">Thursday, 16:15</span>
                 </div>
 
                 <div className="flex items-center gap-2.5">
                     <MapPinIcon className="w-6 h-6 text-blue-600" />
-                    <span className="font-medium text-lg">HG D 5.1</span>
+                    <span className="font-medium text-lg">HG XX.X</span>
                 </div>
 
                 <div className="flex items-center gap-2.5">
