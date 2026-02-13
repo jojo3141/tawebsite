@@ -38,6 +38,51 @@ interface PseudocodeViewerProps {
   dpApproach?: DPApproach;
 }
 
+const ALGORITHM_RUNTIMES: Record<string, string> = {
+    // Graph Algorithms
+    [AlgorithmType.DFS]: "\\mathcal{O}(n+m)",
+    [AlgorithmType.BFS]: "\\mathcal{O}(n+m)",
+    [AlgorithmType.DIJKSTRA]: "\\mathcal{O}((n+m) \\cdot \\log n)",
+    [AlgorithmType.BELLMAN_FORD]: "\\mathcal{O}(n \\cdot m)",
+    [AlgorithmType.PRIM]: "\\mathcal{O}((n+m) \\cdot \\log n)",
+    [AlgorithmType.KRUSKAL]: "\\mathcal{O}(m \\log m)",
+    [AlgorithmType.BORUVKA]: "\\mathcal{O}((n+m) \\cdot \\log n)",
+    [AlgorithmType.TARJAN]: "\\mathcal{O}(n+m)",
+    [AlgorithmType.EULER]: "\\mathcal{O}(n+m)",
+    [AlgorithmType.GREEDY_MATCHING]: "\\mathcal{O}(m)",
+    [AlgorithmType.HOPCROFT_KARP]: "\\mathcal{O}(m\\sqrt{n})",
+    [AlgorithmType.GREEDY_COLORING]: "\\mathcal{O}(n+m)",
+    [AlgorithmType.SMALLEST_LAST_COLORING]: "\\mathcal{O}(n+m)",
+    [AlgorithmType.FORD_FULKERSON]: "\\mathcal{O}(n \\cdot m \\cdot \\text{maxCapacity})",
+    [AlgorithmType.LONG_PATH]: "\\mathcal{O}(\\lambda(2e)^kkm)",
+    [AlgorithmType.HAMILTON_PATH]: "\\mathcal{O}(n^2 \\cdot 2^n)",
+    [AlgorithmType.MINIMUM_EDGE_CUT]: "\\mathcal{O}(\\lambda n^4)",
+    [AlgorithmType.SMALLEST_ENCLOSING_DISK]: "\\mathcal{O}(n \\cdot \\log n)",
+    [AlgorithmType.JARVIS_WRAP]: "\\mathcal{O}(n \\cdot h)",
+    [AlgorithmType.LOCAL_REPAIR]: "\\mathcal{O}(n \\cdot \\log n)",
+    [AlgorithmType.FINDING_DUPLICATES_HASH]: "\\mathcal{O}(n)",
+    [AlgorithmType.BLOOM_FILTER]: "",
+    [AlgorithmType.FINDING_DUPLICATES_FLOYD]: "\\mathcal{O}(n)",
+
+    // Sorting Algorithms
+    [SortingAlgorithmType.BUBBLE_SORT]: "\\mathcal{O}(n^2)",
+    [SortingAlgorithmType.SELECTION_SORT]: "\\mathcal{O}(n^2)",
+    [SortingAlgorithmType.INSERTION_SORT]: "\\mathcal{O}(n^2)",
+    [SortingAlgorithmType.MERGE_SORT]: "\\mathcal{O}(n \\log n)",
+    [SortingAlgorithmType.QUICK_SORT]: "\\mathcal{O}(n^2)",
+    [SortingAlgorithmType.HEAP_SORT]: "\\mathcal{O}(n \\log n)",
+
+    // DP Algorithms
+    [DPAlgorithmType.FIBONACCI]: "\\mathcal{O}(n)",
+    [DPAlgorithmType.MAXIMUM_SUBARRAY_SUM]: "\\mathcal{O}(n)",
+    [DPAlgorithmType.JUMP_GAME]: "\\mathcal{O}(n)",
+    [DPAlgorithmType.LCS]: "\\mathcal{O}(n \\cdot m)",
+    [DPAlgorithmType.EDIT_DISTANCE]: "\\mathcal{O}(n \\cdot m)",
+    [DPAlgorithmType.SUBSET_SUM]: "\\mathcal{O}(n \\cdot target)",
+    [DPAlgorithmType.KNAPSACK]: " \\mathcal{O}(n \\cdot W)",
+    [DPAlgorithmType.LAS]: "\\mathcal{O}(n^2)",
+};
+
 const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorithm, isDirected = true, dpApproach = 'BOTTOM_UP' }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLDivElement>(null);
@@ -144,6 +189,8 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
       }
   }
 
+  const runtime = ALGORITHM_RUNTIMES[algorithm];
+
   return (
     <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col h-full">
       <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 flex justify-between items-center">
@@ -151,7 +198,11 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
           <Code size={14} />
           <span>{algorithm === 'EULER' ? 'EULER TOUR' : algorithm === 'GREEDY_MATCHING' ? 'GREEDY MATCHING' : algorithm === 'HOPCROFT_KARP' ? 'HOPCROFT-KARP' : algorithm === 'HAMILTON_PATH' ? 'HAMILTON CYCLE' : algorithm.replace(/_/g, ' ')}</span>
         </div>
-        <span className="text-xs text-slate-500">CLRS Style</span>
+        {runtime && (
+             <span className="text-xs text-blue-300">
+                <InlineMath math={runtime} />
+             </span>
+        )}
       </div>
       <div className="p-4 overflow-auto flex-1" ref={containerRef}>
         <div className="font-mono text-sm space-y-0.5">
