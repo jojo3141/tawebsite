@@ -70,7 +70,7 @@ export default function HomePage() {
 
                 <div className="flex items-center gap-2.5">
                     <MapPinIcon className="w-6 h-6 text-blue-600" />
-                    <span className="font-medium text-lg">HG XX.X</span>
+                    <span className="font-medium text-lg">HG G 26.1</span>
                 </div>
 
                 <div className="flex items-center gap-2.5">
