@@ -100,8 +100,8 @@ export const lessonsAW: Lesson[] = [
   // Add new lessons for A&W here
   {
     week: 1,
-    title: "Graphs Recap",
-    description: "Recap of Graph basics from A&D",
+    title: "A&D Recap",
+    description: "Overview and recap of some A&D topics that are relevant for A&W",
     pdf: "/lessons/AuW_FS26/week-1.pdf",
   }
 ];
