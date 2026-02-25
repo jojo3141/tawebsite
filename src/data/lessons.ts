@@ -103,6 +103,12 @@ export const lessonsAW: Lesson[] = [
     title: "A&D Recap",
     description: "Overview and recap of some A&D topics that are relevant for A&W",
     pdf: "/lessons/AuW_FS26/week-1.pdf",
+  },
+  {
+    week: 2,
+    title: "Zusammenhang, Kreise",
+    description: "Zusammenhang, Artikulationsknoten, Brücken, Tarjan Algorithmus, Euler Tour, Hamiltonkreis, Dirac",
+    pdf: "/lessons/AuW_FS26/week-2.pdf",
   }
 ];
 
