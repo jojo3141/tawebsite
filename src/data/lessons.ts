@@ -109,6 +109,12 @@ export const lessonsAW: Lesson[] = [
     title: "Zusammenhang, Kreise",
     description: "Zusammenhang, Artikulationsknoten, Brücken, Tarjan Algorithmus, Euler Tour, Hamiltonkreis, Dirac",
     pdf: "/lessons/AuW_FS26/week-2.pdf",
+  },
+  {
+    week: 3,
+    title: "TSP, Matchings",
+    description: "TSP, TSP Approximationen, Matchings, Augmentierende Pfade, Satz von Berge, Satz von Hall",
+    pdf: "/lessons/AuW_FS26/week-3.pdf",
   }
 ];
 

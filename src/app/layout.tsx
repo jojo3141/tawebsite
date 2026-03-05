@@ -6,7 +6,7 @@ import MainLayoutWrapper from "@/components/MainLayoutWrapper";
 import { CourseProvider } from "@/context/CourseContext";
 
 export const metadata = {
-  title: "A&D Exercise Classes",
+  title: "A&W Exercise Classes",
   description: "Weekly lesson materials",
 };
 
