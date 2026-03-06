@@ -45,6 +45,8 @@ export enum AlgorithmType {
   FINDING_DUPLICATES_HASH = 'FINDING_DUPLICATES_HASH',
   BLOOM_FILTER = 'BLOOM_FILTER',
   FINDING_DUPLICATES_FLOYD = 'FINDING_DUPLICATES_FLOYD',
+  METRIC_TSP = 'METRIC_TSP',
+  METRIC_TSP_15 = 'METRIC_TSP_15',
 }
 
 export enum EdgeType {
@@ -180,6 +182,9 @@ export interface AlgorithmStep {
     array: number[]; // The underlying array A (size 15, values 1-14)
     phase: 1 | 2; // 1 = Cycle Detection, 2 = Find Start
   };
+
+  // Metric TSP Specific
+  metricTspGraphState?: { nodes: Node[], edges: Edge[], isDirected?: boolean };
 }
 
 export const PSEUDOCODE_MIN_EDGE_CUT = [
@@ -560,7 +565,26 @@ export const PSEUDOCODE_FINDING_DUPLICATES_FLOYD = [
   { line: 8, text: "return i, j", indent: 0 },
 ];
 
+export const PSEUDOCODE_METRIC_TSP = [
+  { line: 1, text: "find MST", indent: 0 },
+  { line: 2, text: "double MST edges", indent: 0 },
+  { line: 3, text: "find Euler Tour", indent: 0 },
+  { line: 4, text: "Walk along Euler tour with shortcuts:", indent: 0 },
+  { line: 5, text: "v ← next node in Euler tour", indent: 2 },
+  { line: 6, text: "if v is not visited then", indent: 2 },
+  { line: 7, text: "add v to TSP path", indent: 4 },
+  { line: 8, text: "mark v as visited", indent: 4 },
+  { line: 9, text: "else shortcut past v", indent: 2 },
+];
 
-
-
-
+export const PSEUDOCODE_METRIC_TSP_15 = [
+  { line: 1, text: "find MST", indent: 0 },
+  { line: 2, text: "add a minimum weight perfect matching of all vertices of odd degree", indent: 0 },
+  { line: 3, text: "find Euler Tour", indent: 0 },
+  { line: 4, text: "Walk along Euler tour with shortcuts:", indent: 0 },
+  { line: 5, text: "v ← next node in Euler tour", indent: 2 },
+  { line: 6, text: "if v is not visited then", indent: 2 },
+  { line: 7, text: "add v to TSP path", indent: 4 },
+  { line: 8, text: "mark v as visited", indent: 4 },
+  { line: 9, text: "else shortcut past v", indent: 2 },
+];

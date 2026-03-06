@@ -5,6 +5,7 @@ import { generateSmallestEnclosingDiskGraph, calculateSmallestEnclosingDiskSteps
 import { generateJarvisWrapGraph, calculateJarvisWrapSteps, calculateLocalRepairSteps } from '@/utils/hullUtils';
 import { generateFindingDuplicatesHashGraph, calculateFindingDuplicatesHashSteps, calculateBloomFilterSteps } from '@/utils/hashUtils';
 import { generateFindingDuplicatesFloydGraph, calculateFindingDuplicatesFloydSteps } from '@/utils/floydUtils';
+import { generateMetricTspGraph, calculateMetricTspSteps, calculateMetricTsp15Steps } from '@/utils/metricTspUtils';
 import { AnimatePresence, motion } from 'framer-motion';
 import GraphCanvas from '@/components/visualizer/GraphCanvas';
 import PseudocodeViewer from '@/components/visualizer/PseudocodeViewer';
@@ -63,7 +64,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
   const isTarjan = (algo: AlgorithmType) => algo === AlgorithmType.TARJAN;
   
   // Helper: These algorithms support the toggle (Exclude MST, Bellman-Ford, Tarjan, Euler, Matching, and Coloring algorithms)
-  const supportsDirectionToggle = (algo: AlgorithmType) => !isMstAlgo(algo) && !isTarjan(algo) && algo !== AlgorithmType.BELLMAN_FORD && algo !== AlgorithmType.EULER && algo !== AlgorithmType.GREEDY_MATCHING && algo !== AlgorithmType.HOPCROFT_KARP && algo !== AlgorithmType.GREEDY_COLORING && algo !== AlgorithmType.SMALLEST_LAST_COLORING && algo !== AlgorithmType.FORD_FULKERSON && algo !== AlgorithmType.LONG_PATH && algo !== AlgorithmType.HAMILTON_PATH && algo !== AlgorithmType.MINIMUM_EDGE_CUT && algo !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algo !== AlgorithmType.JARVIS_WRAP && algo !== AlgorithmType.LOCAL_REPAIR && algo !== AlgorithmType.FINDING_DUPLICATES_HASH && algo !== AlgorithmType.BLOOM_FILTER && algo !== AlgorithmType.FINDING_DUPLICATES_FLOYD;
+  const supportsDirectionToggle = (algo: AlgorithmType) => !isMstAlgo(algo) && !isTarjan(algo) && algo !== AlgorithmType.BELLMAN_FORD && algo !== AlgorithmType.EULER && algo !== AlgorithmType.GREEDY_MATCHING && algo !== AlgorithmType.HOPCROFT_KARP && algo !== AlgorithmType.GREEDY_COLORING && algo !== AlgorithmType.SMALLEST_LAST_COLORING && algo !== AlgorithmType.FORD_FULKERSON && algo !== AlgorithmType.LONG_PATH && algo !== AlgorithmType.HAMILTON_PATH && algo !== AlgorithmType.MINIMUM_EDGE_CUT && algo !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algo !== AlgorithmType.JARVIS_WRAP && algo !== AlgorithmType.LOCAL_REPAIR && algo !== AlgorithmType.FINDING_DUPLICATES_HASH && algo !== AlgorithmType.BLOOM_FILTER && algo !== AlgorithmType.FINDING_DUPLICATES_FLOYD && algo !== AlgorithmType.METRIC_TSP && algo !== AlgorithmType.METRIC_TSP_15;
 
   // Memoized solver to be stable for useEffect deps
   const solveGraph = useCallback((g: Graph, algo: AlgorithmType) => {
@@ -118,6 +119,10 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
     } else if (algo === AlgorithmType.FINDING_DUPLICATES_FLOYD) {
       // Need graph for this one
       solutionSteps = calculateFindingDuplicatesFloydSteps(g);
+    } else if (algo === AlgorithmType.METRIC_TSP) {
+      solutionSteps = calculateMetricTspSteps(g);
+    } else if (algo === AlgorithmType.METRIC_TSP_15) {
+      solutionSteps = calculateMetricTsp15Steps(g);
     }
     
     setSteps(solutionSteps);
@@ -234,6 +239,14 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
         return;
     }
 
+    // METRIC_TSP Specific Graph
+    if (algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) {
+        const newGraph = generateMetricTspGraph(width, height);
+        setGraph(newGraph);
+        solveGraph(newGraph, algorithm);
+        return;
+    }
+
     // Determine settings based on current state
     const uniqueWeights = algorithm === AlgorithmType.BORUVKA;
     
@@ -271,7 +284,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
        const isHopcroftKarp = algorithm === AlgorithmType.HOPCROFT_KARP;
        const graphHasUniqueWeights = graph.hasUniqueWeights === true;
        
-       const shouldBeDirected = (isMstAlgo(algorithm) || isTarjan || isEuler || isGreedyMatching || isHopcroftKarp || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING || algorithm === AlgorithmType.LONG_PATH || algorithm === AlgorithmType.HAMILTON_PATH || algorithm === AlgorithmType.MINIMUM_EDGE_CUT || algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK || algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR || algorithm === AlgorithmType.FINDING_DUPLICATES_HASH || algorithm === AlgorithmType.BLOOM_FILTER) ? false : (algorithm === AlgorithmType.BELLMAN_FORD || algorithm === AlgorithmType.FORD_FULKERSON || algorithm === AlgorithmType.FINDING_DUPLICATES_FLOYD ? true : userPreferredDirected);
+       const shouldBeDirected = (isMstAlgo(algorithm) || isTarjan || isEuler || isGreedyMatching || isHopcroftKarp || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING || algorithm === AlgorithmType.LONG_PATH || algorithm === AlgorithmType.HAMILTON_PATH || algorithm === AlgorithmType.MINIMUM_EDGE_CUT || algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK || algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR || algorithm === AlgorithmType.FINDING_DUPLICATES_HASH || algorithm === AlgorithmType.BLOOM_FILTER || algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) ? false : (algorithm === AlgorithmType.BELLMAN_FORD || algorithm === AlgorithmType.FORD_FULKERSON || algorithm === AlgorithmType.FINDING_DUPLICATES_FLOYD ? true : userPreferredDirected);
        const graphIsDirected = graph.isDirected !== false; // Default to true if undefined
 
        const isBellmanFord = algorithm === AlgorithmType.BELLMAN_FORD;
@@ -288,7 +301,8 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
        const isJarvisWrap = algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR;
        const isFindingDuplicates = algorithm === AlgorithmType.FINDING_DUPLICATES_HASH || algorithm === AlgorithmType.BLOOM_FILTER;
        const isFloyd = algorithm === AlgorithmType.FINDING_DUPLICATES_FLOYD;
-       const expectedNodeCount = isFindingDuplicates ? 0 : isFloyd ? 15 : isSED ? 40 : isJarvisWrap ? 10 : (isHopcroftKarp || isColoring) ? 15 : (isTarjan || isEuler || isGreedyMatching || isLongPath || isMinEdgeCut) ? 12 : (isFlow ? 11 : 9);
+       const isMetricTsp = algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15;
+       const expectedNodeCount = isFindingDuplicates ? 0 : isFloyd ? 15 : isSED ? 40 : isJarvisWrap ? 10 : (isHopcroftKarp || isColoring) ? 15 : (isTarjan || isEuler || isGreedyMatching || isLongPath || isMinEdgeCut) ? 12 : (isFlow ? 11 : (isMetricTsp ? 8 : 9));
 
        if (isBoruvka && !graphHasUniqueWeights) {
            generateNewGraph();

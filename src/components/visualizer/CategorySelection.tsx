@@ -1,11 +1,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Share2, ArrowUpDown, Trees, Layers, ArrowRight, ArrowLeft, GitGraph, Scissors, Disc, Hexagon, Waypoints, Users, Waves, VectorSquare, RefreshCw, Palette, Copy } from 'lucide-react';
+import { Share2, ArrowUpDown, Trees, Layers, ArrowRight, ArrowLeft, GitGraph, Scissors, Disc, Hexagon, Waypoints, Users, Waves, VectorSquare, RefreshCw, Palette, Copy, Route } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useCourse } from '@/context/CourseContext';
 
-export type CategoryType = 'GRAPH' | 'SORTING' | 'TREES' | 'DP' | 'TARJAN' | 'EULER' |'GREEDY_MATCHING' | 'HOPCROFT_KARP' | 'GRAPH_COLORING' | 'FORD_FULKERSON' | 'LONG_PATH' | 'HAMILTON_PATH' | 'MINIMUM_EDGE_CUT' | 'SMALLEST_ENCLOSING_DISK' | 'JARVIS_WRAP' | 'FINDING_DUPLICATES_HASH' | 'BLOOM_FILTER';
+export type CategoryType = 'GRAPH' | 'SORTING' | 'TREES' | 'DP' | 'TARJAN' | 'EULER' |'GREEDY_MATCHING' | 'HOPCROFT_KARP' | 'GRAPH_COLORING' | 'FORD_FULKERSON' | 'LONG_PATH' | 'HAMILTON_PATH' | 'MINIMUM_EDGE_CUT' | 'SMALLEST_ENCLOSING_DISK' | 'JARVIS_WRAP' | 'FINDING_DUPLICATES_HASH' | 'BLOOM_FILTER' | 'METRIC_TSP';
 
 interface CategorySelectionProps {
   onSelect: (category: CategoryType) => void;
@@ -84,6 +84,13 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
         icon: VectorSquare,
         color: 'text-indigo-400',
         gradient: 'from-indigo-500/20 to-pink-500/20',
+    },
+    {
+        id: 'METRIC_TSP',
+        name: 'Metric TSP',
+        icon: Route,
+        color: 'text-purple-400',
+        gradient: 'from-purple-500/20 to-indigo-500/20',
     },
     {
       id: 'GREEDY_MATCHING',

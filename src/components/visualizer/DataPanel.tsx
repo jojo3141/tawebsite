@@ -1139,7 +1139,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                )}
            </>
 
-         ) : (algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algorithm !== AlgorithmType.JARVIS_WRAP && algorithm !== AlgorithmType.LOCAL_REPAIR && algorithm !== AlgorithmType.FINDING_DUPLICATES_HASH && algorithm !== AlgorithmType.BLOOM_FILTER && algorithm !== AlgorithmType.FINDING_DUPLICATES_FLOYD) && (
+         ) : (algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algorithm !== AlgorithmType.JARVIS_WRAP && algorithm !== AlgorithmType.LOCAL_REPAIR && algorithm !== AlgorithmType.FINDING_DUPLICATES_HASH && algorithm !== AlgorithmType.BLOOM_FILTER && algorithm !== AlgorithmType.FINDING_DUPLICATES_FLOYD && algorithm !== AlgorithmType.METRIC_TSP && algorithm !== AlgorithmType.METRIC_TSP_15) && (
            <>
              {/* PANEL 1: Queue / Stack / Set F */}
              <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden">
@@ -1364,7 +1364,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
       )}
 
       {/* --- BOTTOM SECTION: TABLE (Hidden for Boruvka and select A&W algorithms) --- */}
-      {algorithm !== AlgorithmType.BORUVKA && algorithm !== AlgorithmType.EULER && algorithm !== AlgorithmType.GREEDY_MATCHING && algorithm !== AlgorithmType.HOPCROFT_KARP && algorithm !== AlgorithmType.GREEDY_COLORING && algorithm !== AlgorithmType.SMALLEST_LAST_COLORING && algorithm !== AlgorithmType.FORD_FULKERSON && algorithm !== AlgorithmType.LONG_PATH && algorithm !== AlgorithmType.HAMILTON_PATH && algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algorithm !== AlgorithmType.JARVIS_WRAP && algorithm !== AlgorithmType.LOCAL_REPAIR && algorithm !== AlgorithmType.MINIMUM_EDGE_CUT && algorithm !== AlgorithmType.FINDING_DUPLICATES_HASH && algorithm !== AlgorithmType.BLOOM_FILTER && algorithm !== AlgorithmType.FINDING_DUPLICATES_FLOYD && (
+      {algorithm !== AlgorithmType.BORUVKA && algorithm !== AlgorithmType.EULER && algorithm !== AlgorithmType.GREEDY_MATCHING && algorithm !== AlgorithmType.HOPCROFT_KARP && algorithm !== AlgorithmType.GREEDY_COLORING && algorithm !== AlgorithmType.SMALLEST_LAST_COLORING && algorithm !== AlgorithmType.FORD_FULKERSON && algorithm !== AlgorithmType.LONG_PATH && algorithm !== AlgorithmType.HAMILTON_PATH && algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algorithm !== AlgorithmType.JARVIS_WRAP && algorithm !== AlgorithmType.LOCAL_REPAIR && algorithm !== AlgorithmType.MINIMUM_EDGE_CUT && algorithm !== AlgorithmType.FINDING_DUPLICATES_HASH && algorithm !== AlgorithmType.BLOOM_FILTER && algorithm !== AlgorithmType.FINDING_DUPLICATES_FLOYD && algorithm !== AlgorithmType.METRIC_TSP && algorithm !== AlgorithmType.METRIC_TSP_15 && (
         <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden h-[26rem]">
           <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-slate-300 uppercase tracking-wider">
               {algorithm === AlgorithmType.DFS ? 'Tracking Table' : (algorithm === AlgorithmType.PRIM ? 'Node Status' : (algorithm === AlgorithmType.KRUSKAL ? 'Union-Find Structure' : 'Tracking Table'))}

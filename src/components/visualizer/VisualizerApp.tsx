@@ -233,6 +233,24 @@ const VisualizerApp: React.FC = () => {
         </motion.div>
       )}
 
+      {mode === 'METRIC_TSP' && (
+        <motion.div 
+          key="metric_tsp"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <GraphMode 
+             mode={mode} 
+             setMode={(m) => setMode(m)} 
+             onBack={handleBack}
+             initialAlgorithm={AlgorithmType.METRIC_TSP}
+             availableAlgorithms={[AlgorithmType.METRIC_TSP, AlgorithmType.METRIC_TSP_15]}
+          />
+        </motion.div>
+      )}
+
       {mode === 'MINIMUM_EDGE_CUT' && (
         <motion.div 
           key="minimum_edge_cut"

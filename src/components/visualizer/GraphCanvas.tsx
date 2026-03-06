@@ -13,12 +13,16 @@ interface GraphCanvasProps {
 
 const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentStep, width, height, algorithm }) => {
   
-  // For MINIMUM_EDGE_CUT, use the step's graph state snapshot for animation
+  // For MINIMUM_EDGE_CUT and METRIC_TSP, use the step's graph state snapshot for animation
   const graph = React.useMemo(() => {
-    return (algorithm === AlgorithmType.MINIMUM_EDGE_CUT && currentStep.minCutGraphState) 
-      ? { ...currentStep.minCutGraphState, isDirected: false } as Graph
-      : initialGraph;
-  }, [algorithm, currentStep.minCutGraphState, initialGraph]);
+    if (algorithm === AlgorithmType.MINIMUM_EDGE_CUT && currentStep.minCutGraphState) {
+      return { ...currentStep.minCutGraphState, isDirected: false } as Graph;
+    }
+    if ((algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) && currentStep.metricTspGraphState) {
+      return { ...currentStep.metricTspGraphState } as Graph;
+    }
+    return initialGraph;
+  }, [algorithm, currentStep.minCutGraphState, currentStep.metricTspGraphState, initialGraph]);
 
 
   // Determine colors based on state
@@ -281,6 +285,9 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
     if (algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR) {
          return 6;
     }
+    if (algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) {
+         return 8;
+    }
     return NODE_RADIUS;
   };
 
@@ -444,7 +451,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
         }
     }
 
-    if (isActive && algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.EULER && algorithm !== AlgorithmType.GREEDY_MATCHING && algorithm !== AlgorithmType.HOPCROFT_KARP && algorithm !== AlgorithmType.FORD_FULKERSON) {
+    if (isActive && algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.EULER && algorithm !== AlgorithmType.GREEDY_MATCHING && algorithm !== AlgorithmType.HOPCROFT_KARP && algorithm !== AlgorithmType.FORD_FULKERSON && algorithm !== AlgorithmType.METRIC_TSP && algorithm !== AlgorithmType.METRIC_TSP_15) {
         if (algorithm === AlgorithmType.BELLMAN_FORD) return '#3b82f6'; // Blue-500 for BF
         return '#ef4444'; // Red-500 for others
     }
@@ -499,6 +506,17 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
              if (currentStep.path[i] === source && currentStep.path[i+1] === target) return '#a855f7'; // Purple
              if (graph.isDirected === false && currentStep.path[i] === target && currentStep.path[i+1] === source) return '#a855f7';
          }
+    }
+
+    // METRIC TSP HIGHLIGHT
+    if (algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) {
+        if (edgeId && edgeId.startsWith('tsp-')) {
+            // Also highlight active edge in brighter green to indicate action if necessary, or just keep green
+            return isActive ? '#4ade80' : '#22c55e'; // Green (Lighter green if active)
+        }
+        if (edgeId && edgeId.startsWith('euler-')) {
+            return '#64748b'; // Slate-500 (Duller than active but visible)
+        }
     }
 
     // TARJAN BRIDGE HIGHLIGHT (Persistent)
@@ -894,8 +912,8 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
             const color = getEdgeColor(edge.source, edge.target, edge.id);
             const strokeWidth = getEdgeStrokeWidth(edge.source, edge.target);
             
-            // Check for reverse edge to increase curve curvature (only relevant for directed)
-            const hasReverse = graph.isDirected !== false && graph.edges.some(e => e.source === edge.target && e.target === edge.source);
+            // Check for reverse edge to increase curve curvature (only relevant for directed, or Metric TSP multigraphs)
+            const hasReverse = (graph.isDirected !== false || algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) && graph.edges.some(e => e.source === edge.target && e.target === edge.source);
             
             let pathD: string;
             let labelX: number, labelY: number;
@@ -949,7 +967,9 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                 
                 // Offset amount
                 let offset = 0;
-                if (graph.isDirected !== false && hasReverse) offset = 20; // Separates two directions
+                if ((graph.isDirected !== false || algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) && hasReverse) {
+                    offset = 20; // Separates two directions
+                }
 
                 // Curved Edges (Random 50/50 but stable)
                 if (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.LONG_PATH || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.BFS || algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD || algorithm === AlgorithmType.BORUVKA || algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.PRIM) {
@@ -1164,7 +1184,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                if (d) badgeText = `${d}/${low !== undefined ? low : '?'}`; else showBadge = false;
             } else if (algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR) {
                  showBadge = false;
-            } else if (isMstAlgo || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING || isFordFulkerson || algorithm === AlgorithmType.LONG_PATH || algorithm === AlgorithmType.HAMILTON_PATH || algorithm === AlgorithmType.MINIMUM_EDGE_CUT || algorithm === AlgorithmType.FINDING_DUPLICATES_FLOYD) {
+            } else if (isMstAlgo || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING || isFordFulkerson || algorithm === AlgorithmType.LONG_PATH || algorithm === AlgorithmType.HAMILTON_PATH || algorithm === AlgorithmType.MINIMUM_EDGE_CUT || algorithm === AlgorithmType.FINDING_DUPLICATES_FLOYD || algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) {
                 showBadge = false;
             }
 
@@ -1267,7 +1287,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                   dy=".35em"
                   textAnchor="middle"
                   className={`text-xs font-bold pointer-events-none select-none ${bgColor === '#ffffff' ? 'fill-slate-900' : 'fill-white'}`}
-                  style={{ fontSize: (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || isFordFulkerson) ? '10px' : '12px' }}
+                  style={{ fontSize: (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || isFordFulkerson) ? '10px' : ((algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) ? '9px' : '12px') }}
                 >
                   {node.label}
                 </motion.text>
