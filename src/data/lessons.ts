@@ -115,6 +115,12 @@ export const lessonsAW: Lesson[] = [
     title: "TSP, Matchings",
     description: "TSP, TSP Approximationen, Matchings, Augmentierende Pfade, Satz von Berge, Satz von Hall",
     pdf: "/lessons/AuW_FS26/week-3.pdf",
+  },
+  {
+    week: 4,
+    title: "Hopcroft-Karp, Färbungen",
+    description: "Hopcroft-Karp, Färbungen, Greedy Färbung, Smallest Last Färbung",
+    pdf: "/lessons/AuW_FS26/week-4.pdf",
   }
 ];
 
