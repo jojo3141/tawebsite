@@ -121,6 +121,12 @@ export const lessonsAW: Lesson[] = [
     title: "Hopcroft-Karp, Färbungen",
     description: "Hopcroft-Karp, Färbungen, Greedy Färbung, Smallest Last Färbung",
     pdf: "/lessons/AuW_FS26/week-4.pdf",
+  },
+  {
+    week: 5,
+    title: "Wahrscheinlichkeit Intro",
+    description: "Satz von Brooks, Planare Graphen, Wahrscheinlichkeitsraum, Laplace, Kombinatorik, Bedingte Wahrscheinlichkeit",
+    pdf: "/lessons/AuW_FS26/week-5.pdf",
   }
 ];
 
