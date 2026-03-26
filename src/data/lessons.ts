@@ -127,6 +127,16 @@ export const lessonsAW: Lesson[] = [
     title: "Wahrscheinlichkeit Intro",
     description: "Satz von Brooks, Planare Graphen, Wahrscheinlichkeitsraum, Laplace, Kombinatorik, Bedingte Wahrscheinlichkeit",
     pdf: "/lessons/AuW_FS26/week-5.pdf",
+  },
+  {
+    week: 6,
+    title: "Zufallsvariablen",
+    description: "Totale Wahrscheinlichkeit, Bayes, Unabhängigkeit, Zufallsvariablen, Erwartungswert",
+    pdf: "/lessons/AuW_FS26/week-6.pdf",
+    additionalPdf: {
+      url: "/lessons/AuW_FS26/week-6-zusatz.pdf",
+      label: "Zusatzaufgaben",
+    },
   }
 ];
 
