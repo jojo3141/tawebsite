@@ -137,6 +137,16 @@ export const lessonsAW: Lesson[] = [
       url: "/lessons/AuW_FS26/week-6-zusatz.pdf",
       label: "Zusatzaufgaben",
     },
+  },
+  {
+    week: 7,
+    title: "Verteilungen",
+    description: "Erwartungswert, Varianz, Verteilungen, Unabhängige und bedingte Zufallsvariablen",
+    pdf: "/lessons/AuW_FS26/week-7.pdf",
+    additionalPdf: {
+      url: "/lessons/AuW_FS26/week-7-zusatz.pdf",
+      label: "Zusatzaufgaben",
+    },
   }
 ];
 
