@@ -131,7 +131,7 @@ export const lessonsAW: Lesson[] = [
   {
     week: 6,
     title: "Zufallsvariablen",
-    description: "Totale Wahrscheinlichkeit, Bayes, Unabhängigkeit, Zufallsvariablen, Erwartungswert",
+    description: "Totale Wahrscheinlichkeit, Bayes, Unabhängigkeit, Zufallsvariablen",
     pdf: "/lessons/AuW_FS26/week-6.pdf",
     additionalPdf: {
       url: "/lessons/AuW_FS26/week-6-zusatz.pdf",
