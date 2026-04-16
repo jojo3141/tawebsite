@@ -141,7 +141,7 @@ export const lessonsAW: Lesson[] = [
   {
     week: 7,
     title: "Verteilungen",
-    description: "Erwartungswert, Varianz, Verteilungen, Unabhängige und bedingte Zufallsvariablen",
+    description: "Erwartungswert, Varianz, Verteilungen, Unabhängige und bedingte Zufallsvariablen, DP",
     pdf: "/lessons/AuW_FS26/week-7.pdf",
     additionalPdf: {
       url: "/lessons/AuW_FS26/week-7-zusatz.pdf",
@@ -151,7 +151,7 @@ export const lessonsAW: Lesson[] = [
   {
     week: 8,
     title: "Wahrscheinlichkeits-Ungleichungen",
-    description: "Faltung, Waldsche Identität, Markov, Chebyshev, Chernoff",
+    description: "Faltung, Waldsche Identität, Markov, Chebyshev, Chernoff, DP",
     pdf: "/lessons/AuW_FS26/week-8.pdf",
     additionalPdf: {
       url: "/lessons/AuW_FS26/week-8-zusatz.pdf",
