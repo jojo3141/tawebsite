@@ -147,6 +147,16 @@ export const lessonsAW: Lesson[] = [
       url: "/lessons/AuW_FS26/week-7-zusatz.pdf",
       label: "Zusatzaufgaben",
     },
+  },
+  {
+    week: 8,
+    title: "Wahrscheinlichkeits-Ungleichungen",
+    description: "Faltung, Waldsche Identität, Markov, Chebyshev, Chernoff",
+    pdf: "/lessons/AuW_FS26/week-8.pdf",
+    additionalPdf: {
+      url: "/lessons/AuW_FS26/week-8-zusatz.pdf",
+      label: "Zusatzaufgaben",
+    },
   }
 ];
 
