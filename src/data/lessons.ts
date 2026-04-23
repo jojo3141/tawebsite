@@ -157,6 +157,16 @@ export const lessonsAW: Lesson[] = [
       url: "/lessons/AuW_FS26/week-8-zusatz.pdf",
       label: "Zusatzaufgaben",
     },
+  },
+  {
+    week: 9,
+    title: "Monte-Carlo und Las-Vegas",
+    description: "Targetshooting, Monte-Carlo und Las-Vegas Algorithmen, Fehlerreduktion, Primzahltests",
+    pdf: "/lessons/AuW_FS26/week-9.pdf",
+    additionalPdf: {
+      url: "/lessons/AuW_FS26/week-9-zusatz.pdf",
+      label: "Zusatzaufgaben",
+    },
   }
 ];
 
