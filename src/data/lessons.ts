@@ -167,6 +167,16 @@ export const lessonsAW: Lesson[] = [
       url: "/lessons/AuW_FS26/week-9-zusatz.pdf",
       label: "Zusatzaufgaben",
     },
+  },
+  {
+    week: 10,
+    title: "QuickSort, Duplikate",
+    description: "QuickSort, Duplikate finden mit direktem Sortieren, mit Hashing, mit Hase-Igel Algorithmus",
+    pdf: "/lessons/AuW_FS26/week-10.pdf",
+    additionalPdf: {
+      url: "/lessons/AuW_FS26/week-10-zusatz.pdf",
+      label: "Zusatzaufgaben",
+    },
   }
 ];
 
