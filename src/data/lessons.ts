@@ -177,6 +177,16 @@ export const lessonsAW: Lesson[] = [
       url: "/lessons/AuW_FS26/week-10-zusatz.pdf",
       label: "Zusatzaufgaben",
     },
+  },
+  {
+    week: 11,
+    title: "Long Path, Flows",
+    description: "Long Path Algorithmus, Flows, Maxflow Mincut, Ford-Fulkerson",
+    pdf: "/lessons/AuW_FS26/week-11.pdf",
+    additionalPdf: {
+      url: "/lessons/AuW_FS26/week-11-zusatz.pdf",
+      label: "Zusatzaufgaben",
+    },
   }
 ];
 

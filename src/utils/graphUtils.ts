@@ -2803,18 +2803,25 @@ export const generateFordFulkersonGraph = (width: number, height: number): Graph
   addEdge('f', 't', 5, 15);
   addEdge('i', 't', 5, 15);
 
-  addEdge('a', 'b', 3, 10); addEdge('b', 'c', 3, 10);
-  addEdge('d', 'e', 3, 10); addEdge('e', 'f', 3, 10);
-  addEdge('g', 'h', 3, 10); addEdge('h', 'i', 3, 10);
+  const addInternalEdge = (u: string, v: string, capMin: number, capMax: number) => {
+    const r = Math.random();
+    if (r < 0.05) return; // 5% Omit
+    if (r < 0.20) addEdge(v, u, capMin, capMax); // 15% Reverse
+    else addEdge(u, v, capMin, capMax); // 80% Normal
+  };
 
-  addEdge('a', 'd', 2, 8); addEdge('d', 'g', 2, 8);
-  addEdge('e', 'b', 2, 8); addEdge('e', 'h', 2, 8);
-  addEdge('c', 'f', 2, 8); addEdge('f', 'i', 2, 8);
+  addInternalEdge('a', 'b', 3, 10); addInternalEdge('b', 'c', 3, 10);
+  addInternalEdge('d', 'e', 3, 10); addInternalEdge('e', 'f', 3, 10);
+  addInternalEdge('g', 'h', 3, 10); addInternalEdge('h', 'i', 3, 10);
+
+  addInternalEdge('a', 'd', 2, 8); addInternalEdge('d', 'g', 2, 8);
+  addInternalEdge('e', 'b', 2, 8); addInternalEdge('e', 'h', 2, 8);
+  addInternalEdge('c', 'f', 2, 8); addInternalEdge('f', 'i', 2, 8);
 
   // Cross edges
-  addEdge('d', 'b', 2, 6);
-  addEdge('e', 'c', 2, 6);
-  addEdge('h', 'f', 2, 6);
+  addInternalEdge('d', 'b', 2, 6);
+  addInternalEdge('e', 'c', 2, 6);
+  addInternalEdge('h', 'f', 2, 6);
 
   return { nodes, edges, isDirected: true, hasUniqueWeights: false };
 };
