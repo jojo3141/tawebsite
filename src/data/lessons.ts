@@ -187,6 +187,16 @@ export const lessonsAW: Lesson[] = [
       url: "/lessons/AuW_FS26/week-11-zusatz.pdf",
       label: "Zusatzaufgaben",
     },
+  },
+  {
+    week: 13,
+    title: "Min-Cut, Smallest Enclosing Disk",
+    description: "Min-Cut, Bootstrapping-Algorithmus, Smallest Enclosing Disk, Flow Aufgaben",
+    pdf: "/lessons/AuW_FS26/week-13.pdf",
+    additionalPdf: {
+      url: "/lessons/AuW_FS26/week-13-zusatz.pdf",
+      label: "Zusatzaufgaben",
+    },
   }
 ];
 
