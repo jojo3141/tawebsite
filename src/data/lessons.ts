@@ -197,6 +197,16 @@ export const lessonsAW: Lesson[] = [
       url: "/lessons/AuW_FS26/week-13-zusatz.pdf",
       label: "Zusatzaufgaben",
     },
+  },
+  {
+    week: 14,
+    title: "Konvexe Hülle",
+    description: "Konvexe Hülle, Jarvis-Wrap, Local-Repair, Flow und DP Aufgaben",
+    pdf: "/lessons/AuW_FS26/week-14.pdf",
+    additionalPdf: {
+      url: "/lessons/AuW_FS26/AW-Lernziele.pdf",
+      label: "A&W Lernziele",
+    },
   }
 ];
 
