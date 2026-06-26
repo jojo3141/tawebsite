@@ -165,6 +165,7 @@ export interface AlgorithmStep {
   findingDuplicatesTuples?: { hash: number, originalIndex: number, originalString: string }[]; // The list of tuples
   findingDuplicatesActiveIndex?: number; // Index in the tuple list being processed/highlighted
   findingDuplicatesCompareIndices?: [number, number]; // Indices of tuples currently
+  findingDuplicatesFoundPairs?: [number, number][]; // Found duplicate index pairs
 
   // Bloom Filter Specific
   bloomFilterBitVector?: (0 | 1)[]; // Array of 16 bits
@@ -549,9 +550,10 @@ export const PSEUDOCODE_FINDING_DUPLICATES_HASH = [
   { line: 3, text: "add (h, index(s)) to L", indent: 2 },
   { line: 4, text: "Sort L by hash value", indent: 0 },
   { line: 5, text: "for k = 0 to |L|-2 do", indent: 0 },
-  { line: 6, text: "if L[k].hash == L[k+1].hash then", indent: 2 },
-  { line: 7, text: "if Dataset[L[k].index] == Dataset[L[k+1].index] then", indent: 4 },
-  { line: 8, text: "mark s as duplicate", indent: 6 },
+  { line: 6, text: "for j = k+1 to |L|-1 do", indent: 2 },
+  { line: 7, text: "while L[k].hash == L[j].hash do", indent: 4 },
+  { line: 8, text: "if Dataset[L[k].index] == Dataset[L[j].index] then", indent: 6 },
+  { line: 9, text: "mark s as duplicate", indent: 8 },
 ];
 
 export const PSEUDOCODE_FINDING_DUPLICATES_FLOYD = [

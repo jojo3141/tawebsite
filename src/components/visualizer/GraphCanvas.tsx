@@ -69,10 +69,10 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
            <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider">Dataset D</h3>
            <div className="flex gap-2 overflow-x-auto pb-2 pt-2 px-2">
               {dataset.map((s, i) => {
-                 const isDuplicate = duplicates.includes(i.toString());
+                 const isDuplicate = currentStep.lineNumber === 9 && Boolean(compareIndices && (currentStep.findingDuplicatesTuples?.[compareIndices[0]]?.originalIndex === i || currentStep.findingDuplicatesTuples?.[compareIndices[1]]?.originalIndex === i));
                  const isActive = activeIndex === i;
-                 // Highlight if this specific index is involved in a comparison AND we are at the string comparison step (Line 7)
-                 const isBeingCompared = compareIndices && currentStep.lineNumber === 7 && (currentStep.findingDuplicatesTuples?.[compareIndices[0]]?.originalIndex === i || currentStep.findingDuplicatesTuples?.[compareIndices[1]]?.originalIndex === i);
+                 // Highlight if this specific index is involved in a comparison AND we are at the string comparison step
+                 const isBeingCompared = !isDuplicate && Boolean(compareIndices && (currentStep.lineNumber === 7 || currentStep.lineNumber === 8) && (currentStep.findingDuplicatesTuples?.[compareIndices[0]]?.originalIndex === i || currentStep.findingDuplicatesTuples?.[compareIndices[1]]?.originalIndex === i));
                  
                  return (
                    <div 
@@ -93,7 +93,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
         </div>
 
         {/* Tuples View (L) */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex flex-col">
             <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider flex justify-between">
                 <span>List L: (Hash, Index)</span>
             </h3>
@@ -105,11 +105,11 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
             ) : (
                 <div className="flex flex-wrap gap-1 content-start">
                     {tuples.map((t, idx) => {
+                        // Check if this tuple represents a found duplicate in the current step
+                        const isConfirmedDuplicate = currentStep.lineNumber === 9 && Boolean(compareIndices && compareIndices.includes(idx));
                         // Check if this tuple is being compared
-                        const isComparing = compareIndices && (compareIndices.includes(idx));
+                        const isComparing = !isConfirmedDuplicate && Boolean(compareIndices && compareIndices.includes(idx));
                         const isActive = activeIndex === t.originalIndex; // Only true during creation phase really
-                        // Check if this tuple represents a found duplicate
-                        const isConfirmedDuplicate = duplicates.includes(t.originalIndex.toString());
 
                         return (
                             <motion.div 
@@ -130,6 +130,35 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                                 <span className="text-slate-400">,</span>
                                 <span className="text-slate-400 ml-0.5">{t.originalIndex}</span>
                                 <span className="text-slate-400">)</span>
+                            </motion.div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+
+        {/* Found Duplicates View */}
+        <div>
+            <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider">
+                Found Duplicates
+            </h3>
+            {(!currentStep.findingDuplicatesFoundPairs || currentStep.findingDuplicatesFoundPairs.length === 0) ? (
+                <div className="text-slate-600 italic text-xs">
+                    No duplicates found yet
+                </div>
+            ) : (
+                <div className="flex flex-wrap gap-2">
+                    {currentStep.findingDuplicatesFoundPairs.map(([idx1, idx2], i) => {
+                        const s = dataset[idx1];
+                        return (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                key={`${idx1}-${idx2}-${i}`}
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-emerald-500/20 border border-emerald-500 text-emerald-200 font-mono text-xs font-bold shadow-sm"
+                            >
+                                <span>({idx1}, {idx2})</span>
+                                <span className="text-slate-400 font-normal">"{s}"</span>
                             </motion.div>
                         );
                     })}

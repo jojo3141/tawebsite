@@ -133,76 +133,101 @@ export const calculateFindingDuplicatesHashSteps = (): AlgorithmStep[] => {
 
     // 3. Scan for Duplicates
     const duplicates = new Set<number>(); // Store original indices of duplicates
+    const foundPairs: [number, number][] = [];
 
     for (let k = 0; k < tuples.length - 1; k++) {
         const t1 = tuples[k];
-        const t2 = tuples[k + 1];
 
-        // Highlight the two we are comparing
-        steps.push({
-            stepId: stepCounter++,
-            lineNumber: [5, 6],
-            description: `Check consecutive tuples at indices ${k} and ${k + 1}. Hashes: ${t1.hash} vs ${t2.hash}.`,
-            distances: {}, parents: {}, discoveryTimes: {}, finishTimes: {}, edgeClassifications: {}, mstEdges: [], queue: [], stack: [],
-            processedSet: Array.from(duplicates).map(String),
-            currentNodeId: null, currentNeighborId: null, activeEdge: null,
-            findingDuplicatesDataset: dataset,
-            findingDuplicatesTuples: [...tuples],
-            findingDuplicatesCompareIndices: [k, k + 1],
+        for (let j = k + 1; j < tuples.length; j++) {
+            const t2 = tuples[j];
 
-        });
+            if (t1.hash !== t2.hash) {
+                if (j === k + 1) {
+                    steps.push({
+                        stepId: stepCounter++,
+                        lineNumber: [5, 6, 7],
+                        description: `Check tuples at indices ${k} and ${j}. Hashes: ${t1.hash} vs ${t2.hash}. No collision.`,
+                        distances: {}, parents: {}, discoveryTimes: {}, finishTimes: {}, edgeClassifications: {}, mstEdges: [], queue: [], stack: [],
+                        processedSet: Array.from(duplicates).map(String),
+                        currentNodeId: null, currentNeighborId: null, activeEdge: null,
+                        findingDuplicatesDataset: dataset,
+                        findingDuplicatesTuples: [...tuples],
+                        findingDuplicatesCompareIndices: [k, j],
+                        findingDuplicatesFoundPairs: [...foundPairs],
+                    });
+                }
+                break;
+            }
 
-        if (t1.hash === t2.hash) {
+            // Highlight the two we are comparing
+            steps.push({
+                stepId: stepCounter++,
+                lineNumber: [5, 6, 7],
+                description: `Check tuples at indices ${k} and ${j}. Hashes: ${t1.hash} vs ${t2.hash}.`,
+                distances: {}, parents: {}, discoveryTimes: {}, finishTimes: {}, edgeClassifications: {}, mstEdges: [], queue: [], stack: [],
+                processedSet: Array.from(duplicates).map(String),
+                currentNodeId: null, currentNeighborId: null, activeEdge: null,
+                findingDuplicatesDataset: dataset,
+                findingDuplicatesTuples: [...tuples],
+                findingDuplicatesCompareIndices: [k, j],
+                findingDuplicatesFoundPairs: [...foundPairs],
+            });
+
             // Collision
             steps.push({
                 stepId: stepCounter++,
-                lineNumber: 6,
+                lineNumber: 7,
                 description: `Hash collision found (${t1.hash}). Proceeding to verify string content.`,
                 distances: {}, parents: {}, discoveryTimes: {}, finishTimes: {}, edgeClassifications: {}, mstEdges: [], queue: [], stack: [], processedSet: Array.from(duplicates).map(String),
                 currentNodeId: null, currentNeighborId: null, activeEdge: null,
                 findingDuplicatesDataset: dataset,
                 findingDuplicatesTuples: [...tuples],
-                findingDuplicatesCompareIndices: [k, k + 1]
+                findingDuplicatesCompareIndices: [k, j],
+                findingDuplicatesFoundPairs: [...foundPairs],
             });
 
-            // Explicit step for Line 7 (String Comparison)
+            // Explicit step for Line 8 (String Comparison)
             steps.push({
                 stepId: stepCounter++,
-                lineNumber: 7,
+                lineNumber: 8,
                 description: `Comparing strings for indices ${t1.originalIndex} and ${t2.originalIndex}: "${t1.originalString}" vs "${t2.originalString}".`,
                 distances: {}, parents: {}, discoveryTimes: {}, finishTimes: {}, edgeClassifications: {}, mstEdges: [], queue: [], stack: [], processedSet: Array.from(duplicates).map(String),
                 currentNodeId: null, currentNeighborId: null, activeEdge: null,
                 findingDuplicatesDataset: dataset,
                 findingDuplicatesTuples: [...tuples],
-                findingDuplicatesCompareIndices: [k, k + 1]
+                findingDuplicatesCompareIndices: [k, j],
+                findingDuplicatesFoundPairs: [...foundPairs],
             });
 
             if (t1.originalString === t2.originalString) {
                 duplicates.add(t1.originalIndex);
                 duplicates.add(t2.originalIndex);
+                foundPairs.push([Math.min(t1.originalIndex, t2.originalIndex), Math.max(t1.originalIndex, t2.originalIndex)]);
 
                 steps.push({
                     stepId: stepCounter++,
-                    lineNumber: 8,
+                    lineNumber: 9,
                     description: `Duplicate found! "${t1.originalString}" at indices ${t1.originalIndex} and ${t2.originalIndex}.`,
                     distances: {}, parents: {}, discoveryTimes: {}, finishTimes: {}, edgeClassifications: {}, mstEdges: [], queue: [], stack: [],
                     processedSet: Array.from(duplicates).map(String),
                     currentNodeId: null, currentNeighborId: null, activeEdge: null,
                     findingDuplicatesDataset: dataset,
                     findingDuplicatesTuples: [...tuples],
-                    findingDuplicatesCompareIndices: [k, k + 1]
+                    findingDuplicatesCompareIndices: [k, j],
+                    findingDuplicatesFoundPairs: [...foundPairs],
                 });
             } else {
                 steps.push({
                     stepId: stepCounter++,
-                    lineNumber: 7, // Stay on 7 to show result of check
+                    lineNumber: 8, // Stay on 8 to show result of check
                     description: `Strings do not match ("${t1.originalString}" != "${t2.originalString}"). False positive collision.`,
                     distances: {}, parents: {}, discoveryTimes: {}, finishTimes: {}, edgeClassifications: {}, mstEdges: [], queue: [], stack: [],
                     processedSet: Array.from(duplicates).map(String),
                     currentNodeId: null, currentNeighborId: null, activeEdge: null,
                     findingDuplicatesDataset: dataset,
                     findingDuplicatesTuples: [...tuples],
-                    findingDuplicatesCompareIndices: [k, k + 1]
+                    findingDuplicatesCompareIndices: [k, j],
+                    findingDuplicatesFoundPairs: [...foundPairs],
                 });
             }
         }
@@ -212,13 +237,14 @@ export const calculateFindingDuplicatesHashSteps = (): AlgorithmStep[] => {
     steps.push({
         stepId: stepCounter++,
         lineNumber: 0,
-        description: `Algorithm finished. Found ${duplicates.size} duplicate entries (total unique strings: ${dataset.length - (duplicates.size > 0 ? duplicates.size / 2 : 0) /* rough estimate logic, actually we just count unique strings */}).`,
+        description: `Algorithm finished. Found ${foundPairs.length} duplicate${foundPairs.length === 1 ? '' : 's'}`,
         distances: {}, parents: {}, discoveryTimes: {}, finishTimes: {}, edgeClassifications: {}, mstEdges: [], queue: [], stack: [],
         processedSet: Array.from(duplicates).map(String),
         currentNodeId: null, currentNeighborId: null, activeEdge: null,
         findingDuplicatesDataset: dataset,
         findingDuplicatesTuples: [...tuples],
-        findingDuplicatesCompareIndices: undefined
+        findingDuplicatesCompareIndices: undefined,
+        findingDuplicatesFoundPairs: [...foundPairs],
     });
 
     return steps;
