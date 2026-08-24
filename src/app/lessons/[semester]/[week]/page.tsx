@@ -9,7 +9,7 @@ export function generateStaticParams() {
   
   // AD -> AuD_HS25
   lessons.AD.forEach(lesson => {
-    params.push({ semester: 'AuD_HS25', week: lesson.week.toString() });
+    params.push({ semester: 'AuD_HS26', week: lesson.week.toString() });
   });
 
   // AW -> AuW_FS26
@@ -24,7 +24,7 @@ export default async function LessonPage({ params }: { params: Promise<{ semeste
   const { semester, week } = await params;
   
   let course: Course | undefined;
-  if (semester === 'AuD_HS25') course = 'AD';
+  if (semester === 'AuD_HS26') course = 'AD';
   else if (semester === 'AuW_FS26') course = 'AW';
   
   if (!course) {

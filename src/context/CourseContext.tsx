@@ -11,7 +11,7 @@ interface CourseContextType {
 const CourseContext = createContext<CourseContextType | undefined>(undefined);
 
 export function CourseProvider({ children }: { children: React.ReactNode }) {
-  const [course, setCourse] = useState<Course>("AW");
+  const [course, setCourse] = useState<Course>("AD");
 
   useEffect(() => {
     const saved = localStorage.getItem("selectedCourse") as Course;

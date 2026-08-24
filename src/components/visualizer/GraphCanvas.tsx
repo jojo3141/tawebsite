@@ -57,8 +57,6 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
     const tuples = currentStep.findingDuplicatesTuples || [];
     const activeIndex = currentStep.findingDuplicatesActiveIndex ?? -1;
     const compareIndices = currentStep.findingDuplicatesCompareIndices;
-    const duplicates = currentStep.processedSet || [];
-
     return (
       <div 
         className="w-full p-6 flex flex-col gap-8 overflow-y-auto"
@@ -158,7 +156,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-emerald-500/20 border border-emerald-500 text-emerald-200 font-mono text-xs font-bold shadow-sm"
                             >
                                 <span>({idx1}, {idx2})</span>
-                                <span className="text-slate-400 font-normal">"{s}"</span>
+                                <span className="text-slate-400 font-normal">&quot;{s}&quot;</span>
                             </motion.div>
                         );
                     })}

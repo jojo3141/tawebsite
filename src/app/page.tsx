@@ -11,7 +11,7 @@ export default function HomePage() {
   const currentLessons = lessons[course];
 
   const courseTitle = course === "AD" ? "Algorithms & Data Structures" : "Algorithms & Probability";
-  const semesterParam = course === "AD" ? "AuD_HS25" : "AuW_FS26";
+  const semesterParam = course === "AD" ? "AuD_HS26" : "AuW_FS26";
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-purple-200 selection:text-purple-900">
@@ -65,12 +65,12 @@ export default function HomePage() {
             >
                 <div className="flex items-center gap-2.5">
                     <ClockIcon className="w-6 h-6 text-blue-600" />
-                    <span className="font-medium text-lg">Thursday, 16:15</span>
+                    <span className="font-medium text-lg">Monday, 09:15</span>
                 </div>
 
                 <div className="flex items-center gap-2.5">
                     <MapPinIcon className="w-6 h-6 text-blue-600" />
-                    <span className="font-medium text-lg">HG G 26.1</span>
+                    <span className="font-medium text-lg">Room XYZ</span>
                 </div>
 
                 <div className="flex items-center gap-2.5">
