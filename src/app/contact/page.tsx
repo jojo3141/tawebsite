@@ -60,7 +60,7 @@ export default function ContactPage() {
           <p className="text-slate-500 mb-4 font-medium uppercase tracking-wider text-sm">Scan to join group</p>
           <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100">
              <Image 
-                src="/whatsapp-qr.png" 
+                src="/whatsapp-qr.jpeg" 
                 alt="WhatsApp Group QR Code" 
                 width={400}
                 height={400}
