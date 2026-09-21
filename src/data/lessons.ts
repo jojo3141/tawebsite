@@ -15,7 +15,7 @@ export const lessonsAD: Lesson[] = [
   {
     week: 1,
     title: "Asymptotic Growth",
-    description: "Course organization and introduction to induction and asymptotic growth",
+    description: "Course organization, introduction to induction and asymptotic growth",
     pdf: "/lessons/AuD_HS26/week-1.pdf",
   }
 ];
