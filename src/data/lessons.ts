@@ -23,6 +23,12 @@ export const lessonsAD: Lesson[] = [
     title: "O-Notation",
     description: "Introduction to O-Notation, some more induction",
     pdf: "/lessons/AuD_HS26/week-2.pdf",
+  },
+  {
+    week: 3,
+    title: "Maximum Subarray Sum, Θ und Ω",
+    description: "Maximum Subarray Sum, Θ und Ω-Notation, counting function calls, more induction",
+    pdf: "/lessons/AuD_HS26/week-3.pdf",
   }
 ];
 
