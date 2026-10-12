@@ -29,6 +29,12 @@ export const lessonsAD: Lesson[] = [
     title: "Maximum Subarray Sum, Θ und Ω",
     description: "Maximum Subarray Sum, Θ und Ω-Notation, counting function calls, more induction",
     pdf: "/lessons/AuD_HS26/week-3.pdf",
+  },
+  {
+    week: 4,
+    title: "Suchen und Sortieren",
+    description: "Lineare/Binäre Suche, Bubble/Selection/Insertion/Merge Sort",
+    pdf: "/lessons/AuD_HS26/week-4.pdf",
   }
 ];
 
