@@ -35,6 +35,12 @@ export const lessonsAD: Lesson[] = [
     title: "Suchen und Sortieren",
     description: "Lineare/Binäre Suche, Bubble/Selection/Insertion/Merge Sort",
     pdf: "/lessons/AuD_HS26/week-4.pdf",
+  },
+  {
+    week: 5,
+    title: "Sortieren und Max-Heaps",
+    description: "Quick-Sort, Max-Heaps, Heap-Sort, ADTs, more Function calls",
+    pdf: "/lessons/AuD_HS26/week-5.pdf",
   }
 ];
 
