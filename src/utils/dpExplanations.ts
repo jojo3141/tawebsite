@@ -52,10 +52,10 @@ export const DP_EXPLANATIONS: Record<DPAlgorithmType, DPExplanation> = {
         baseCase: "$DP[i][0] = 0, \\quad DP[0][j] = 0$.",
         recurrence: "$DP[i][j] = \\begin{cases} 1 + DP[i-1][j-1] & \\text{if } A[i] = B[j] \\\\ \\max(DP[i-1][j], DP[i][j-1]) & \\text{if } A[i] \\neq B[j] \\end{cases}$",
         justification: "When considering characters $A[i]$ and $B[j]$, there are two cases. If they match, they contribute to the LCS, so we take the result from the prefixes excluding these characters ($DP[i-1][j-1]$) and add 1. If they strictly do not match, at least one of them is not part of the optimal solution's end. Thus, we discard either $A[i]$ or $B[j]$ and inherit the maximum length found so far from either $DP[i-1][j]$ or $DP[i][j-1]$.",
-        orderOfComputation: "for i ← 1,...,m\n    for j ← 1,...,n",
-        solution: "$DP[m][n]$, where $m=|A|, n=|B|$.",
-        complexity: "Time: $O(mn)$\nSpace: $O(mn)$.",
-        dimension: "$DP[0...m][0...n]$"
+        orderOfComputation: "for i ← 1,...,n\n    for j ← 1,...,m",
+        solution: "$DP[n][m]$, where $n=|A|, m=|B|$.",
+        complexity: "Time: $O(nm)$\nSpace: $O(nm)$.",
+        dimension: "$DP[0...n][0...m]$"
     },
     [DPAlgorithmType.EDIT_DISTANCE]: {
         problem: "Find the minimum number of operations (insert, delete, replace) to convert string $A$ to string $B$.",
@@ -63,10 +63,10 @@ export const DP_EXPLANATIONS: Record<DPAlgorithmType, DPExplanation> = {
         baseCase: "$DP[i][0] = i, \\quad DP[0][j] = j$.",
         recurrence: "$DP[i][j] = \\begin{cases} DP[i-1][j-1] & \\text{if } A[i] = B[j] \\\\ 1 + \\min(DP[i-1][j], DP[i][j-1], DP[i-1][j-1]) & \\text{if } A[i] \\neq B[j] \\end{cases}$",
         justification: "To convert prefix $A[1..i]$ to $B[1..j]$, we check the last characters. If $A[i] == B[j]$, no new operation is needed, so cost is unchanged from $DP[i-1][j-1]$. If they differ, we must perform an operation: Insert $B[j]$ (moves to $DP[i][j-1]$), Delete $A[i]$ (moves to $DP[i-1][j]$), or Replace $A[i]$ with $B[j]$ (moves to $DP[i-1][j-1]$). We pick the minimum of these previous costs and add 1.",
-        orderOfComputation: "for i ← 1,...,m\n    for j ← 1,...,n",
-        solution: "$DP[m][n]$.",
-        complexity: "Time: $O(mn)$\nSpace: $O(mn)$ (or $O(\\min(m, n))$ optimized).",
-        dimension: "$DP[0...m][0...n]$"
+        orderOfComputation: "for i ← 1,...,n\n    for j ← 1,...,m",
+        solution: "$DP[n][m]$.",
+        complexity: "Time: $O(nm)$\nSpace: $O(nm)$ (or $O(\\min(n, m))$ optimized).",
+        dimension: "$DP[0...n][0...m]$"
     },
     [DPAlgorithmType.SUBSET_SUM]: {
         problem: "Determine if any subset of the given array sums up to a specific target.",

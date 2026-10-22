@@ -89,22 +89,22 @@ export const PSEUDOCODE_LAS = [
 // --- EDIT DISTANCE ---
 export const PSEUDOCODE_EDIT_DISTANCE = [
     { line: 1, text: "EDIT-DISTANCE(A, B)", indent: 0 },
-    { line: 2, text: "m ← len(A), n ← len(B)", indent: 2 },
-    { line: 3, text: "initialize DP[0...m][0...n], fill base cases", indent: 2 },
-    { line: 4, text: "for i ← 1,...,m do", indent: 2 },
-    { line: 5, text: "for j ← 1,...,n do", indent: 4 },
+    { line: 2, text: "n ← len(A), m ← len(B)", indent: 2 },
+    { line: 3, text: "initialize DP[0...n][0...m], fill base cases", indent: 2 },
+    { line: 4, text: "for i ← 1,...,n do", indent: 2 },
+    { line: 5, text: "for j ← 1,...,m do", indent: 4 },
     { line: 6, text: "if A[i] == B[j]", indent: 6 },
     { line: 7, text: "DP[i][j] ← DP[i-1][j-1]", indent: 8 },
     { line: 8, text: "else", indent: 6 },
     { line: 9, text: "DP[i][j] ← 1 + min(", indent: 8 },
     { line: 9, text: "DP[i-1][j], DP[i][j-1], DP[i-1][j-1])", indent: 10 },
-    { line: 11, text: "return DP[m][n]", indent: 2 },
+    { line: 11, text: "return DP[n][m]", indent: 2 },
 ];
 
 export const PSEUDOCODE_EDIT_DISTANCE_TOP_DOWN = [
     { line: 1, text: "EDIT-DISTANCE(A, B)", indent: 0 },
     { line: 2, text: "initialize DP table with -1", indent: 2 },
-    { line: 3, text: "return compute(m, n)", indent: 2 },
+    { line: 3, text: "return compute(n, m)", indent: 2 },
     { line: 4, text: "compute(i, j)", indent: 0 },
     { line: 5, text: "if i==0 return j, if j==0 return i", indent: 2 },
     { line: 6, text: "if DP[i][j] ≠ -1 return DP[i][j]", indent: 2 },
@@ -193,19 +193,19 @@ export const PSEUDOCODE_JUMP_GAME = [
 
 export const PSEUDOCODE_LCS = [
     { line: 1, text: "LCS(A, B)", indent: 0 },
-    { line: 2, text: "m ← len(A), n ← len(B)", indent: 2 },
-    { line: 3, text: "initialize DP[0...m][0...n] with 0", indent: 2 },
-    { line: 4, text: "for i ← 1,...,m do", indent: 2 },
-    { line: 5, text: "for j ← 1,...,n do", indent: 4 },
+    { line: 2, text: "n ← len(A), m ← len(B)", indent: 2 },
+    { line: 3, text: "initialize DP[0...n][0...m] with 0", indent: 2 },
+    { line: 4, text: "for i ← 1,...,n do", indent: 2 },
+    { line: 5, text: "for j ← 1,...,m do", indent: 4 },
     { line: 6, text: "if A[i] == B[j] then DP[i][j] ← 1 + DP[i-1][j-1]", indent: 6 },
     { line: 7, text: "else DP[i][j] ← max(DP[i-1][j], DP[i][j-1])", indent: 6 },
-    { line: 8, text: "return DP[m][n]", indent: 2 },
+    { line: 8, text: "return DP[n][m]", indent: 2 },
 ];
 
 export const PSEUDOCODE_LCS_TOP_DOWN = [
     { line: 1, text: "LCS(A, B)", indent: 0 },
-    { line: 2, text: "initialize DP[0...m][0...n] with -1", indent: 2 },
-    { line: 3, text: "return compute(m, n)", indent: 2 },
+    { line: 2, text: "initialize DP[0...n][0...m] with -1", indent: 2 },
+    { line: 3, text: "return compute(n, m)", indent: 2 },
     { line: 4, text: "compute(i, j)", indent: 0 },
     { line: 5, text: "if i == 0 or j == 0 return 0", indent: 2 },
     { line: 6, text: "if DP[i][j] ≠ -1 return DP[i][j]", indent: 2 },
