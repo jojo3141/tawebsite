@@ -41,6 +41,7 @@ const LatexRenderer = ({ children }: { children: string }) => {
 };
 
 import { VisualizerMode } from '@/components/visualizer/VisualizerHeader';
+import { useAlgorithmsTheme } from '@/context/AlgorithmsThemeContext';
 
 interface DPModeProps {
   mode: VisualizerMode;
@@ -49,6 +50,9 @@ interface DPModeProps {
 }
 
 const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
+  const { theme } = useAlgorithmsTheme();
+  const isLight = theme === 'light';
+
   // State
   const [algorithm, setAlgorithm] = useState<DPAlgorithmType>(DPAlgorithmType.FIBONACCI);
   const [approach, setApproach] = useState<DPApproach>('BOTTOM_UP');
@@ -256,24 +260,29 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
         
         {/* Left Column: Visualization */}
         <div className="flex flex-col gap-2 w-auto shrink-0 z-30 sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto no-scrollbar">
-          <div className="bg-slate-900/50 rounded-2xl border border-slate-800 shadow-xl overflow-hidden w-fit flex flex-col">
+          <div className={`${isLight ? 'bg-white/95 border-slate-200 shadow-md' : 'bg-slate-900/50 border-slate-800 shadow-xl'} rounded-2xl border overflow-hidden w-fit flex flex-col`}>
             
             {/* Canvas Area */}
-            <div className="relative w-[600px] min-h-[300px] bg-slate-950 flex flex-col items-center justify-start p-4 gap-4">
+            <div className={`relative w-[600px] min-h-[300px] flex flex-col items-center justify-start p-4 gap-4 ${isLight ? 'bg-slate-50/50' : 'bg-slate-950'}`}>
                
                 {/* 1. Input Array - Old Style (Hidden for Max Subarray & Jump Game) */}
                 {currentStep.inputArray && algorithm !== DPAlgorithmType.MAXIMUM_SUBARRAY_SUM && algorithm !== DPAlgorithmType.JUMP_GAME && (
                    <div className="flex flex-col items-center gap-2 w-full">
-                       <div className="text-xs font-bold text-slate-500 uppercase tracking-wider self-start pl-4">Input Array (A)</div>
+                       <div className={`text-xs font-bold uppercase tracking-wider self-start pl-4 ${isLight ? 'text-slate-700' : 'text-slate-500'}`}>Input Array (A)</div>
                        <div className="flex gap-2 flex-wrap justify-center">
                            {currentStep.inputArray.map((val, idx) => {
                                const highlight = currentStep.highlights.find(h => h.target === 'input' && h.indices.includes(idx));
-                               let borderColor = 'border-slate-700';
-                               let bgColor = 'bg-slate-800';
-                               let textColor = 'text-slate-400';
+                               let borderColor = isLight ? 'border-slate-300' : 'border-slate-700';
+                               let bgColor = isLight ? 'bg-white shadow-sm' : 'bg-slate-800';
+                               let textColor = isLight ? 'text-slate-800 font-semibold' : 'text-slate-400';
 
-                               if (highlight?.type === 'current') { borderColor = 'border-purple-500'; bgColor = 'bg-purple-900/30'; textColor = 'text-purple-300'; }
-                               if (highlight?.type === 'read') { borderColor = 'border-blue-500'; bgColor = 'bg-blue-900/30'; textColor = 'text-blue-300'; }
+                               if (isLight) {
+                                   if (highlight?.type === 'current') { borderColor = 'border-purple-600'; bgColor = 'bg-purple-100'; textColor = 'text-purple-950 font-bold'; }
+                                   if (highlight?.type === 'read') { borderColor = 'border-blue-600'; bgColor = 'bg-blue-100'; textColor = 'text-blue-950 font-bold'; }
+                               } else {
+                                   if (highlight?.type === 'current') { borderColor = 'border-purple-500'; bgColor = 'bg-purple-900/30'; textColor = 'text-purple-300'; }
+                                   if (highlight?.type === 'read') { borderColor = 'border-blue-500'; bgColor = 'bg-blue-900/30'; textColor = 'text-blue-300'; }
+                               }
 
                                return (
                                    <motion.div
@@ -286,7 +295,7 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                                      )}
                                    >
                                        {val}
-                                       <span className="absolute -bottom-5 text-[10px] text-slate-600 font-normal">{idx + 1}</span>
+                                       <span className={`absolute -bottom-5 text-[10px] font-normal ${isLight ? 'text-slate-500 font-medium' : 'text-slate-600'}`}>{idx + 1}</span>
                                    </motion.div>
                                );
                            })}
@@ -313,22 +322,28 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                                      {/* Header Row (Indices) */}
                                      <div className="w-10 h-10"></div> 
                                      {Array.from({ length: currentStep.inputArray.length }, (_, i) => i).map((val, i) => (
-                                          <div key={`input-head-col-${i}`} className="w-10 h-10 flex items-center justify-center font-bold text-slate-500 text-xs">{val + 1}</div>
+                                          <div key={`input-head-col-${i}`} className={`w-10 h-10 flex items-center justify-center font-bold text-xs ${isLight ? 'text-slate-600' : 'text-slate-500'}`}>{val + 1}</div>
                                      ))}
 
                                      {/* Row Label */}
-                                     <div className="w-10 h-10 flex items-center justify-center font-bold text-slate-400">A</div>
+                                     <div className={`w-10 h-10 flex items-center justify-center font-bold ${isLight ? 'text-slate-700' : 'text-slate-400'}`}>A</div>
 
                                      {/* Data Cells */}
                                      {currentStep.inputArray.map((val, idx) => {
                                          const highlight = currentStep.highlights.find(h => h.target === 'input' && h.indices.includes(idx));
-                                         let borderColor = 'border-slate-700';
-                                         let bgColor = 'bg-slate-800';
-                                         let textColor = 'text-slate-400';
+                                         let borderColor = isLight ? 'border-slate-300' : 'border-slate-700';
+                                         let bgColor = isLight ? 'bg-white shadow-sm' : 'bg-slate-800';
+                                         let textColor = isLight ? 'text-slate-800 font-semibold' : 'text-slate-400';
                                          
-                                         if (highlight?.type === 'current') { borderColor = 'border-purple-500'; bgColor = 'bg-purple-900/30'; textColor = 'text-purple-300'; }
-                                         if (highlight?.type === 'read') { borderColor = 'border-blue-500'; bgColor = 'bg-blue-900/30'; textColor = 'text-blue-300'; }
-                                         if (highlight?.type === 'match') { borderColor = 'border-yellow-500'; bgColor = 'bg-yellow-900/30'; textColor = 'text-yellow-300'; }
+                                         if (isLight) {
+                                             if (highlight?.type === 'current') { borderColor = 'border-purple-600'; bgColor = 'bg-purple-100'; textColor = 'text-purple-950 font-bold'; }
+                                             if (highlight?.type === 'read') { borderColor = 'border-blue-600'; bgColor = 'bg-blue-100'; textColor = 'text-blue-950 font-bold'; }
+                                             if (highlight?.type === 'match') { borderColor = 'border-amber-500'; bgColor = 'bg-amber-100'; textColor = 'text-amber-950 font-bold'; }
+                                         } else {
+                                             if (highlight?.type === 'current') { borderColor = 'border-purple-500'; bgColor = 'bg-purple-900/30'; textColor = 'text-purple-300'; }
+                                             if (highlight?.type === 'read') { borderColor = 'border-blue-500'; bgColor = 'bg-blue-900/30'; textColor = 'text-blue-300'; }
+                                             if (highlight?.type === 'match') { borderColor = 'border-yellow-500'; bgColor = 'bg-yellow-900/30'; textColor = 'text-yellow-300'; }
+                                         }
 
                                          return (
                                              <motion.div
@@ -498,18 +513,24 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                                              if (algorithm === DPAlgorithmType.MAXIMUM_SUBARRAY_SUM && idx === 0) return null;
 
                                              const highlight = currentStep.highlights.find(h => h.target === 'dp' && h.indices.includes(idx));
-                                             let borderColor = 'border-slate-700';
-                                             let bgColor = 'bg-slate-800';
-                                             let textColor = 'text-slate-400';
+                                             let borderColor = isLight ? 'border-slate-300' : 'border-slate-700';
+                                             let bgColor = isLight ? 'bg-white shadow-sm' : 'bg-slate-800';
+                                             let textColor = isLight ? 'text-slate-800 font-semibold' : 'text-slate-400';
                                              const shadow = '';
                                              
-                                             if (highlight?.type === 'write') { borderColor = 'border-emerald-500'; bgColor = 'bg-emerald-900/30'; textColor = 'text-emerald-300'; }
-                                             if (highlight?.type === 'read') { borderColor = 'border-blue-500'; bgColor = 'bg-blue-900/30'; textColor = 'text-blue-300'; }
-                                             if (highlight?.type === 'current') { borderColor = 'border-yellow-500'; bgColor = 'bg-yellow-900/30'; textColor = 'text-yellow-300'; }
-                                             if (highlight?.type === 'match') { 
-                                                 borderColor = 'border-yellow-500'; 
-                                                 bgColor = 'bg-yellow-900/30'; 
-                                                 textColor = 'text-yellow-300';
+                                             if (isLight) {
+                                                 if (highlight?.type === 'write') { borderColor = 'border-emerald-600'; bgColor = 'bg-emerald-100'; textColor = 'text-emerald-950 font-bold'; }
+                                                 if (highlight?.type === 'read') { borderColor = 'border-blue-600'; bgColor = 'bg-blue-100'; textColor = 'text-blue-950 font-bold'; }
+                                                 if (highlight?.type === 'current' || highlight?.type === 'match') { borderColor = 'border-amber-500'; bgColor = 'bg-amber-100'; textColor = 'text-amber-950 font-bold'; }
+                                             } else {
+                                                 if (highlight?.type === 'write') { borderColor = 'border-emerald-500'; bgColor = 'bg-emerald-900/30'; textColor = 'text-emerald-300'; }
+                                                 if (highlight?.type === 'read') { borderColor = 'border-blue-500'; bgColor = 'bg-blue-900/30'; textColor = 'text-blue-300'; }
+                                                 if (highlight?.type === 'current') { borderColor = 'border-yellow-500'; bgColor = 'bg-yellow-900/30'; textColor = 'text-yellow-300'; }
+                                                 if (highlight?.type === 'match') { 
+                                                     borderColor = 'border-yellow-500'; 
+                                                     bgColor = 'bg-yellow-900/30'; 
+                                                     textColor = 'text-yellow-300';
+                                                 }
                                              }
             
                                              const row = Math.floor(idx / currentStep.gridDimensions!.cols);
@@ -591,13 +612,19 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                                 if (algorithm === DPAlgorithmType.MAXIMUM_SUBARRAY_SUM && idx === 0) return null;
 
                                 const highlight = currentStep.highlights.find(h => h.target === 'dp' && h.indices.includes(idx));
-                                let borderColor = 'border-slate-700';
-                                let bgColor = 'bg-slate-800';
-                                let textColor = 'text-slate-400';
+                                let borderColor = isLight ? 'border-slate-300' : 'border-slate-700';
+                                let bgColor = isLight ? 'bg-white shadow-sm' : 'bg-slate-800';
+                                let textColor = isLight ? 'text-slate-800' : 'text-slate-400';
                                 
-                                if (highlight?.type === 'write') { borderColor = 'border-emerald-500'; bgColor = 'bg-emerald-900/30'; textColor = 'text-emerald-300'; }
-                                if (highlight?.type === 'read') { borderColor = 'border-blue-500'; bgColor = 'bg-blue-900/30'; textColor = 'text-blue-300'; }
-                                if (highlight?.type === 'current') { borderColor = 'border-yellow-500'; bgColor = 'bg-yellow-900/30'; textColor = 'text-yellow-300'; }
+                                if (isLight) {
+                                    if (highlight?.type === 'write') { borderColor = 'border-emerald-600'; bgColor = 'bg-emerald-100'; textColor = 'text-emerald-950 font-bold'; }
+                                    if (highlight?.type === 'read') { borderColor = 'border-blue-600'; bgColor = 'bg-blue-100'; textColor = 'text-blue-950 font-bold'; }
+                                    if (highlight?.type === 'current') { borderColor = 'border-amber-500'; bgColor = 'bg-amber-100'; textColor = 'text-amber-950 font-bold'; }
+                                } else {
+                                    if (highlight?.type === 'write') { borderColor = 'border-emerald-500'; bgColor = 'bg-emerald-900/30'; textColor = 'text-emerald-300'; }
+                                    if (highlight?.type === 'read') { borderColor = 'border-blue-500'; bgColor = 'bg-blue-900/30'; textColor = 'text-blue-300'; }
+                                    if (highlight?.type === 'current') { borderColor = 'border-yellow-500'; bgColor = 'bg-yellow-900/30'; textColor = 'text-yellow-300'; }
+                                }
 
                                 return (
                                     <motion.div
@@ -610,7 +637,7 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                                     )}
                                     >
                                         {val === Infinity ? '∞' : (val === -Infinity ? '-∞' : (val !== null ? val : ''))}
-                                        <span className="absolute -bottom-5 text-[10px] text-slate-600 font-normal">{idx}</span>
+                                        <span className={clsx("absolute -bottom-5 text-[10px] font-normal", isLight ? "text-slate-500 font-medium" : "text-slate-600")}>{idx}</span>
                                     </motion.div>
                                 );
                             })}
@@ -619,25 +646,28 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                </div>
 
                {/* Toast */}
-               <div className="bg-slate-800/90 backdrop-blur-md border border-slate-600 shadow-2xl flex items-center justify-center transition-all px-6 py-3 rounded-full gap-4 mt-2 max-w-lg text-center">
+               <div className={clsx(
+                 "backdrop-blur-md border shadow-2xl flex items-center justify-center transition-all px-6 py-3 rounded-full gap-4 mt-2 max-w-lg text-center",
+                 isLight ? "bg-white/95 border-slate-300 text-slate-800 shadow-slate-200" : "bg-slate-800/90 border-slate-600 text-white"
+               )}>
                  <div className="flex items-center gap-3 shrink-0">
-                     <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                     <span className="text-sm font-medium text-white">{currentStep.description}</span>
+                     <div className={clsx("w-2 h-2 rounded-full animate-pulse", isLight ? "bg-indigo-600" : "bg-indigo-500")}></div>
+                     <span className={clsx("text-sm font-medium", isLight ? "text-slate-800" : "text-white")}>{currentStep.description}</span>
                  </div>
                </div>
             </div>
 
             {/* Controls */}
-            <div className="border-t border-slate-800 p-2 bg-slate-900/50 flex items-center justify-between">
+            <div className={clsx("border-t p-2 flex items-center justify-between", isLight ? "border-slate-200 bg-slate-100/70" : "border-slate-800 bg-slate-900/50")}>
               <div className="flex items-center gap-1">
-                <button onClick={handlePrev} disabled={currentStepIndex === 0} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 disabled:opacity-30 transition-colors"><ArrowLeft size={20} /></button>
-                <div className="text-sm font-mono text-slate-400 w-32 text-center">Step {currentStep.stepId} / {steps.length - 1}</div>
-                <button onClick={handleNext} disabled={currentStepIndex === steps.length - 1} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 disabled:opacity-30 transition-colors"><ArrowRight size={20} /></button>
+                <button onClick={handlePrev} disabled={currentStepIndex === 0} className={clsx("p-2 rounded-lg disabled:opacity-30 transition-colors", isLight ? "hover:bg-slate-200 text-slate-600" : "hover:bg-slate-800 text-slate-400")}><ArrowLeft size={20} /></button>
+                <div className={clsx("text-sm font-mono w-32 text-center", isLight ? "text-slate-600" : "text-slate-400")}>Step {currentStep.stepId} / {steps.length - 1}</div>
+                <button onClick={handleNext} disabled={currentStepIndex === steps.length - 1} className={clsx("p-2 rounded-lg disabled:opacity-30 transition-colors", isLight ? "hover:bg-slate-200 text-slate-600" : "hover:bg-slate-800 text-slate-400")}><ArrowRight size={20} /></button>
               </div>
               <div className="flex gap-1">
-                <button onClick={handleReset} disabled={currentStepIndex === 0} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-bold transition-colors border border-slate-700 text-slate-200 disabled:opacity-50"><SkipBack size={16} /> Reset</button>
-                <button onClick={() => setIsAutoPlaying(!isAutoPlaying)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isAutoPlaying ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'}`}>{isAutoPlaying ? 'Pause' : <><Play size={16} fill="currentColor" /> Auto Play</>}</button>
-                <button onClick={handleJumpToEnd} disabled={currentStepIndex === steps.length - 1} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-bold transition-colors border border-slate-700 text-slate-200 disabled:opacity-50"><SkipForward size={16} /> Jump to End</button>
+                <button onClick={handleReset} disabled={currentStepIndex === 0} className={clsx("flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors border disabled:opacity-50", isLight ? "bg-white hover:bg-slate-100 border-slate-300 text-slate-700 shadow-sm" : "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200")}><SkipBack size={16} /> Reset</button>
+                <button onClick={() => setIsAutoPlaying(!isAutoPlaying)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isAutoPlaying ? (isLight ? 'bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-300' : 'bg-red-500/20 text-red-400 hover:bg-red-500/30') : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'}`}>{isAutoPlaying ? 'Pause' : <><Play size={16} fill="currentColor" /> Auto Play</>}</button>
+                <button onClick={handleJumpToEnd} disabled={currentStepIndex === steps.length - 1} className={clsx("flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors border disabled:opacity-50", isLight ? "bg-white hover:bg-slate-100 border-slate-300 text-slate-700 shadow-sm" : "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200")}><SkipForward size={16} /> Jump to End</button>
               </div>
             </div>
           </div>
@@ -657,10 +687,10 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                 <div className="flex flex-col gap-4 h-full">
                     {/* Array Input (Max Subarray / Jump Game / Subset Sum / LAS) */}
                     {(algorithm === DPAlgorithmType.MAXIMUM_SUBARRAY_SUM || algorithm === DPAlgorithmType.JUMP_GAME || algorithm === DPAlgorithmType.SUBSET_SUM || algorithm === DPAlgorithmType.LAS) && (
-                        <div className="flex flex-col gap-3 p-4 bg-slate-800 rounded-xl border border-slate-700">
-                             <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Input Array</div>
+                        <div className={clsx("flex flex-col gap-3 p-4 rounded-xl border transition-colors", isLight ? "bg-white border-slate-200 shadow-sm" : "bg-slate-800 border-slate-700")}>
+                             <div className={clsx("text-xs font-bold uppercase tracking-wider", isLight ? "text-slate-700" : "text-slate-400")}>Input Array</div>
                              <div className="flex flex-col gap-2">
-                                <label className="text-xs text-slate-500">
+                                <label className={clsx("text-xs", isLight ? "text-slate-600 font-medium" : "text-slate-500")}>
                                     {algorithm === DPAlgorithmType.MAXIMUM_SUBARRAY_SUM 
                                         ? "Comma separated numbers (max 9)" 
                                         : (algorithm === DPAlgorithmType.JUMP_GAME || algorithm === DPAlgorithmType.SUBSET_SUM)
@@ -707,13 +737,18 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                                             setInputArray([]);
                                         }
                                     }}
-                                    className="bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white font-mono"
+                                    className={clsx(
+                                        "border rounded p-2 text-sm font-mono transition-colors focus:outline-none",
+                                        isLight 
+                                            ? "bg-slate-50 border-slate-300 text-black focus:border-indigo-600 focus:bg-white" 
+                                            : "bg-slate-900 border-slate-700 text-white focus:border-indigo-500"
+                                    )}
                                 />
                              </div>
                              
                              {algorithm === DPAlgorithmType.SUBSET_SUM && (
                                  <div className="flex flex-col gap-2 mt-2">
-                                    <label className="text-xs text-slate-500">Target Sum</label>
+                                    <label className={clsx("text-xs", isLight ? "text-slate-600 font-medium" : "text-slate-500")}>Target Sum</label>
                                     <input 
                                         type="text" 
                                         value={rawTargetStr}
@@ -724,7 +759,12 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                                                 setSubsetTarget(val === '' ? 0 : parseInt(val));
                                             }
                                         }}
-                                        className="bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white font-mono"
+                                        className={clsx(
+                                            "border rounded p-2 text-sm font-mono transition-colors focus:outline-none",
+                                            isLight 
+                                                ? "bg-slate-50 border-slate-300 text-black focus:border-indigo-600 focus:bg-white" 
+                                                : "bg-slate-900 border-slate-700 text-white focus:border-indigo-500"
+                                        )}
                                     />
                                  </div>
                              )}
@@ -733,11 +773,11 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
 
                     {/* Knapsack Inputs */}
                      {algorithm === DPAlgorithmType.KNAPSACK && (
-                        <div className="flex flex-col gap-3 p-4 bg-slate-800 rounded-xl border border-slate-700">
-                             <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Knapsack Config</div>
+                        <div className={clsx("flex flex-col gap-3 p-4 rounded-xl border transition-colors", isLight ? "bg-white border-slate-200 shadow-sm" : "bg-slate-800 border-slate-700")}>
+                             <div className={clsx("text-xs font-bold uppercase tracking-wider", isLight ? "text-slate-700" : "text-slate-400")}>Knapsack Config</div>
                              <div className="grid grid-cols-2 gap-3">
                                 <div className="col-span-2">
-                                    <label className="text-[10px] uppercase text-slate-500 font-bold mb-1 block">Weights (wt)</label>
+                                    <label className={clsx("text-[10px] uppercase font-bold mb-1 block", isLight ? "text-slate-600" : "text-slate-500")}>Weights (wt)</label>
                                     <input 
                                         type="text" 
                                         value={rawWeightsStr}
@@ -759,11 +799,16 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                                             if (validNums.length > 0) setKnapsackWeights(validNums);
                                             else if (val.trim() === '') setKnapsackWeights([]);
                                         }}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm font-mono text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                                        className={clsx(
+                                            "w-full border rounded px-2 py-1 text-sm font-mono focus:outline-none transition-colors",
+                                            isLight 
+                                                ? "bg-slate-50 border-slate-300 text-black focus:border-indigo-600 focus:bg-white" 
+                                                : "bg-slate-900 border-slate-700 text-white focus:border-indigo-500"
+                                        )}
                                     />
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="text-[10px] uppercase text-slate-500 font-bold mb-1 block">Values (val)</label>
+                                    <label className={clsx("text-[10px] uppercase font-bold mb-1 block", isLight ? "text-slate-600" : "text-slate-500")}>Values (val)</label>
                                     <input 
                                         type="text" 
                                         value={rawValuesStr}
@@ -773,7 +818,7 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                                             const arr = val.split(/[,\s]+/).filter(s => s.trim() !== '');
                                             const numArr = arr.map(s => parseInt(s.trim())).filter(n => !isNaN(n));
 
-                                            if (numArr.length > 7) return;
+                                            if (numArr.length > 7) return; 
                                             if (numArr.some(n => n < 0)) return;
                                             if (val.includes('-')) return;
 
@@ -783,11 +828,16 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                                             if (validNums.length > 0) setKnapsackValues(validNums);
                                             else if (val.trim() === '') setKnapsackValues([]);
                                         }}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm font-mono text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                                        className={clsx(
+                                            "w-full border rounded px-2 py-1 text-sm font-mono focus:outline-none transition-colors",
+                                            isLight 
+                                                ? "bg-slate-50 border-slate-300 text-black focus:border-indigo-600 focus:bg-white" 
+                                                : "bg-slate-900 border-slate-700 text-white focus:border-indigo-500"
+                                        )}
                                     />
                                 </div>
                                 <div className="col-span-1">
-                                    <label className="text-[10px] uppercase text-slate-500 font-bold mb-1 block">Capacity (W)</label>
+                                    <label className={clsx("text-[10px] uppercase font-bold mb-1 block", isLight ? "text-slate-600" : "text-slate-500")}>Capacity (W)</label>
                                     <input 
                                         type="text" 
                                         value={rawCapacityStr}
@@ -798,7 +848,12 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                                                 setKnapsackCapacity(val === '' ? 0 : parseInt(val));
                                             }
                                         }}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm font-mono text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                                        className={clsx(
+                                            "w-full border rounded px-2 py-1 text-sm font-mono focus:outline-none transition-colors",
+                                            isLight 
+                                                ? "bg-slate-50 border-slate-300 text-black focus:border-indigo-600 focus:bg-white" 
+                                                : "bg-slate-900 border-slate-700 text-white focus:border-indigo-500"
+                                        )}
                                     />
                                 </div>
                              </div>
@@ -807,27 +862,37 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
 
                     {/* LCS / Edit Distance Input */}
                     {(algorithm === DPAlgorithmType.LCS || algorithm === DPAlgorithmType.EDIT_DISTANCE) && (
-                        <div className="flex flex-col gap-3 p-4 bg-slate-800 rounded-xl border border-slate-700">
-                             <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Configuration</div>
+                        <div className={clsx("flex flex-col gap-3 p-4 rounded-xl border transition-colors", isLight ? "bg-white border-slate-200 shadow-sm" : "bg-slate-800 border-slate-700")}>
+                             <div className={clsx("text-xs font-bold uppercase tracking-wider", isLight ? "text-slate-700" : "text-slate-400")}>Configuration</div>
                              <div className="flex flex-col gap-2">
                                  <div>
-                                     <label className="text-[10px] uppercase text-slate-500 font-bold mb-1 block">String A (max 7)</label>
+                                     <label className={clsx("text-[10px] uppercase font-bold mb-1 block", isLight ? "text-slate-600" : "text-slate-500")}>String A (max 7)</label>
                                      <input 
                                         type="text" 
                                         maxLength={7}
                                         value={lcsStringA}
                                         onChange={(e) => setLcsStringA(e.target.value.toUpperCase())}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm font-mono text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                                        className={clsx(
+                                            "w-full border rounded px-2 py-1 text-sm font-mono focus:outline-none transition-colors",
+                                            isLight 
+                                                ? "bg-slate-50 border-slate-300 text-black focus:border-indigo-600 focus:bg-white" 
+                                                : "bg-slate-900 border-slate-700 text-white focus:border-indigo-500"
+                                        )}
                                      />
                                  </div>
                                  <div>
-                                     <label className="text-[10px] uppercase text-slate-500 font-bold mb-1 block">String B (max 7)</label>
+                                     <label className={clsx("text-[10px] uppercase font-bold mb-1 block", isLight ? "text-slate-600" : "text-slate-500")}>String B (max 7)</label>
                                      <input 
                                         type="text" 
                                         maxLength={7}
                                         value={lcsStringB}
                                         onChange={(e) => setLcsStringB(e.target.value.toUpperCase())}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm font-mono text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                                        className={clsx(
+                                            "w-full border rounded px-2 py-1 text-sm font-mono focus:outline-none transition-colors",
+                                            isLight 
+                                                ? "bg-slate-50 border-slate-300 text-black focus:border-indigo-600 focus:bg-white" 
+                                                : "bg-slate-900 border-slate-700 text-white focus:border-indigo-500"
+                                        )}
                                      />
                                  </div>
                              </div>
@@ -836,12 +901,12 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
 
                     {/* Switcher */}
                      {algorithm !== DPAlgorithmType.JUMP_GAME && algorithm !== DPAlgorithmType.LAS && (
-                     <div className="flex p-1 bg-slate-800/50 rounded-lg border border-slate-800 w-fit">
+                     <div className={clsx("flex p-1 rounded-lg border w-fit", isLight ? "bg-slate-200/70 border-slate-300" : "bg-slate-800/50 border-slate-800")}>
                         <button 
                             onClick={() => setApproach('BOTTOM_UP')}
                             className={clsx(
                                 "px-3 py-1.5 text-xs font-bold rounded-md transition-all",
-                                approach === 'BOTTOM_UP' ? "bg-indigo-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-300"
+                                approach === 'BOTTOM_UP' ? "bg-indigo-600 text-white shadow-sm" : (isLight ? "text-slate-600 hover:text-slate-900" : "text-slate-500 hover:text-slate-300")
                             )}
                         >
                             Bottom-Up
@@ -850,7 +915,7 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                             onClick={() => setApproach('TOP_DOWN')}
                             className={clsx(
                                 "px-3 py-1.5 text-xs font-bold rounded-md transition-all",
-                                approach === 'TOP_DOWN' ? "bg-indigo-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-300"
+                                approach === 'TOP_DOWN' ? "bg-indigo-600 text-white shadow-sm" : (isLight ? "text-slate-600 hover:text-slate-900" : "text-slate-500 hover:text-slate-300")
                             )}
                         >
                             Top-Down
@@ -868,8 +933,8 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
 
                      {/* Recursion Stack Panel */}
                      {approach === 'TOP_DOWN' && currentStep.stack && (
-                        <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden max-h-[300px]">
-                             <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 flex items-center gap-2 text-xs font-bold text-amber-500 uppercase tracking-wider shrink-0 w-full z-10">
+                        <div className={clsx("rounded-xl border flex flex-col overflow-hidden max-h-[300px]", isLight ? "bg-white border-slate-300 shadow-sm" : "bg-slate-800 border-slate-700")}>
+                             <div className={clsx("px-3 py-2 border-b flex items-center gap-2 text-xs font-bold uppercase tracking-wider shrink-0 w-full z-10", isLight ? "bg-amber-50 border-slate-200 text-amber-700" : "bg-slate-900 border-slate-700 text-amber-500")}>
                                  <Layers size={14} />
                                  Recursion Stack
                              </div>
@@ -881,13 +946,13 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                                          initial={{ opacity: 0, x: -10 }}
                                          animate={{ opacity: 1, x: 0 }}
                                          layout
-                                         className="p-2 bg-slate-700 rounded border-l-4 border-amber-500 text-sm font-mono text-slate-200 shadow-sm shrink-0"
+                                         className={clsx("p-2 rounded border-l-4 text-sm font-mono shadow-sm shrink-0", isLight ? "bg-slate-100 border-amber-600 text-slate-800" : "bg-slate-700 border-amber-500 text-slate-200")}
                                      >
                                          {frame}
                                      </motion.div>
                                  ))}
                                  {currentStep.stack.length === 0 && (
-                                     <div className="text-slate-500 italic text-sm text-center py-4">Stack is empty</div>
+                                     <div className={clsx("italic text-sm text-center py-4", isLight ? "text-slate-400" : "text-slate-500")}>Stack is empty</div>
                                  )}
                              </div>
                         </div>

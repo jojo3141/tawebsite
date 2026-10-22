@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { Share2, ArrowUpDown, Trees, Layers, ArrowRight, ArrowLeft, GitGraph, Scissors, Disc, Hexagon, Waypoints, Users, Waves, VectorSquare, RefreshCw, Palette, Copy, Route } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useCourse } from '@/context/CourseContext';
+import { useAlgorithmsTheme } from '@/context/AlgorithmsThemeContext';
+import ThemeToggle from '@/components/visualizer/ThemeToggle';
 
 export type CategoryType = 'GRAPH' | 'SORTING' | 'TREES' | 'DP' | 'TARJAN' | 'EULER' |'GREEDY_MATCHING' | 'HOPCROFT_KARP' | 'GRAPH_COLORING' | 'FORD_FULKERSON' | 'LONG_PATH' | 'HAMILTON_PATH' | 'MINIMUM_EDGE_CUT' | 'SMALLEST_ENCLOSING_DISK' | 'JARVIS_WRAP' | 'FINDING_DUPLICATES_HASH' | 'BLOOM_FILTER' | 'METRIC_TSP';
 
@@ -13,6 +15,8 @@ interface CategorySelectionProps {
 
 const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
   const { course, setCourse } = useCourse();
+  const { theme } = useAlgorithmsTheme();
+  const isLight = theme === 'light';
 
   const categoriesAD: { 
     id: CategoryType; 
@@ -152,17 +156,36 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
   const categories = course === 'AD' ? categoriesAD : categoriesAW;
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-8 relative overflow-hidden">
+    <div className={clsx(
+      "min-h-screen flex flex-col items-center justify-center p-8 relative overflow-hidden transition-colors duration-300",
+      isLight ? "bg-slate-50 text-slate-900" : "bg-slate-950 text-slate-200"
+    )}>
       {/* Background Gradients */}
-      <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-indigo-900/20 to-transparent pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-900/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className={clsx(
+        "absolute top-0 left-0 w-full h-[500px] pointer-events-none transition-all duration-300",
+        isLight ? "bg-gradient-to-b from-purple-100/60 to-transparent" : "bg-gradient-to-b from-indigo-900/20 to-transparent"
+      )} />
+      <div className={clsx(
+        "absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full blur-[100px] pointer-events-none transition-colors duration-300",
+        isLight ? "bg-purple-200/30" : "bg-purple-900/10"
+      )} />
       
       {/* Back to Home Button */}
       <div className="absolute top-8 left-8 z-20">
-          <Link href="/" className="flex items-center gap-2 px-4 py-2 bg-slate-900/50 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl border border-slate-800 hover:border-slate-700 transition-all backdrop-blur-sm group">
+          <Link href="/" className={clsx(
+            "flex items-center gap-2 px-4 py-2 rounded-xl border transition-all backdrop-blur-sm group shadow-sm",
+            isLight 
+              ? "bg-white/80 hover:bg-white text-slate-600 hover:text-slate-900 border-slate-200 hover:border-slate-300"
+              : "bg-slate-900/50 hover:bg-slate-800 text-slate-400 hover:text-white border-slate-800 hover:border-slate-700"
+          )}>
               <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
               <span className="font-medium">Home</span>
           </Link>
+      </div>
+
+      {/* Theme Toggle Button (Top Right Corner) */}
+      <div className="absolute top-8 right-8 z-20">
+          <ThemeToggle size="md" />
       </div>
 
       <div className="max-w-6xl w-full z-10 flex flex-col gap-12">
@@ -184,7 +207,9 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
                     }
                 }}
                 style={{
-                    backgroundImage: 'linear-gradient(90deg, #7244ffff, #c084fc, #f472b6, #7244ffff, #c084fc, #f472b6, #7244ffff)',
+                    backgroundImage: isLight
+                      ? 'linear-gradient(90deg, #6366f1, #9333ea, #ec4899, #6366f1, #9333ea, #ec4899, #6366f1)'
+                      : 'linear-gradient(90deg, #7244ffff, #c084fc, #f472b6, #7244ffff, #c084fc, #f472b6, #7244ffff)',
                     backgroundSize: '200% auto',
                 }}
                 className="text-4xl md:text-6xl pb-2 font-bold text-transparent bg-clip-text"
@@ -197,7 +222,10 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-slate-900 p-1 rounded-xl flex items-center gap-1 border border-slate-800"
+                className={clsx(
+                  "p-1 rounded-xl flex items-center gap-1 border transition-colors",
+                  isLight ? "bg-slate-200/80 border-slate-300" : "bg-slate-900 border-slate-800"
+                )}
              >
                 {(['AD', 'AW'] as const).map((c) => (
                   <button
@@ -205,13 +233,18 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
                     onClick={() => setCourse(c)}
                     className={clsx(
                       "relative px-4 py-2 text-sm font-bold rounded-lg transition-colors z-0 min-w-[80px]",
-                      course === c ? "text-indigo-400" : "text-slate-500 hover:text-slate-300"
+                      course === c 
+                        ? (isLight ? "text-purple-700" : "text-indigo-400") 
+                        : (isLight ? "text-slate-600 hover:text-slate-900" : "text-slate-500 hover:text-slate-300")
                     )}
                   >
                     {course === c && (
                       <motion.div
                         layoutId="visualizerCourseHighlight"
-                        className="absolute inset-0 bg-slate-800 shadow-sm rounded-lg border border-slate-700"
+                        className={clsx(
+                          "absolute inset-0 shadow-sm rounded-lg border",
+                          isLight ? "bg-white border-slate-200" : "bg-slate-800 border-slate-700"
+                        )}
                         initial={false}
                         transition={{ type: "spring", stiffness: 400, damping: 30 }}
                       />
@@ -246,24 +279,32 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
                                 damping: 20 
                             }}
                             onClick={() => onSelect(category.id)}
-                            className="group relative flex flex-col rounded-3xl border border-slate-800 text-left transition-colors duration-300 hover:border-slate-600 hover:shadow-2xl overflow-hidden bg-slate-900/40 backdrop-blur-sm p-8"
+                            className={clsx(
+                              "group relative flex flex-col rounded-3xl border text-left transition-all duration-300 hover:shadow-2xl overflow-hidden backdrop-blur-sm p-8",
+                              isLight 
+                                ? "bg-white/90 border-slate-200 hover:border-slate-300 shadow-md hover:-translate-y-0.5" 
+                                : "bg-slate-900/40 border-slate-800 hover:border-slate-600"
+                            )}
                         >
                             <div className={clsx("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500", category.gradient)} />
                             
                             <div className="relative z-10 flex flex-col gap-4 h-full">
                                 <div className={clsx(
-                                    "flex items-center justify-center bg-slate-800/80 group-hover:bg-slate-800/50 transition-colors border border-slate-700 group-hover:border-slate-600 w-14 h-14 rounded-2xl",
+                                    "flex items-center justify-center transition-colors border w-14 h-14 rounded-2xl",
+                                    isLight 
+                                      ? "bg-slate-100 group-hover:bg-slate-50 border-slate-200" 
+                                      : "bg-slate-800/80 group-hover:bg-slate-800/50 border-slate-700 group-hover:border-slate-600",
                                     category.color
                                 )}>
                                     <category.icon size={28} />
                                 </div>
                                 
                                 <div className="flex flex-col gap-2 mt-auto">
-                                    <h3 className="font-bold text-white flex items-center gap-2 text-2xl">
+                                    <h3 className={clsx("font-bold flex items-center gap-2 text-2xl transition-colors", isLight ? "text-slate-900" : "text-white")}>
                                         {category.name}
-                                        <ArrowRight size={20} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 text-slate-400" />
+                                        <ArrowRight size={20} className={clsx("opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300", isLight ? "text-slate-500" : "text-slate-400")} />
                                     </h3>
-                                    <p className="text-slate-400 font-medium leading-relaxed text-sm">
+                                    <p className={clsx("font-medium leading-relaxed text-sm transition-colors", isLight ? "text-slate-600" : "text-slate-400")}>
                                         {category.description}
                                     </p>
                                 </div>
@@ -285,20 +326,27 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ onSelect }) => {
                                 damping: 20 
                             }}
                             onClick={() => onSelect(category.id)}
-                            className="group relative flex flex-col items-center justify-center rounded-2xl border border-slate-600/50 text-center transition-all duration-300 hover:border-slate-600 hover:shadow-lg hover:-translate-y-1 overflow-hidden bg-slate-900/30 backdrop-blur-sm p-6 gap-4"
+                            className={clsx(
+                              "group relative flex flex-col items-center justify-center rounded-2xl border text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden backdrop-blur-sm p-6 gap-4",
+                              isLight 
+                                ? "bg-white/90 border-slate-200 hover:border-slate-300 shadow-sm" 
+                                : "bg-slate-900/30 border-slate-600/50 hover:border-slate-600"
+                            )}
                         >
                             <div className={clsx("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500", category.gradient)} />
                             
                             <div className="relative z-10 flex flex-col items-center gap-3">
                                 <div className={clsx(
-                                    "flex items-center justify-center transition-all duration-300 group-hover:scale-110",
-                                    "w-12 h-12 rounded-xl bg-slate-800/50 border border-slate-700 group-hover:border-slate-600 shadow-sm",
+                                    "flex items-center justify-center transition-all duration-300 group-hover:scale-110 w-12 h-12 rounded-xl shadow-sm border",
+                                    isLight 
+                                      ? "bg-slate-100 border-slate-200" 
+                                      : "bg-slate-800/50 border-slate-700 group-hover:border-slate-600",
                                     category.color
                                 )}>
                                     <category.icon size={24} />
                                 </div>
                                 
-                                <h3 className="font-bold text-slate-200 group-hover:text-white text-[19px] transition-colors">
+                                <h3 className={clsx("font-bold text-[19px] transition-colors", isLight ? "text-slate-800 group-hover:text-slate-950" : "text-slate-200 group-hover:text-white")}>
                                     {category.name}
                                 </h3>
                             </div>

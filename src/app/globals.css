@@ -22,3 +22,371 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Scoped light theme rules for /algorithms */
+.algorithms-light {
+  color-scheme: light;
+}
+
+.algorithms-light .bg-slate-950 {
+  background-color: #f8fafc !important;
+}
+
+.algorithms-light .bg-slate-900,
+.algorithms-light .bg-slate-900\/50,
+.algorithms-light .bg-slate-900\/40,
+.algorithms-light .bg-slate-900\/30 {
+  background-color: #ffffff !important;
+}
+
+.algorithms-light .bg-slate-900\/80 {
+  background-color: #f1f5f9 !important;
+}
+
+.algorithms-light .bg-slate-800,
+.algorithms-light .bg-slate-800\/80,
+.algorithms-light .bg-slate-800\/50,
+.algorithms-light .bg-slate-800\/40 {
+  background-color: #f8fafc !important;
+}
+
+.algorithms-light .bg-slate-800\/90 {
+  background-color: #ffffff !important;
+}
+
+.algorithms-light .bg-slate-700,
+.algorithms-light .bg-slate-700\/30,
+.algorithms-light .bg-slate-700\/50 {
+  background-color: #f1f5f9 !important;
+}
+
+.algorithms-light .border-slate-800,
+.algorithms-light .border-slate-800\/80,
+.algorithms-light .border-slate-700,
+.algorithms-light .border-slate-700\/50,
+.algorithms-light .border-slate-600,
+.algorithms-light .border-slate-600\/50 {
+  border-color: #e2e8f0 !important;
+}
+
+.algorithms-light .shadow-2xl,
+.algorithms-light .shadow-xl,
+.algorithms-light .shadow-lg,
+.algorithms-light .shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05) !important;
+}
+
+/* Neutral Text */
+.algorithms-light .text-slate-200,
+.algorithms-light .text-slate-300 {
+  color: #1e293b !important;
+}
+
+.algorithms-light .text-slate-400,
+.algorithms-light .text-slate-500 {
+  color: #475569 !important;
+}
+
+.algorithms-light .text-slate-600 {
+  color: #334155 !important;
+}
+
+/* CRITICAL: Ensure buttons and elements with dark backgrounds ALWAYS preserve crisp white text */
+.algorithms-light .text-white:not(input),
+.algorithms-light button.text-white,
+.algorithms-light button .text-white,
+.algorithms-light button[class*="text-white"],
+.algorithms-light button[class*="bg-indigo-"],
+.algorithms-light button[class*="bg-blue-"],
+.algorithms-light button[class*="bg-red-"],
+.algorithms-light button[class*="bg-sky-"],
+.algorithms-light button[class*="bg-purple-"],
+.algorithms-light button[class*="bg-emerald-"],
+.algorithms-light [class*="bg-indigo-600"],
+.algorithms-light [class*="bg-indigo-700"],
+.algorithms-light [class*="bg-blue-600"],
+.algorithms-light [class*="bg-red-600"],
+.algorithms-light [class*="bg-sky-600"],
+.algorithms-light [class*="bg-purple-600"],
+.algorithms-light [class*="bg-emerald-600"] {
+  color: #ffffff !important;
+}
+
+.algorithms-light button.text-white svg,
+.algorithms-light button [class*="text-white"] svg,
+.algorithms-light [class*="bg-indigo-600"] svg,
+.algorithms-light [class*="bg-red-600"] svg,
+.algorithms-light [class*="bg-sky-600"] svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Input fields in light mode must always have crisp black text and visible borders */
+.algorithms-light input,
+.algorithms-light input[type="text"],
+.algorithms-light input[type="number"],
+.algorithms-light input.text-white,
+.algorithms-light input[class*="text-"] {
+  color: #000000 !important;
+  background-color: #f8fafc !important;
+}
+
+.algorithms-light input:focus {
+  background-color: #ffffff !important;
+  border-color: #4f46e5 !important;
+}
+
+/* Panel Titles & Accents (Vibrant & High Contrast on Light Backgrounds) */
+.algorithms-light .text-indigo-400,
+.algorithms-light .text-indigo-300 {
+  color: #3730a3 !important; /* indigo-800 */
+}
+
+.algorithms-light .text-orange-400,
+.algorithms-light .text-orange-300 {
+  color: #9a3412 !important; /* orange-800 */
+}
+
+.algorithms-light .text-teal-400,
+.algorithms-light .text-teal-300 {
+  color: #115e59 !important; /* teal-800 */
+}
+
+.algorithms-light .text-fuchsia-400,
+.algorithms-light .text-fuchsia-300 {
+  color: #86198f !important; /* fuchsia-800 */
+}
+
+.algorithms-light .text-amber-500,
+.algorithms-light .text-amber-400 {
+  color: #92400e !important; /* amber-800 */
+}
+
+.algorithms-light .text-cyan-400,
+.algorithms-light .text-cyan-300 {
+  color: #155e75 !important; /* cyan-800 */
+}
+
+.algorithms-light .text-violet-400,
+.algorithms-light .text-violet-300 {
+  color: #5b21b6 !important; /* violet-800 */
+}
+
+.algorithms-light .text-emerald-400,
+.algorithms-light .text-emerald-300 {
+  color: #065f46 !important; /* emerald-800 */
+}
+
+.algorithms-light .text-purple-400,
+.algorithms-light .text-purple-300 {
+  color: #6b21a8 !important; /* purple-800 */
+}
+
+.algorithms-light .text-blue-400,
+.algorithms-light .text-blue-300 {
+  color: #1e40af !important; /* blue-800 */
+}
+
+.algorithms-light .text-green-500,
+.algorithms-light .text-green-400 {
+  color: #166534 !important; /* green-800 */
+}
+
+.algorithms-light .text-sky-400,
+.algorithms-light .text-sky-300 {
+  color: #075985 !important; /* sky-800 */
+}
+
+.algorithms-light .text-pink-400,
+.algorithms-light .text-pink-300 {
+  color: #9d174d !important; /* pink-800 */
+}
+
+/* Saturated, High-Contrast Panel Badges in Light Mode */
+.algorithms-light .bg-purple-900\/30,
+.algorithms-light .bg-purple-900\/40,
+.algorithms-light .bg-purple-900\/10 {
+  background-color: #f3e8ff !important;
+  border-color: #a855f7 !important;
+  color: #3b0764 !important;
+}
+
+.algorithms-light .bg-amber-900\/30,
+.algorithms-light .bg-amber-900\/40,
+.algorithms-light .bg-amber-900\/20,
+.algorithms-light .bg-amber-900\/10 {
+  background-color: #fef3c7 !important;
+  border-color: #f59e0b !important;
+  color: #451a03 !important;
+}
+
+.algorithms-light .bg-green-900\/30,
+.algorithms-light .bg-green-900\/40,
+.algorithms-light .bg-emerald-900\/20,
+.algorithms-light .bg-emerald-900\/30 {
+  background-color: #d1fae5 !important;
+  border-color: #10b981 !important;
+  color: #022c22 !important;
+}
+
+.algorithms-light .bg-indigo-900\/40,
+.algorithms-light .bg-indigo-900\/30,
+.algorithms-light .bg-indigo-900\/20 {
+  background-color: #e0e7ff !important;
+  border-color: #6366f1 !important;
+  color: #1e1b4b !important;
+}
+
+.algorithms-light .bg-violet-900\/30,
+.algorithms-light .bg-violet-900\/40 {
+  background-color: #ede9fe !important;
+  border-color: #8b5cf6 !important;
+  color: #2e1065 !important;
+}
+
+.algorithms-light .bg-blue-900\/30,
+.algorithms-light .bg-blue-900\/40 {
+  background-color: #dbeafe !important;
+  border-color: #3b82f6 !important;
+  color: #172554 !important;
+}
+
+.algorithms-light .bg-fuchsia-900\/40,
+.algorithms-light .bg-fuchsia-900\/30,
+.algorithms-light .bg-fuchsia-900\/20 {
+  background-color: #fae8ff !important;
+  border-color: #d946ef !important;
+  color: #4a044e !important;
+}
+
+.algorithms-light .bg-cyan-900\/30,
+.algorithms-light .bg-cyan-900\/40 {
+  background-color: #cffafe !important;
+  border-color: #06b6d4 !important;
+  color: #083344 !important;
+}
+
+.algorithms-light .bg-rose-900\/30,
+.algorithms-light .bg-rose-900\/40 {
+  background-color: #ffe4e6 !important;
+  border-color: #f43f5e !important;
+  color: #4c0519 !important;
+}
+
+/* Badge Text Colors (High Intensity & Legibility) */
+.algorithms-light .text-purple-200,
+.algorithms-light .text-purple-300 {
+  color: #3b0764 !important;
+  font-weight: 700 !important;
+}
+
+.algorithms-light .text-amber-200,
+.algorithms-light .text-amber-300 {
+  color: #451a03 !important;
+  font-weight: 700 !important;
+}
+
+.algorithms-light .text-green-200,
+.algorithms-light .text-green-300,
+.algorithms-light .text-emerald-200,
+.algorithms-light .text-emerald-300 {
+  color: #022c22 !important;
+  font-weight: 700 !important;
+}
+
+.algorithms-light .text-indigo-200,
+.algorithms-light .text-indigo-300 {
+  color: #1e1b4b !important;
+  font-weight: 700 !important;
+}
+
+.algorithms-light .text-violet-200,
+.algorithms-light .text-violet-300 {
+  color: #2e1065 !important;
+  font-weight: 700 !important;
+}
+
+.algorithms-light .text-blue-200,
+.algorithms-light .text-blue-300 {
+  color: #172554 !important;
+  font-weight: 700 !important;
+}
+
+.algorithms-light .text-cyan-200,
+.algorithms-light .text-cyan-300 {
+  color: #083344 !important;
+  font-weight: 700 !important;
+}
+
+.algorithms-light .text-fuchsia-200,
+.algorithms-light .text-fuchsia-300 {
+  color: #4a044e !important;
+  font-weight: 700 !important;
+}
+
+.algorithms-light .text-rose-200,
+.algorithms-light .text-rose-300,
+.algorithms-light .text-pink-200,
+.algorithms-light .text-pink-300 {
+  color: #4c0519 !important;
+  font-weight: 700 !important;
+}
+
+.algorithms-light .hover\:bg-slate-700\/30:hover,
+.algorithms-light .hover\:bg-slate-700\/50:hover,
+.algorithms-light .hover\:bg-slate-800:hover,
+.algorithms-light .hover\:bg-slate-700:hover {
+  background-color: #f1f5f9 !important;
+}
+
+.algorithms-light .bg-yellow-900\/60 {
+  background-color: #fef3c7 !important;
+  border-left-color: #d97706 !important;
+  color: #000000 !important;
+}
+
+.algorithms-light .bg-yellow-900\/60 .text-yellow-200 {
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+/* Pseudocode Panel Pure Black & Crisp High Contrast */
+.algorithms-light [data-pseudocode-panel] {
+  color: #000000 !important;
+}
+
+@keyframes pseudocode-active-blink-light {
+  0% {
+    border-left-color: #ffffff;
+  }
+  100% {
+    border-left-color: #d97706;
+  }
+}
+
+.algorithms-light [data-pseudocode-panel] .pseudocode-line {
+  color: #000000 !important;
+  font-weight: 450 !important;
+  border-left: 4px solid #ffffff !important;
+  border-left-color: #ffffff !important;
+  transition: border-color 200ms cubic-bezier(0.4, 0, 0.2, 1), background-color 200ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.algorithms-light [data-pseudocode-panel] .pseudocode-line:hover {
+  border-left-color: #f1f5f9 !important;
+}
+
+.algorithms-light [data-pseudocode-panel] .pseudocode-line-active {
+  background-color: #fef3c7 !important;
+  border-left: 4px solid #d97706 !important;
+  border-left-color: #d97706 !important;
+  color: #000000 !important;
+  font-weight: 600 !important;
+  transition: border-color 200ms cubic-bezier(0.4, 0, 0.2, 1), background-color 200ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  animation: pseudocode-active-blink-light 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.algorithms-light [data-pseudocode-panel] .pseudocode-line-num {
+  color: #64748b !important;
+  font-weight: 500 !important;
+}

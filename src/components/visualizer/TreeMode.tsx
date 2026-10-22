@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import VisualizerHeader from './VisualizerHeader';
 import { BSTManager, MaxHeapManager, TwoThreeManager, TreeNode, layoutTree, TreeStep, getTreeBounds } from '@/utils/treeUtils';
 import { RotateCcw, Search, Plus, Trash2 } from 'lucide-react';
-// import { clsx } from 'clsx';
+import { useAlgorithmsTheme } from '@/context/AlgorithmsThemeContext';
 
 interface TreeModeProps {
   mode: 'TREES';
@@ -12,6 +12,9 @@ interface TreeModeProps {
 }
 
 const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
+  const { theme } = useAlgorithmsTheme();
+  const isLight = theme === 'light';
+
   const [algorithm, setAlgorithm] = useState<string>('BINARY SEARCH TREE');
   const [inputValue, setInputValue] = useState<string>('');
   // const [treeRoot, setTreeRoot] = useState<TreeNode | null>(null);
@@ -188,7 +191,7 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
                     initial={false}
                     animate={{ x1: startX, y1: startY, x2: child.x, y2: child.y }}
                     transition={{ duration: 0.3 }}
-                    stroke="#475569"
+                    stroke={isLight ? "#94a3b8" : "#475569"}
                     strokeWidth="2"
                   />
               );
@@ -204,13 +207,7 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
             animate={{ x: node.x, y: node.y }}
             transition={{ duration: 0.5, type: "spring", stiffness: 100, damping: 20 }}
             className="absolute"
-            // We use standard motion.g with direct x/y or transform. 
-            // SVG transform is better for performance usually, but Framer Motion handles layout animations well.
-            // Let's use simple x/y mapping for g if supported, generally transform is safer for SVG groups.
           >
-             {/* We need to reset the inner transform if we are animating the group's position */}
-             {/* Actually, it's easier to just translate the group */}
-             
              {node.type === 'inner' ? (
                  <g>
                      <rect 
@@ -218,8 +215,8 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
                         width={node.keys.length * 28 + 20} 
                         height={32} 
                         rx="6"
-                        fill={node.highlight === 'insert' ? '#3b82f6' : '#1e293b'}
-                        stroke={node.highlight === 'search' ? '#d97706' : '#334155'}
+                        fill={node.highlight === 'insert' ? '#3b82f6' : (isLight ? '#ffffff' : '#1e293b')}
+                        stroke={node.highlight === 'search' ? '#d97706' : (isLight ? '#cbd5e1' : '#334155')}
                         strokeWidth="2"
                      />
                      {node.keys.map((key, i) => (
@@ -229,13 +226,13 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
                             y="1" 
                             dy=".3em" 
                             textAnchor="middle" 
-                            className="fill-white font-bold text-xs select-none"
+                            className={`font-bold text-xs select-none ${node.highlight === 'insert' ? 'fill-white' : (isLight ? 'fill-slate-900' : 'fill-white')}`}
                          >
                             {key}
                          </text>
                      ))}
                      {node.keys.length > 1 && (
-                         <line x1={-24 + 10 + 28} y1={-12} x2={-24 + 10 + 28} y2={12} stroke="#334155" strokeWidth="1" />
+                         <line x1={-24 + 10 + 28} y1={-12} x2={-24 + 10 + 28} y2={12} stroke={isLight ? '#e2e8f0' : '#334155'} strokeWidth="1" />
                      )}
                  </g>
              ) : (
@@ -247,21 +244,21 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
                             node.highlight === 'search' ? '#f59e0b' : 
                             node.highlight === 'insert' ? '#3b82f6' : 
                             node.highlight === 'delete' ? '#ef4444' :
-                            '#1e293b'
+                            (isLight ? '#ffffff' : '#1e293b')
                         }
                         stroke={
                             node.highlight === 'match' ? '#059669' : 
                             node.highlight === 'search' ? '#d97706' : 
                             node.highlight === 'insert' ? '#2563eb' : 
                             node.highlight === 'delete' ? '#b91c1c' :
-                            '#334155'
+                            (isLight ? '#94a3b8' : '#334155')
                         }
                         strokeWidth="2"
                     />
                      <text 
                         dy=".3em" 
                         textAnchor="middle" 
-                        className="fill-white font-bold text-xs select-none"
+                        className={`font-bold text-xs select-none ${node.highlight ? 'fill-white' : (isLight ? 'fill-slate-900' : 'fill-white')}`}
                      >
                         {node.keys.join(',')}
                      </text>
@@ -276,7 +273,7 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950">
+    <div className={`min-h-screen flex flex-col ${isLight ? 'bg-slate-100' : 'bg-slate-950'}`}>
       <VisualizerHeader 
         mode="TREES" 
         setMode={() => {}} 
@@ -289,7 +286,7 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
       <div className="flex-1 flex overflow-hidden">
         
         {/* Left: Visualization Canvas */}
-        <div className="flex-1 relative bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-950">
+        <div className={`flex-1 relative ${isLight ? 'bg-slate-50' : 'bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-950'}`}>
              {/* Message Toast */}
             <AnimatePresence mode="wait">
                 {steps.length > 0 && currentStepIndex < steps.length - 1 && (
@@ -298,7 +295,7 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-6 py-3 bg-slate-800/90 backdrop-blur text-slate-200 rounded-full border border-slate-700 shadow-lg text-sm font-medium"
+                    className={`absolute top-4 left-1/2 -translate-x-1/2 z-10 px-6 py-3 rounded-full border shadow-lg text-sm font-medium backdrop-blur ${isLight ? 'bg-white/95 text-slate-800 border-slate-300 shadow-slate-300/40' : 'bg-slate-800/90 text-slate-200 border-slate-700'}`}
                     >
                         {message}
                     </motion.div>
@@ -312,7 +309,7 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
                 </AnimatePresence>
 
                 {!currentRoot && (
-                    <text x="400" y="300" textAnchor="middle" fill="#475569" fontSize="16">
+                    <text x="400" y="300" textAnchor="middle" fill={isLight ? "#94a3b8" : "#475569"} fontSize="16">
                         Tree is empty. Start by inserting a value.
                     </text>
                 )}
@@ -320,9 +317,9 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
         </div>
 
         {/* Right: Control Panel */}
-        <div className="w-80 bg-slate-900 border-l border-slate-800 p-6 flex flex-col gap-8 shadow-2xl z-20">
+        <div className={`w-80 border-l p-6 flex flex-col gap-8 shadow-2xl z-20 ${isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-slate-900 border-slate-800'}`}>
             <div>
-                <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-4">Controls</h3>
+                <h3 className={`text-xs font-bold uppercase tracking-wider mb-4 ${isLight ? 'text-slate-700' : 'text-slate-400'}`}>Controls</h3>
                 <div className="flex flex-col gap-3">
                      <div className="flex gap-2">
                         <input 
@@ -330,7 +327,7 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             placeholder="Value"
-                            className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-indigo-500 transition-colors text-sm"
+                            className={`flex-1 border rounded-lg px-3 py-2 outline-none transition-colors text-sm ${isLight ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-600' : 'bg-slate-800 border-slate-700 text-white focus:border-indigo-500'}`}
                             onKeyDown={(e) => e.key === 'Enter' && handleInsert()}
                         />
                      </div>
@@ -352,36 +349,36 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
                              </button>
                          ) : (
                              <>
-                                <button 
-                                    onClick={handleSearch}
-                                    className="flex items-center justify-center gap-2 py-2.5 bg-sky-600 hover:bg-sky-500 rounded-lg text-white text-sm font-medium transition-colors"
-                                >
-                                    <Search size={16} /> Search
-                                </button>
+                                 <button 
+                                     onClick={handleSearch}
+                                     className="flex items-center justify-center gap-2 py-2.5 bg-sky-600 hover:bg-sky-500 rounded-lg text-white text-sm font-medium transition-colors"
+                                 >
+                                     <Search size={16} /> Search
+                                 </button>
 
-                                <button 
-                                    onClick={handleDelete}
-                                    className="flex items-center justify-center gap-2 py-2.5 bg-red-600/20 hover:bg-red-600/30 text-red-500 border border-red-600/30 rounded-lg text-sm font-medium transition-colors"
-                                >
-                                    <Trash2 size={16} /> Delete
-                                </button>
+                                 <button 
+                                     onClick={handleDelete}
+                                     className="flex items-center justify-center gap-2 py-2.5 bg-red-600/20 hover:bg-red-600/30 text-red-500 border border-red-600/30 rounded-lg text-sm font-medium transition-colors"
+                                 >
+                                     <Trash2 size={16} /> Delete
+                                 </button>
                              </>
                          )}
                      </div>
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-slate-800">
+                <div className={`mt-4 pt-4 border-t ${isLight ? 'border-slate-200' : 'border-slate-800'}`}>
                     <button 
                        onClick={handleReset}
-                       className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition-colors border border-slate-700 hover:border-slate-600"
+                       className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-medium transition-colors border ${isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700 hover:border-slate-600'}`}
                     >
                        <RotateCcw size={16} /> Restart / Clear Tree
                     </button>
 
                     <div className="mt-8">
-                         <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">DEFINITION</h3>
-                         <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-800">
-                            <ul className="list-disc pl-4 space-y-2 text-xs text-slate-300 leading-relaxed marker:text-slate-500">
+                         <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${isLight ? 'text-slate-700' : 'text-slate-400'}`}>DEFINITION</h3>
+                         <div className={`p-4 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-slate-800/50 border-slate-800 text-slate-300'}`}>
+                            <ul className={`list-disc pl-4 space-y-2 text-xs leading-relaxed ${isLight ? 'text-slate-700 marker:text-slate-400' : 'text-slate-300 marker:text-slate-500'}`}>
                                 {algorithm === 'BINARY SEARCH TREE' && (
                                     <>
                                         <li><strong>Binary Tree:</strong> Every node <em className="font-serif">v</em> has at most 2 children.</li>
@@ -400,13 +397,13 @@ const TreeMode: React.FC<TreeModeProps> = ({ onBack }) => {
                                         <li><strong>Balance:</strong> All leaves are at the same depth.</li>
                                         <li><strong>Leaves:</strong> Keys are stored in leaves. Each leaf contains exactly 1 key.</li>
                                         <li><strong>2-Node (1 Separator <em className="font-serif">s1</em>):</strong>
-                                            <ul className="list-[circle] ml-4 mt-1 space-y-1 text-slate-400">
+                                            <ul className={`list-[circle] ml-4 mt-1 space-y-1 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                                                 <li>Left subtree keys &le; <em className="font-serif">s1</em></li>
                                                 <li>Right subtree keys &gt; <em className="font-serif">s1</em></li>
                                             </ul>
                                         </li>
                                         <li><strong>3-Node (2 Separators <em className="font-serif">s1 &lt; s2</em>):</strong>
-                                            <ul className="list-[circle] ml-4 mt-1 space-y-1 text-slate-400">
+                                            <ul className={`list-[circle] ml-4 mt-1 space-y-1 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                                                 <li>Left subtree keys &le; <em className="font-serif">s1</em></li>
                                                 <li>Middle subtree keys &gt; <em className="font-serif">s1</em> and &le; <em className="font-serif">s2</em></li>
                                                 <li>Right subtree keys &gt; <em className="font-serif">s2</em></li>

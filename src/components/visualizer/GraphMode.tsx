@@ -13,6 +13,7 @@ import DataPanel from '@/components/visualizer/DataPanel';
 import VisualizerHeader, { VisualizerMode } from '@/components/visualizer/VisualizerHeader';
 import { Graph, AlgorithmStep, AlgorithmType } from '@/types/graph';
 import { Play, ArrowRight, ArrowLeft, SkipForward, SkipBack } from 'lucide-react';
+import { useAlgorithmsTheme } from '@/context/AlgorithmsThemeContext';
 
 interface GraphModeProps {
   mode: VisualizerMode;
@@ -37,6 +38,9 @@ const DEFAULT_ALGORITHMS = [
 ];
 
 const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlgorithm, availableAlgorithms }) => {
+  const { theme } = useAlgorithmsTheme();
+  const isLight = theme === 'light';
+
   // Navigation Order
   const activeAlgorithms = availableAlgorithms || DEFAULT_ALGORITHMS;
 
@@ -398,7 +402,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
         <div className="flex flex-col gap-2 w-auto shrink-0 sticky top-24 z-30">
           
           {/* Unified Card for Graph & Controls */}
-          <div className="bg-slate-900/50 rounded-2xl border border-slate-800 shadow-xl overflow-hidden w-fit flex flex-col">
+          <div className={`${isLight ? 'bg-white/95 border-slate-200 shadow-md' : 'bg-slate-900/50 border-slate-800 shadow-xl'} rounded-2xl border overflow-hidden w-fit flex flex-col`}>
             
             {/* Graph Visualization Section */}
             <div className="relative">
@@ -412,40 +416,40 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
               
               {/* Color Legend for Graph Coloring (Positioned above toast) */}
               {showColoringLegend && (
-                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-slate-900/80 backdrop-blur-sm border border-slate-700 px-4 py-2 rounded-lg flex items-center gap-3">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Colors:</span>
+                <div className={`absolute bottom-20 left-1/2 -translate-x-1/2 backdrop-blur-sm border px-4 py-2 rounded-lg flex items-center gap-3 ${isLight ? 'bg-white/95 border-slate-300 shadow-md' : 'bg-slate-900/80 border-slate-700'}`}>
+                  <span className={`text-[10px] uppercase tracking-wider font-semibold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Colors:</span>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-3 rounded-full" style={{backgroundColor: '#ef4444'}}></div>
-                    <span className="text-[10px] text-slate-300">1</span>
+                    <span className={`text-[10px] font-bold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>1</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-3 rounded-full" style={{backgroundColor: '#f97316'}}></div>
-                    <span className="text-[10px] text-slate-300">2</span>
+                    <span className={`text-[10px] font-bold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>2</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-3 rounded-full" style={{backgroundColor: '#eab308'}}></div>
-                    <span className="text-[10px] text-slate-300">3</span>
+                    <span className={`text-[10px] font-bold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>3</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-3 rounded-full" style={{backgroundColor: '#22c55e'}}></div>
-                    <span className="text-[10px] text-slate-300">4</span>
+                    <span className={`text-[10px] font-bold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>4</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-3 rounded-full" style={{backgroundColor: '#06b6d4'}}></div>
-                    <span className="text-[10px] text-slate-300">5</span>
+                    <span className={`text-[10px] font-bold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>5</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-3 rounded-full" style={{backgroundColor: '#3b82f6'}}></div>
-                    <span className="text-[10px] text-slate-300">6</span>
+                    <span className={`text-[10px] font-bold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>6</span>
                   </div>
                 </div>
               )}
               
               {/* Current Action Toast (Positioned inside graph) */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur-md border border-slate-600 shadow-2xl flex items-center justify-center transition-all px-10 py-3 rounded-full gap-4 min-w-[300px]">
+              <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 backdrop-blur-md border shadow-xl flex items-center justify-center transition-all px-10 py-3 rounded-full gap-4 min-w-[300px] ${isLight ? 'bg-white/95 border-slate-300 text-slate-800 shadow-slate-300/40' : 'bg-slate-800/90 border-slate-600 text-white shadow-2xl'}`}>
                  <div className="flex items-center gap-3 shrink-0">
                      <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                     <span className="text-sm font-medium text-white whitespace-nowrap flex items-center gap-1">
+                     <span className={`text-sm font-medium whitespace-nowrap flex items-center gap-1 ${isLight ? 'text-slate-800' : 'text-white'}`}>
                          {currentStep.description.split(/({{color:\d+}})/g).map((part, i) => {
                              const match = part.match(/{{color:(\d+)}}/);
                              if (match) {
@@ -460,23 +464,23 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
                  
                  {showDfsLegend && (
                      <>
-                         <div className="w-px h-4 bg-slate-600 shrink-0"></div>
+                         <div className={`w-px h-4 shrink-0 ${isLight ? 'bg-slate-300' : 'bg-slate-600'}`}></div>
                          <div className="flex items-center gap-4">
                               <div className="flex items-center gap-1.5">
-                                  <div className="w-3 h-1 bg-green-500 rounded-full"></div>
-                                  <span className="text-[10px] text-green-200">Tree</span>
+                                  <div className={`w-3 h-1 rounded-full ${isLight ? 'bg-emerald-600' : 'bg-green-500'}`}></div>
+                                  <span className={`text-[10px] font-semibold ${isLight ? 'text-emerald-700' : 'text-green-200'}`}>Tree</span>
                               </div>
                               <div className="flex items-center gap-1.5">
-                                  <div className="w-3 h-1 rounded-full" style={{backgroundColor: '#ec489980'}}></div>
-                                  <span className="text-[10px] text-pink-200">Back</span>
+                                  <div className="w-3 h-1 rounded-full" style={{backgroundColor: isLight ? '#e11d48' : '#ec489980'}}></div>
+                                  <span className={`text-[10px] font-semibold ${isLight ? 'text-rose-700' : 'text-pink-200'}`}>Back</span>
                               </div>
                               <div className="flex items-center gap-1.5">
-                                  <div className="w-3 h-1 rounded-full" style={{backgroundColor: '#38bdf880'}}></div>
-                                  <span className="text-[10px] text-sky-200">Forward</span>
+                                  <div className="w-3 h-1 rounded-full" style={{backgroundColor: isLight ? '#0284c7' : '#38bdf880'}}></div>
+                                  <span className={`text-[10px] font-semibold ${isLight ? 'text-sky-800' : 'text-sky-200'}`}>Forward</span>
                               </div>
                               <div className="flex items-center gap-1.5">
-                                  <div className="w-3 h-1 rounded-full" style={{backgroundColor: '#a855f780'}}></div>
-                                  <span className="text-[10px] text-purple-200">Cross</span>
+                                  <div className="w-3 h-1 rounded-full" style={{backgroundColor: isLight ? '#9333ea' : '#a855f780'}}></div>
+                                  <span className={`text-[10px] font-semibold ${isLight ? 'text-purple-800' : 'text-purple-200'}`}>Cross</span>
                               </div>
                          </div>
                      </>
@@ -485,24 +489,24 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
             </div>
 
             {/* Playback Controls Section */}
-            <div className="border-t border-slate-800 p-2 bg-slate-900/50 flex items-center justify-between relative z-20">
+            <div className={`border-t p-2 flex items-center justify-between relative z-20 ${isLight ? 'border-slate-200 bg-slate-50/80' : 'border-slate-800 bg-slate-900/50'}`}>
               <div className="flex items-center gap-1">
                 <button 
                   onClick={handlePrev}
                   disabled={currentStepIndex === 0}
-                  className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 disabled:opacity-30 transition-colors"
+                  className={`p-2 rounded-lg disabled:opacity-30 transition-colors ${isLight ? 'hover:bg-slate-200 text-slate-700' : 'hover:bg-slate-800 text-slate-400'}`}
                 >
                   <ArrowLeft size={20} />
                 </button>
                 
-                <div className="text-sm font-mono text-slate-400 w-32 text-center">
+                <div className={`text-sm font-mono w-32 text-center ${isLight ? 'text-slate-700 font-semibold' : 'text-slate-400'}`}>
                   Step {currentStep.stepId} / {steps.length - 1}
                 </div>
 
                 <button 
                   onClick={handleNext}
                   disabled={currentStepIndex === steps.length - 1}
-                  className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 disabled:opacity-30 transition-colors"
+                  className={`p-2 rounded-lg disabled:opacity-30 transition-colors ${isLight ? 'hover:bg-slate-200 text-slate-700' : 'hover:bg-slate-800 text-slate-400'}`}
                 >
                   <ArrowRight size={20} />
                 </button>
@@ -512,14 +516,14 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
                 <button
                    onClick={handleReset}
                    disabled={currentStepIndex === 0}
-                   className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-bold transition-colors border border-slate-700 text-slate-200 disabled:opacity-50"
+                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors border disabled:opacity-50 ${isLight ? 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300 shadow-sm' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'}`}
                 >
                   <SkipBack size={16} /> Reset
                 </button>
 
                 <button
                    onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isAutoPlaying ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'}`}
+                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isAutoPlaying ? (isLight ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100' : 'bg-red-500/20 text-red-400 hover:bg-red-500/30') : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'}`}
                 >
                   {isAutoPlaying ? 'Pause' : <><Play size={16} fill="currentColor" /> Auto Play</>}
                 </button>
@@ -527,7 +531,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
                 <button 
                   onClick={handleJumpToEnd}
                   disabled={currentStepIndex === steps.length - 1}
-                  className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-bold transition-colors border border-slate-700 text-slate-200 disabled:opacity-50"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors border disabled:opacity-50 ${isLight ? 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300 shadow-sm' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'}`}
                 >
                   <SkipForward size={16} /> Jump to End
                 </button>

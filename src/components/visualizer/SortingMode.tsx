@@ -11,6 +11,7 @@ import {
 import { Play, ArrowRight, ArrowLeft, SkipForward, SkipBack } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAlgorithmsTheme } from '@/context/AlgorithmsThemeContext';
 
 interface SortingModeProps {
   mode: VisualizerMode;
@@ -18,7 +19,7 @@ interface SortingModeProps {
   onBack?: () => void;
 }
 
-const RecursionStackPanel: React.FC<{ stack: string[] }> = ({ stack }) => {
+const RecursionStackPanel: React.FC<{ stack: string[]; isLight?: boolean }> = ({ stack, isLight }) => {
     const stackRef = React.useRef<HTMLDivElement>(null);
 
     // Auto-scroll to top when stack changes
@@ -29,8 +30,8 @@ const RecursionStackPanel: React.FC<{ stack: string[] }> = ({ stack }) => {
     }, [stack]);
 
     return (
-        <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden mt-4">
-            <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-purple-400 uppercase tracking-wider">
+        <div className={`rounded-xl border flex flex-col overflow-hidden mt-4 ${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-800 border-slate-700'}`}>
+            <div className={`px-3 py-2 border-b text-xs font-bold uppercase tracking-wider ${isLight ? 'bg-slate-50 border-slate-200 text-purple-700' : 'bg-slate-900 border-slate-700 text-purple-400'}`}>
                 Recursion Stack
             </div>
             <div 
@@ -39,7 +40,7 @@ const RecursionStackPanel: React.FC<{ stack: string[] }> = ({ stack }) => {
             >
                 <AnimatePresence initial={false}>
                     {stack.length === 0 ? (
-                        <div className="text-slate-600 text-center text-xs py-4 italic">Empty</div>
+                        <div className={`text-center text-xs py-4 italic ${isLight ? 'text-slate-400' : 'text-slate-600'}`}>Empty</div>
                     ) : (
                         [...stack].reverse().map((call, idx) => (
                             <motion.div
@@ -47,7 +48,7 @@ const RecursionStackPanel: React.FC<{ stack: string[] }> = ({ stack }) => {
                                 initial={{ opacity: 0, y: -10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
-                                className="bg-purple-900/30 border-l-2 border-purple-500 px-3 py-2 rounded text-sm text-purple-200 font-mono shrink-0"
+                                className={`px-3 py-2 rounded text-sm font-mono shrink-0 ${isLight ? 'bg-purple-50 border-l-4 border-purple-600 text-purple-950 font-semibold' : 'bg-purple-900/30 border-l-2 border-purple-500 text-purple-200'}`}
                             >
                                 {call}
                             </motion.div>
@@ -60,6 +61,8 @@ const RecursionStackPanel: React.FC<{ stack: string[] }> = ({ stack }) => {
 };
 
 const SortingMode: React.FC<SortingModeProps> = ({ mode, setMode, onBack }) => {
+  const { theme } = useAlgorithmsTheme();
+  const isLight = theme === 'light';
   // State
   const [algorithm, setAlgorithm] = useState<SortingAlgorithmType>(SortingAlgorithmType.BUBBLE_SORT);
   const [steps, setSteps] = useState<SortingStep[]>([]);
@@ -170,19 +173,19 @@ const SortingMode: React.FC<SortingModeProps> = ({ mode, setMode, onBack }) => {
           const y = level * 60 + 40;
 
           const highlight = currentStep.highlights.find(h => h.indices.includes(idx));
-          let bgColor = "bg-slate-700";
-          let borderColor = "border-slate-600";
+          let bgColor = isLight ? "bg-white text-slate-800" : "bg-slate-700 text-white";
+          let borderColor = isLight ? "border-slate-300 shadow-sm" : "border-slate-600";
           
-          if (highlight?.color === 'compare') { bgColor = "bg-yellow-500"; borderColor = "border-yellow-600"; }
-          else if (highlight?.color === 'swap') { bgColor = "bg-orange-500"; borderColor = "border-orange-600"; } // Changed red to orange
-          else if (highlight?.color === 'pivot') { bgColor = "bg-purple-500"; borderColor = "border-purple-600"; }
+          if (highlight?.color === 'compare') { bgColor = "bg-amber-500 text-white"; borderColor = "border-amber-600"; }
+          else if (highlight?.color === 'swap') { bgColor = "bg-orange-500 text-white"; borderColor = "border-orange-600"; }
+          else if (highlight?.color === 'pivot') { bgColor = "bg-purple-600 text-white"; borderColor = "border-purple-700"; }
           
           return { ...item, x, y, idx, bgColor, borderColor };
       });
 
       return (
-          <div className="relative w-full h-[300px] border border-slate-800 rounded-xl bg-slate-900/30 mt-4 overflow-hidden">
-              <div className="absolute top-2 left-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Max Heap Visualization</div>
+          <div className={`relative w-full h-[300px] border rounded-xl mt-4 overflow-hidden ${isLight ? 'border-slate-200 bg-slate-50/70 shadow-sm' : 'border-slate-800 bg-slate-900/30'}`}>
+              <div className={`absolute top-2 left-4 text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-700' : 'text-slate-500'}`}>Max Heap Visualization</div>
               <svg className="absolute inset-0 w-full h-full">
                   {nodes.map(node => {
                       const leftChildIdx = 2 * node.idx + 1;
@@ -190,11 +193,11 @@ const SortingMode: React.FC<SortingModeProps> = ({ mode, setMode, onBack }) => {
                       const lines = [];
                       if (leftChildIdx < nodes.length) {
                           const child = nodes[leftChildIdx];
-                          lines.push(<line key={`l-${node.id}`} x1={`${node.x}%`} y1={node.y} x2={`${child.x}%`} y2={child.y} stroke="#475569" strokeWidth="2" />);
+                          lines.push(<line key={`l-${node.id}`} x1={`${node.x}%`} y1={node.y} x2={`${child.x}%`} y2={child.y} stroke={isLight ? "#94a3b8" : "#475569"} strokeWidth="2" />);
                       }
                       if (rightChildIdx < nodes.length) {
                           const child = nodes[rightChildIdx];
-                          lines.push(<line key={`r-${node.id}`} x1={`${node.x}%`} y1={node.y} x2={`${child.x}%`} y2={child.y} stroke="#475569" strokeWidth="2" />);
+                          lines.push(<line key={`r-${node.id}`} x1={`${node.x}%`} y1={node.y} x2={`${child.x}%`} y2={child.y} stroke={isLight ? "#94a3b8" : "#475569"} strokeWidth="2" />);
                       }
                       return lines;
                   })}
@@ -204,14 +207,14 @@ const SortingMode: React.FC<SortingModeProps> = ({ mode, setMode, onBack }) => {
                     layoutId={`heap-${node.id}`}
                     key={node.id}
                     className={clsx(
-                        "absolute w-8 h-8 -ml-4 -mt-4 rounded-full flex items-center justify-center text-xs font-bold text-white border-2 shadow-lg",
+                        "absolute w-8 h-8 -ml-4 -mt-4 rounded-full flex items-center justify-center text-xs font-bold border-2 shadow-sm",
                         node.bgColor, node.borderColor
                     )}
                     style={{ left: `${node.x}%`, top: node.y }}
                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
                   >
                       {node.value}
-                      <span className="absolute -top-5 text-[10px] text-slate-400 font-mono font-normal">
+                      <span className={`absolute -top-5 text-[10px] font-mono font-normal ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                           {node.idx + 1}
                       </span>
                   </motion.div>
@@ -236,26 +239,35 @@ const SortingMode: React.FC<SortingModeProps> = ({ mode, setMode, onBack }) => {
         
         {/* Left Column: Visualization */}
         <div className="flex flex-col gap-2 w-auto shrink-0 sticky top-24 z-30">
-          <div className="bg-slate-900/50 rounded-2xl border border-slate-800 shadow-xl overflow-hidden w-fit flex flex-col">
+          <div className={`${isLight ? 'bg-white/95 border-slate-200 shadow-md' : 'bg-slate-900/50 border-slate-800 shadow-xl'} rounded-2xl border overflow-hidden w-fit flex flex-col`}>
             
             {/* Canvas Area */}
-            <div className="relative w-[600px] min-h-[420px] bg-slate-950 flex flex-col items-center justify-start p-8 gap-8">
+            <div className={`relative w-[600px] min-h-[420px] flex flex-col items-center justify-start p-8 gap-8 ${isLight ? 'bg-slate-50/50' : 'bg-slate-950'}`}>
                
                {/* Array Visualization (Boxes) */}
                <div className="flex gap-2 justify-center items-center w-full h-20 mt-10">
                    <AnimatePresence mode='popLayout'>
                    {currentStep.array.map((item, idx) => {
                        const highlight = currentStep.highlights.find(h => h.indices.includes(idx));
-                       let bgColor = "bg-slate-800";
-                       let borderColor = "border-slate-700";
-                       let textColor = "text-slate-300";
+                       let bgColor = isLight ? "bg-white" : "bg-slate-800";
+                       let borderColor = isLight ? "border-slate-300" : "border-slate-700";
+                       let textColor = isLight ? "text-slate-800 shadow-sm font-semibold" : "text-slate-300";
 
-                       if (highlight?.color === 'compare') { bgColor = "bg-yellow-500/20"; borderColor = "border-yellow-500"; textColor = "text-yellow-200"; }
-                       else if (highlight?.color === 'swap') { bgColor = "bg-orange-500/20"; borderColor = "border-orange-500"; textColor = "text-orange-200"; }
-                       else if (highlight?.color === 'sorted') { bgColor = "bg-green-500/20"; borderColor = "border-green-500"; textColor = "text-green-200"; }
-                       else if (highlight?.color === 'pivot') { bgColor = "bg-purple-500/20"; borderColor = "border-purple-500"; textColor = "text-purple-200"; }
-                       else if (highlight?.color === 'invariant') { bgColor = "bg-emerald-900/40"; borderColor = "border-emerald-700"; textColor = "text-emerald-400"; }
-                       else if (highlight?.color === 'default') { bgColor = "bg-slate-700"; borderColor = "border-slate-600"; }
+                       if (isLight) {
+                           if (highlight?.color === 'compare') { bgColor = "bg-amber-100"; borderColor = "border-amber-500"; textColor = "text-amber-950 font-bold"; }
+                           else if (highlight?.color === 'swap') { bgColor = "bg-orange-100"; borderColor = "border-orange-500"; textColor = "text-orange-950 font-bold"; }
+                           else if (highlight?.color === 'sorted') { bgColor = "bg-emerald-100"; borderColor = "border-emerald-600"; textColor = "text-emerald-950 font-bold"; }
+                           else if (highlight?.color === 'pivot') { bgColor = "bg-purple-100"; borderColor = "border-purple-600"; textColor = "text-purple-950 font-bold"; }
+                           else if (highlight?.color === 'invariant') { bgColor = "bg-teal-100"; borderColor = "border-teal-600"; textColor = "text-teal-950 font-bold"; }
+                           else if (highlight?.color === 'default') { bgColor = "bg-slate-100"; borderColor = "border-slate-300"; }
+                       } else {
+                           if (highlight?.color === 'compare') { bgColor = "bg-yellow-500/20"; borderColor = "border-yellow-500"; textColor = "text-yellow-200"; }
+                           else if (highlight?.color === 'swap') { bgColor = "bg-orange-500/20"; borderColor = "border-orange-500"; textColor = "text-orange-200"; }
+                           else if (highlight?.color === 'sorted') { bgColor = "bg-green-500/20"; borderColor = "border-green-500"; textColor = "text-green-200"; }
+                           else if (highlight?.color === 'pivot') { bgColor = "bg-purple-500/20"; borderColor = "border-purple-500"; textColor = "text-purple-200"; }
+                           else if (highlight?.color === 'invariant') { bgColor = "bg-emerald-900/40"; borderColor = "border-emerald-700"; textColor = "text-emerald-400"; }
+                           else if (highlight?.color === 'default') { bgColor = "bg-slate-700"; borderColor = "border-slate-600"; }
+                       }
 
                        // Pointers (default target is 'main' or undefined)
                        const activePointers = currentStep.pointers?.filter(p => (p.target === 'main' || !p.target) && p.index === idx) || [];
@@ -274,16 +286,16 @@ const SortingMode: React.FC<SortingModeProps> = ({ mode, setMode, onBack }) => {
                                {/* Pointers Rendering */}
                                {activePointers.length > 0 && (
                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-                                       <span className="text-xs font-bold text-indigo-400 whitespace-nowrap bg-slate-900/80 px-1.5 py-0.5 rounded border border-indigo-500/30">
+                                       <span className={`text-xs font-bold whitespace-nowrap px-1.5 py-0.5 rounded border ${isLight ? 'bg-white text-indigo-700 border-indigo-300 shadow-sm' : 'text-indigo-400 bg-slate-900/80 border-indigo-500/30'}`}>
                                            {activePointers.map(p => p.label).join(',')}
                                        </span>
-                                       <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-indigo-400"></div>
+                                       <div className={`w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] ${isLight ? 'border-t-indigo-600' : 'border-t-indigo-400'}`}></div>
                                    </div>
                                )}
 
                                {item.value}
                                {/* Index label */}
-                               <span className="absolute -bottom-6 text-[10px] text-slate-600 font-mono">{idx + 1}</span>
+                               <span className={`absolute -bottom-6 text-[10px] font-mono ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-600'}`}>{idx + 1}</span>
                            </motion.div>
                        );
                    })}
@@ -293,7 +305,7 @@ const SortingMode: React.FC<SortingModeProps> = ({ mode, setMode, onBack }) => {
            {/* Auxiliary Array Visualization */}
            {currentStep.auxiliaryArray && currentStep.auxiliaryArray.length > 0 && (
                <div className="flex flex-col items-center gap-2 mt-8">
-                   <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Auxiliary Array B</div>
+                   <div className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-700' : 'text-slate-500'}`}>Auxiliary Array B</div>
                    <div className="flex gap-2 justify-center items-center">
                        {currentStep.auxiliaryArray.map((item, idx) => {
                            // Auxiliary Pointers
@@ -306,21 +318,23 @@ const SortingMode: React.FC<SortingModeProps> = ({ mode, setMode, onBack }) => {
                                 key={item.id === 'empty' ? `empty-${idx}` : item.id}
                                 className={clsx(
                                     "w-10 h-10 flex items-center justify-center rounded-lg font-bold border-2 shadow-sm relative transition-all duration-300",
-                                    item.id === 'empty' ? "bg-slate-900/50 border-slate-800 text-transparent" : "bg-slate-800 border-slate-700 text-slate-300"
+                                    item.id === 'empty' 
+                                      ? (isLight ? "bg-slate-100/70 border-slate-300 text-transparent" : "bg-slate-900/50 border-slate-800 text-transparent")
+                                      : (isLight ? "bg-white border-slate-300 text-slate-800 shadow-sm font-semibold" : "bg-slate-800 border-slate-700 text-slate-300")
                                 )}
                             >
                                 {/* Auxiliary Pointers Rendering */}
                                 {activeAuxPointers.length > 0 && (
                                     <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-                                        <span className="text-xs font-bold text-indigo-400 whitespace-nowrap bg-slate-900/80 px-1.5 py-0.5 rounded border border-indigo-500/30">
+                                        <span className={`text-xs font-bold whitespace-nowrap px-1.5 py-0.5 rounded border ${isLight ? 'bg-white text-indigo-700 border-indigo-300 shadow-sm' : 'text-indigo-400 bg-slate-900/80 border-indigo-500/30'}`}>
                                             {activeAuxPointers.map(p => p.label).join(',')}
                                         </span>
-                                        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-indigo-400"></div>
+                                        <div className={`w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] ${isLight ? 'border-t-indigo-600' : 'border-t-indigo-400'}`}></div>
                                     </div>
                                 )}
 
                                 {item.id !== 'empty' && item.value}
-                                <span className="absolute -bottom-6 text-[10px] text-slate-600 font-mono">{idx + 1}</span>
+                                <span className={`absolute -bottom-6 text-[10px] font-mono ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-600'}`}>{idx + 1}</span>
                             </motion.div>
                         )})}
                    </div>
@@ -328,25 +342,25 @@ const SortingMode: React.FC<SortingModeProps> = ({ mode, setMode, onBack }) => {
            )}
 
                {/* Toast */}
-               <div className="mt-auto bg-slate-800/90 backdrop-blur-md border border-slate-600 shadow-2xl flex items-center justify-center transition-all px-10 py-3 rounded-full gap-4 min-w-[300px] z-20">
+               <div className={`mt-auto backdrop-blur-md border shadow-xl flex items-center justify-center transition-all px-10 py-3 rounded-full gap-4 min-w-[300px] z-20 ${isLight ? 'bg-white/95 border-slate-300 text-slate-800' : 'bg-slate-800/90 border-slate-600 text-white shadow-2xl'}`}>
                  <div className="flex items-center gap-3 shrink-0">
                      <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                     <span className="text-sm font-medium text-white whitespace-nowrap">{currentStep.description}</span>
+                     <span className={`text-sm font-medium whitespace-nowrap ${isLight ? 'text-slate-800' : 'text-white'}`}>{currentStep.description}</span>
                  </div>
                </div>
             </div>
 
             {/* Controls */}
-            <div className="border-t border-slate-800 p-2 bg-slate-900/50 flex items-center justify-between">
+            <div className={`border-t p-2 flex items-center justify-between ${isLight ? 'border-slate-200 bg-slate-50/80' : 'border-slate-800 bg-slate-900/50'}`}>
               <div className="flex items-center gap-1">
-                <button onClick={handlePrev} disabled={currentStepIndex === 0} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 disabled:opacity-30 transition-colors"><ArrowLeft size={20} /></button>
-                <div className="text-sm font-mono text-slate-400 w-32 text-center">Step {currentStep.stepId} / {steps.length - 1}</div>
-                <button onClick={handleNext} disabled={currentStepIndex === steps.length - 1} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 disabled:opacity-30 transition-colors"><ArrowRight size={20} /></button>
+                <button onClick={handlePrev} disabled={currentStepIndex === 0} className={`p-2 rounded-lg disabled:opacity-30 transition-colors ${isLight ? 'hover:bg-slate-200 text-slate-700' : 'hover:bg-slate-800 text-slate-400'}`}><ArrowLeft size={20} /></button>
+                <div className={`text-sm font-mono w-32 text-center ${isLight ? 'text-slate-700 font-semibold' : 'text-slate-400'}`}>Step {currentStep.stepId} / {steps.length - 1}</div>
+                <button onClick={handleNext} disabled={currentStepIndex === steps.length - 1} className={`p-2 rounded-lg disabled:opacity-30 transition-colors ${isLight ? 'hover:bg-slate-200 text-slate-700' : 'hover:bg-slate-800 text-slate-400'}`}><ArrowRight size={20} /></button>
               </div>
               <div className="flex gap-1">
-                <button onClick={handleReset} disabled={currentStepIndex === 0} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-bold transition-colors border border-slate-700 text-slate-200 disabled:opacity-50"><SkipBack size={16} /> Reset</button>
-                <button onClick={() => setIsAutoPlaying(!isAutoPlaying)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isAutoPlaying ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'}`}>{isAutoPlaying ? 'Pause' : <><Play size={16} fill="currentColor" /> Auto Play</>}</button>
-                <button onClick={handleJumpToEnd} disabled={currentStepIndex === steps.length - 1} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-bold transition-colors border border-slate-700 text-slate-200 disabled:opacity-50"><SkipForward size={16} /> Jump to End</button>
+                <button onClick={handleReset} disabled={currentStepIndex === 0} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors border disabled:opacity-50 ${isLight ? 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300 shadow-sm' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'}`}><SkipBack size={16} /> Reset</button>
+                <button onClick={() => setIsAutoPlaying(!isAutoPlaying)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isAutoPlaying ? (isLight ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100' : 'bg-red-500/20 text-red-400 hover:bg-red-500/30') : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'}`}>{isAutoPlaying ? 'Pause' : <><Play size={16} fill="currentColor" /> Auto Play</>}</button>
+                <button onClick={handleJumpToEnd} disabled={currentStepIndex === steps.length - 1} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors border disabled:opacity-50 ${isLight ? 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300 shadow-sm' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'}`}><SkipForward size={16} /> Jump to End</button>
               </div>
             </div>
           </div>
@@ -375,7 +389,7 @@ const SortingMode: React.FC<SortingModeProps> = ({ mode, setMode, onBack }) => {
 
               {/* Recursion Stack Panel */}
               {(algorithm === SortingAlgorithmType.QUICK_SORT || algorithm === SortingAlgorithmType.MERGE_SORT) && (
-                  <RecursionStackPanel stack={currentStep.recursionStack || []} />
+                  <RecursionStackPanel stack={currentStep.recursionStack || []} isLight={isLight} />
               )}
             </motion.div>
           </AnimatePresence>

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Graph, AlgorithmStep, AlgorithmType, EdgeType } from '@/types/graph';
 import { motion } from 'framer-motion';
+import { useAlgorithmsTheme } from '@/context/AlgorithmsThemeContext';
 
 interface GraphCanvasProps {
   graph: Graph;
@@ -12,6 +13,8 @@ interface GraphCanvasProps {
 }
 
 const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentStep, width, height, algorithm }) => {
+  const { theme } = useAlgorithmsTheme();
+  const isLight = theme === 'light';
   
   // For MINIMUM_EDGE_CUT and METRIC_TSP, use the step's graph state snapshot for animation
   const graph = React.useMemo(() => {
@@ -321,205 +324,201 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
 
 
   const getNodeColor = (nodeId: string) => {
+    const defaultNodeColor = isLight ? '#ffffff' : '#64748b';
+    const visitedIdleColor = isLight ? '#f1f5f9' : '#cbd5e1';
+    const greenColor = isLight ? '#16a34a' : '#22c55e';
+    const redColor = isLight ? '#dc2626' : '#ef4444';
+    const blueColor = isLight ? '#2563eb' : '#3b82f6';
+    const purpleColor = isLight ? '#9333ea' : '#a855f7';
+    const yellowColor = isLight ? '#f59e0b' : '#eab308';
+    const cyanColor = isLight ? '#0891b2' : '#06b6d4';
+    const orangeColor = isLight ? '#ea580c' : '#f97316';
+
     // KRUSKAL: Nodes never highlight
-    if (isNodeHighlightDisabled) return '#64748b'; // Slate-500 (Default)
+    if (isNodeHighlightDisabled) return defaultNodeColor;
 
     // FORD-FULKERSON
     if (isFordFulkerson) {
-        if (nodeId === 's') return '#22c55e'; // Green-500
-        if (nodeId === 't') return '#ef4444'; // Red-500
+        if (nodeId === 's') return greenColor;
+        if (nodeId === 't') return redColor;
         
         // Final Min-Cut Visualization
         if (currentStep.minCutSetS) {
             const isInS = currentStep.minCutSetS.includes(nodeId);
-            return isInS ? '#22c55e' : '#ef4444'; // Green for S, Red for T
+            return isInS ? greenColor : redColor;
         }
 
         // Highlight active nodes in path?
-        if (currentStep.path && currentStep.path.includes(nodeId)) return '#3b82f6'; // Blue-500
-        return '#64748b';
+        if (currentStep.path && currentStep.path.includes(nodeId)) return blueColor;
+        return defaultNodeColor;
     }
 
     // BORUVKA: Only highlight if in queue (S_i members), otherwise default
     if (algorithm === AlgorithmType.BORUVKA) {
-        if (currentStep.queue.some(q => q.nodeId === nodeId)) return '#a855f7'; // Purple-500 (Component S_i)
-        return '#64748b'; // Default
+        if (currentStep.queue.some(q => q.nodeId === nodeId)) return purpleColor;
+        return defaultNodeColor;
     }
 
     // BELLMAN_FORD Override: Highlight both endpoints of active edge in Blue
     if (algorithm === AlgorithmType.BELLMAN_FORD && currentStep.activeEdge) {
         if (nodeId === currentStep.activeEdge.source || nodeId === currentStep.activeEdge.target) {
-            return '#3b82f6'; // Blue-500
+            return blueColor;
         }
     }
 
     // TARJAN: Highlight Articulation Points in Red
     if (algorithm === AlgorithmType.TARJAN && currentStep.articulationPoints?.includes(nodeId)) {
-        return '#ef4444'; // Red-500
+        return redColor;
     }
 
     // MATCHING ALGORITHM: GREEDY
     if (algorithm === AlgorithmType.GREEDY_MATCHING) {
         const isMatched = currentStep.processedSet?.includes(nodeId);
-        return isMatched ? '#a855f7' : '#64748b'; // Purple-500 for matched, Slate-500 for unmatched
+        return isMatched ? purpleColor : defaultNodeColor;
     }
 
     // MATCHING ALGORITHM: HOPCROFT-KARP
     if (algorithm === AlgorithmType.HOPCROFT_KARP) {
-        // 1. Visited (BFS Search) -> Blue (Part A) or Orange (Part B)
-        // Check if node is in processedSet OR in any of the computed layers
         const isInLayer = currentStep.hopcroftLayers && Object.values(currentStep.hopcroftLayers).some(layer => layer.includes(nodeId));
         
         if (currentStep.processedSet?.includes(nodeId) || isInLayer) {
-            return nodeId.startsWith('A') ? '#3b82f6' : '#f97316'; // Blue-500 / Orange-500
+            return nodeId.startsWith('A') ? blueColor : orangeColor;
         }
         
-        return '#64748b'; // Default (Matched nodes will be handled via Stroke)
+        return defaultNodeColor;
     }
 
     // GRAPH COLORING ALGORITHMS
     if (algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING) {
         if (currentStep.nodeColors && currentStep.nodeColors[nodeId]) {
             const colorIndex = currentStep.nodeColors[nodeId];
-            const colors = [
-                '#ef4444', // 1: Red
-                '#f97316', // 2: Orange
-                '#eab308', // 3: Yellow
-                '#22c55e', // 4: Green
-                '#06b6d4', // 5: Cyan
-                '#3b82f6', // 6: Blue
-            ];
+            const colors = isLight
+              ? ['#dc2626', '#ea580c', '#d97706', '#16a34a', '#0891b2', '#2563eb']
+              : ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6'];
             return colors[(colorIndex - 1) % colors.length];
         }
-        
-
-        
-        return '#64748b'; // Slate-500 (Uncolored)
+        return defaultNodeColor;
     }
 
     // LONG PATH ALGORITHM
     if (algorithm === AlgorithmType.LONG_PATH) {
         if (currentStep.nodeColors && currentStep.nodeColors[nodeId]) {
-            const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4']; // Red, Orange, Yellow, Green, Cyan
-            return colors[currentStep.nodeColors[nodeId] - 1] || '#64748b';
+            const colors = isLight
+              ? ['#dc2626', '#ea580c', '#d97706', '#16a34a', '#0891b2']
+              : ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4'];
+            return colors[currentStep.nodeColors[nodeId] - 1] || defaultNodeColor;
         }
-        return '#64748b';
+        return defaultNodeColor;
     }
     
     // SMALLEST ENCLOSING DISK
     if (algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK) {
-         if (currentStep.sedOutliers?.includes(nodeId)) return '#ef4444'; // Red
-         if (currentStep.sedSampleQ?.includes(nodeId)) return '#06b6d4'; // Cyan
-         return '#64748b';
+         if (currentStep.sedOutliers?.includes(nodeId)) return redColor;
+         if (currentStep.sedSampleQ?.includes(nodeId)) return cyanColor;
+         return defaultNodeColor;
     }
 
     if (algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR) {
-         if (currentStep.currentPoint === nodeId) return '#ef4444'; // Red
-         if (currentStep.nextPointCandidate === nodeId) return '#a855f7'; // Purple
-         if (currentStep.checkingPoint === nodeId) return '#eab308'; // Yellow
-         if (currentStep.hull?.includes(nodeId)) return '#22c55e'; // Green
-         return '#64748b';
+         if (currentStep.currentPoint === nodeId) return redColor;
+         if (currentStep.nextPointCandidate === nodeId) return purpleColor;
+         if (currentStep.checkingPoint === nodeId) return yellowColor;
+         if (currentStep.hull?.includes(nodeId)) return greenColor;
+         return defaultNodeColor;
     }
 
     // HAMILTON PATH
     if (algorithm === AlgorithmType.HAMILTON_PATH) {
-        if (currentStep.currentNodeId === nodeId) return '#eab308'; // Yellow
-        if (currentStep.currentNeighborId === nodeId) return '#3b82f6'; // Blue
-        return '#64748b';
+        if (currentStep.currentNodeId === nodeId) return yellowColor;
+        if (currentStep.currentNeighborId === nodeId) return blueColor;
+        return defaultNodeColor;
     }
 
     // FLOYD CYCLE FINDING
     if (algorithm === AlgorithmType.FINDING_DUPLICATES_FLOYD && currentStep.findingDuplicatesFloyd) {
         const { igel, hase } = currentStep.findingDuplicatesFloyd;
         const nodeIdNum = parseInt(nodeId);
-        if (hase === nodeIdNum && igel === nodeIdNum) return '#ffffff'; // Both: White fill (with brown border)
-        if (hase === nodeIdNum) return '#ffffff'; // White Rabbit
-        if (igel === nodeIdNum) return '#8B4513'; // Brown Tortoise
+        if (hase === nodeIdNum && igel === nodeIdNum) return '#ffffff';
+        if (hase === nodeIdNum) return '#ffffff';
+        if (igel === nodeIdNum) return isLight ? '#78350f' : '#8B4513';
     }
 
-    if (currentStep.currentNodeId === nodeId) return '#eab308'; // Yellow-500 (Current u)
-    if (currentStep.currentNeighborId === nodeId) return '#3b82f6'; // Blue-500 (Neighbor v)
-    if (currentStep.processedSet.includes(nodeId)) return '#22c55e'; // Green-500 (Processed / S)
-    if (currentStep.queue.some(q => q.nodeId === nodeId)) return '#a855f7'; // Purple-500 (In Queue)
+    if (currentStep.currentNodeId === nodeId) return yellowColor;
+    if (currentStep.currentNeighborId === nodeId) return blueColor;
+    if (currentStep.processedSet.includes(nodeId)) return greenColor;
+    if (currentStep.queue.some(q => q.nodeId === nodeId)) return purpleColor;
     
     // Visited but idle (Has distance)
-    // We exclude Bellman-Ford from this brighter color shift as requested, keeping it the standard grey.
     if (currentStep.distances[nodeId] !== Infinity && currentStep.distances[nodeId] !== undefined) {
         if (algorithm !== AlgorithmType.BELLMAN_FORD && algorithm !== AlgorithmType.TARJAN) {
-            return '#cbd5e1'; // Slate-300
+            return visitedIdleColor;
         }
     }
     // For Tarjan, visited nodes (have discovery time) show as visited
     if (algorithm === AlgorithmType.TARJAN && currentStep.discoveryTimes[nodeId]) {
-         return '#cbd5e1'; 
+         return visitedIdleColor; 
     }
     
-
-    
-    return '#64748b'; // Slate-500 (Unvisited) - BRIGHTER
+    return defaultNodeColor;
   };
 
   const getEdgeColor = (source: string, target: string, edgeId?: string) => {
     let isActive = false;
     
-    // Check ID first if available (for precise multi-edge highlighting)
     if (currentStep.activeEdge?.id) {
-        // STRICT MODE: If an ID is provided, we MUST match it.
-        // If edgeId is missing from the prop, it fails (correct).
-        // If edgeId differs, it fails (correct).
         isActive = (!!edgeId && currentStep.activeEdge.id === edgeId);
     } else {
-        // Fallback to source/target matching (Legacy / No ID provided)
         isActive = currentStep.activeEdge?.source === source && currentStep.activeEdge?.target === target;
-        
-        // Bidirectional check for Undirected graphs
         if (!isActive && graph.isDirected === false) {
             isActive = currentStep.activeEdge?.source === target && currentStep.activeEdge?.target === source;
         }
     }
 
+    const defaultEdgeColor = isLight ? '#94a3b8' : '#64748b';
+    const greenEdgeColor = isLight ? '#16a34a' : '#22c55e';
+    const redEdgeColor = isLight ? '#dc2626' : '#ef4444';
+    const purpleEdgeColor = isLight ? '#9333ea' : '#a855f7';
+    const blueEdgeColor = isLight ? '#2563eb' : '#3b82f6';
+    const cyanEdgeColor = isLight ? '#0891b2' : '#06b6d4';
+    const orangeEdgeColor = isLight ? '#ea580c' : '#f97316';
+    const amberEdgeColor = isLight ? '#d97706' : '#f59e0b';
+
     if (isActive && algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.EULER && algorithm !== AlgorithmType.GREEDY_MATCHING && algorithm !== AlgorithmType.HOPCROFT_KARP && algorithm !== AlgorithmType.FORD_FULKERSON && algorithm !== AlgorithmType.METRIC_TSP && algorithm !== AlgorithmType.METRIC_TSP_15) {
-        if (algorithm === AlgorithmType.BELLMAN_FORD) return '#3b82f6'; // Blue-500 for BF
-        return '#ef4444'; // Red-500 for others
+        if (algorithm === AlgorithmType.BELLMAN_FORD) return blueEdgeColor;
+        return redEdgeColor;
     }
 
      // FORD-FULKERSON PATH HIGHLIGHT
     if (isFordFulkerson) {
-         // Final Min-Cut Highlight: S->T edges in purple
          if (currentStep.minCutSetS) {
              const sourceInS = currentStep.minCutSetS.includes(source);
-             const targetInS = currentStep.minCutSetS.includes(target); // If not in S, it's in T
-             
-             if (sourceInS && !targetInS) return '#a855f7'; // Purple-500 (Cut Edge S->T)
+             const targetInS = currentStep.minCutSetS.includes(target);
+             if (sourceInS && !targetInS) return purpleEdgeColor;
          }
 
          if (currentStep.path) {
-             // Check if edge is in path
              for (let i = 0; i < currentStep.path.length - 1; i++) {
-                 if (currentStep.path[i] === source && currentStep.path[i+1] === target) return '#22c55e'; // Green path (Augmenting)
+                 if (currentStep.path[i] === source && currentStep.path[i+1] === target) return greenEdgeColor;
              }
          }
-         return '#94a3b8';
+         return defaultEdgeColor;
     }
 
     // LONG PATH HIGHLIGHT
     if (algorithm === AlgorithmType.LONG_PATH) {
         if (currentStep.path) {
             for (let i = 0; i < currentStep.path.length - 1; i++) {
-                 // Undirected check
                  if ((currentStep.path[i] === source && currentStep.path[i+1] === target) ||
                      (currentStep.path[i] === target && currentStep.path[i+1] === source)) {
-                     return '#a855f7'; // Purple Path
+                     return purpleEdgeColor;
                  }
             }
         }
-        // Extended paths highlight during calculation
         if (currentStep.longPathExtendedPaths) {
              for (const path of currentStep.longPathExtendedPaths) {
                  for (let i = 0; i < path.length - 1; i++) {
                      if ((path[i] === source && path[i+1] === target) ||
                          (path[i] === target && path[i+1] === source)) {
-                         return '#a855f7'; // Purple Path (during extension)
+                         return purpleEdgeColor;
                      }
                  }
              }
@@ -529,20 +528,18 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
     // HAMILTON PATH HIGHLIGHT
     if (algorithm === AlgorithmType.HAMILTON_PATH && currentStep.path) {
          for (let i = 0; i < currentStep.path.length - 1; i++) {
-             // Directed graph usually for Hamilton Path but check isDirected
-             if (currentStep.path[i] === source && currentStep.path[i+1] === target) return '#a855f7'; // Purple
-             if (graph.isDirected === false && currentStep.path[i] === target && currentStep.path[i+1] === source) return '#a855f7';
+             if (currentStep.path[i] === source && currentStep.path[i+1] === target) return purpleEdgeColor;
+             if (graph.isDirected === false && currentStep.path[i] === target && currentStep.path[i+1] === source) return purpleEdgeColor;
          }
     }
 
     // METRIC TSP HIGHLIGHT
     if (algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) {
         if (edgeId && edgeId.startsWith('tsp-')) {
-            // Also highlight active edge in brighter green to indicate action if necessary, or just keep green
-            return isActive ? '#4ade80' : '#22c55e'; // Green (Lighter green if active)
+            return isActive ? (isLight ? '#15803d' : '#4ade80') : greenEdgeColor;
         }
         if (edgeId && edgeId.startsWith('euler-')) {
-            return '#64748b'; // Slate-500 (Duller than active but visible)
+            return isLight ? '#94a3b8' : '#64748b';
         }
     }
 
@@ -552,74 +549,65 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
           (b.source === source && b.target === target) ||
           (b.source === target && b.target === source)
        );
-       if (isBridge) return '#ef4444'; // Red for Bridges
+       if (isBridge) return redEdgeColor;
     }
     
     // DFS / Tarjan Edge Classification (Final Step)
     const classification = currentStep.edgeClassifications?.[`${source}-${target}`];
-    // For Undirected Tarjan, we might index edges as u-v or v-u. Check both.
     const reverseKey = `${target}-${source}`;
     const classificationRev = currentStep.edgeClassifications?.[reverseKey];
-    
     const finalClass = classification || classificationRev;
 
     if (finalClass && algorithm !== AlgorithmType.GREEDY_MATCHING && algorithm !== AlgorithmType.HOPCROFT_KARP) {
-        // TARJAN OVERRIDE: Tree is green, all others (Back) are Grey
         if (algorithm === AlgorithmType.TARJAN) {
-            if (finalClass === EdgeType.TREE) return '#22c55e'; // Green
-            return '#94a3b8'; // Grey for Back edges
+            if (finalClass === EdgeType.TREE) return greenEdgeColor;
+            return isLight ? '#94a3b8' : '#cbd5e1';
         }
 
         switch (finalClass) {
-            case EdgeType.TREE: return '#22c55e'; // Green (Tree Edges remain solid green)
-            case EdgeType.BACK: return '#ec489980'; // Pink-500 with 50% opacity
-            case EdgeType.FORWARD: return '#38bdf880'; // Light Blue (Sky-400) with 50% opacity
-            case EdgeType.CROSS: return '#a855f780'; // Purple-500 with 50% opacity
+            case EdgeType.TREE: return greenEdgeColor;
+            case EdgeType.BACK: return isLight ? '#db2777' : '#ec489980';
+            case EdgeType.FORWARD: return isLight ? '#0284c7' : '#38bdf880';
+            case EdgeType.CROSS: return isLight ? '#7c3aed' : '#a855f780';
         }
     }
 
     // Prim/Kruskal/Boruvka MST Edges (Set F)
     if (isMstAlgo) {
        const isInF = currentStep.mstEdges?.some(e => {
-          // If undirected, check both directions or if source/target match regardless of order
           if (graph.isDirected === false) {
               return (e.source === source && e.target === target) || (e.source === target && e.target === source);
           }
-          return e.source === source && e.target === target
+          return e.source === source && e.target === target;
        });
-       if (isInF) return '#f59e0b'; // Amber-500 (Gold) for MST
+       if (isInF) return amberEdgeColor;
     }
 
-    // Parent edges (Dijkstra/BFS/DFS/BF Tree) - EXCLUDE MST ALGOS
-    // Disable green parent edge coloring for MST algorithms to prevent incorrect edge highlighting
-    // For UNDIRECTED graphs, we must check both directions: parent[target] == source OR parent[source] == target
     const isParent = !isMstAlgo && algorithm !== AlgorithmType.EULER && (
         currentStep.parents[target] === source || 
         (graph.isDirected === false && currentStep.parents[source] === target)
     );
 
-    if (isParent) return '#22c55e'; // Green for active path tree
+    if (isParent) return greenEdgeColor;
 
     // EULER TOUR
     if (algorithm === AlgorithmType.EULER) {
-        // Check Sub-Tour First (Active construction)
         if (currentStep.eulerSubTour) {
             for (let i = 0; i < currentStep.eulerSubTour.length - 1; i++) {
                 const u = currentStep.eulerSubTour[i];
                 const v = currentStep.eulerSubTour[i+1];
                 if ((u === source && v === target) || (u === target && v === source)) {
-                    return '#06b6d4'; // Cyan-500 for W'
+                    return cyanEdgeColor;
                 }
             }
         }
         
-        // Check Main Tour
         if (currentStep.eulerTour) {
              for (let i = 0; i < currentStep.eulerTour.length - 1; i++) {
                 const u = currentStep.eulerTour[i];
                 const v = currentStep.eulerTour[i+1];
                 if ((u === source && v === target) || (u === target && v === source)) {
-                    return '#f97316'; // Orange-500 for W
+                    return orangeEdgeColor;
                 }
             }
         }
@@ -627,7 +615,6 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
 
     // MATCHING ALGORITHMS
     if (algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP) {
-        // Check if edge is in the matching (show in purple)
         const isInMatching = currentStep.mstEdges?.some(e => {
             if ((e.source === source && e.target === target) || (e.source === target && e.target === source)) {
                 return true;
@@ -636,33 +623,30 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
         });
         
         if (isInMatching) {
-            return '#a855f7'; // Purple-500 for matching edges
+            return purpleEdgeColor;
         }
     }
 
     // MINIMUM_EDGE_CUT
     if (algorithm === AlgorithmType.MINIMUM_EDGE_CUT) {
         if (currentStep.activeEdge) {
-            // Use ID match if available (for precise multi-edge highlighting)
             if (currentStep.activeEdge.id) {
                 if (edgeId && currentStep.activeEdge.id === edgeId) {
-                    return '#ef4444'; // Red for the specific active edge
+                    return redEdgeColor;
                 }
             } else {
-                // Fallback to source/target match if no ID
                 if ((currentStep.activeEdge.source === source && currentStep.activeEdge.target === target) ||
                     (currentStep.activeEdge.source === target && currentStep.activeEdge.target === source)) {
-                    return '#ef4444'; // Red for active edge
+                    return redEdgeColor;
                 }
             }
         }
-        // If graph is contracted to 2 nodes, all remaining edges are cut edges
         if (graph.nodes.length <= 2) {
-            return '#a855f7'; // Purple for cut edges
+            return purpleEdgeColor;
         }
     }
 
-    return '#94a3b8'; // Slate-400 (Default edge) - BRIGHTER
+    return defaultEdgeColor;
   };
 
   const getEdgeStrokeWidth = (source: string, target: string) => {
@@ -1161,18 +1145,18 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                 {/* Edge Weight Label */}
                 {showWeights && (
                   <>
-                    <circle cx={labelX} cy={labelY} r={isFordFulkerson ? 14 : 8} fill="#1e293b" />
+                    <circle cx={labelX} cy={labelY} r={isFordFulkerson ? 14 : 8} fill={isLight ? "#ffffff" : "#1e293b"} stroke={isLight ? "#cbd5e1" : "none"} strokeWidth={isLight ? 1.5 : 0} />
                     <text
                       x={labelX}
                       y={labelY}
                       dy=".3em"
                       textAnchor="middle"
-                      className="text-[10px] fill-slate-300 font-mono select-none pointer-events-none font-bold"
+                      className={`text-[10px] font-mono select-none pointer-events-none font-bold ${isLight ? 'fill-slate-800' : 'fill-slate-300'}`}
                     >
                       {isFordFulkerson ? (
                         <>
-                          <tspan fill="#3b82f6">{currentStep.edgeFlows?.[`${edge.source}-${edge.target}`] ?? 0}</tspan>
-                          <tspan fill="#cbd5e1">/{edge.capacity}</tspan>
+                          <tspan fill={isLight ? "#2563eb" : "#3b82f6"}>{currentStep.edgeFlows?.[`${edge.source}-${edge.target}`] ?? 0}</tspan>
+                          <tspan fill={isLight ? "#64748b" : "#cbd5e1"}>/{edge.capacity}</tspan>
                         </>
                       ) : (
                         edge.weight
@@ -1235,11 +1219,11 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                     cy: node.y,
                     fill: bgColor, 
                     stroke: (() => {
-                      if (isNodeHighlightDisabled) return 'none';
-                      if (algorithm === AlgorithmType.BELLMAN_FORD) return 'none';
+                      if (isNodeHighlightDisabled) return isLight ? '#cbd5e1' : 'none';
+                      if (algorithm === AlgorithmType.BELLMAN_FORD) return isLight ? '#cbd5e1' : 'none';
                       if ((algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP) && currentStep.activeEdge) {
                         const isEndpoint = node.id === currentStep.activeEdge.source || node.id === currentStep.activeEdge.target;
-                        return isEndpoint ? '#fff' : 'none';
+                        return isEndpoint ? (isLight ? '#0f172a' : '#fff') : (isLight ? '#cbd5e1' : 'none');
                       }
                       // Long Path Extended Nodes
                       if (algorithm === AlgorithmType.LONG_PATH && currentStep.longPathExtendedPaths) {
@@ -1258,10 +1242,6 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                       
                       // Hamilton Path Stroke
                       if (algorithm === AlgorithmType.HAMILTON_PATH && currentStep.path?.includes(node.id)) {
-                          // Exclude current node and neighbor which have their own fills/strokes usually?
-                          // But here we want the "purple border" for the path.
-                          // Current node is yellow fill, Neighbor is blue fill.
-                          // If we add purple stroke, it helps.
                           return '#a855f7'; 
                       }
                       
@@ -1272,7 +1252,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                           if (igel === nodeIdNum && hase === nodeIdNum) return '#8B4513'; // Brown border
                       }
 
-                      return 'none';
+                      return isLight ? '#94a3b8' : 'none';
                     })(),
                     strokeWidth: (() => {
                       if (algorithm === AlgorithmType.LONG_PATH && currentStep.longPathExtendedPaths) {
@@ -1288,7 +1268,6 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                           return 4; // Bolder border for min degree node
                       }
                       
-                      
                       if (algorithm === AlgorithmType.HAMILTON_PATH && currentStep.path?.includes(node.id)) {
                           return 3;
                       }
@@ -1296,7 +1275,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                       if (algorithm === AlgorithmType.FINDING_DUPLICATES_FLOYD && currentStep.findingDuplicatesFloyd) {
                           const { igel, hase } = currentStep.findingDuplicatesFloyd;
                           const nodeIdNum = parseInt(node.id);
-                          if (igel === nodeIdNum && hase === nodeIdNum) return 4; // Bolder border
+                          if (igel === nodeIdNum && hase === nodeIdNum) return 4;
                       }
                       
                       return 2;
@@ -1313,20 +1292,24 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                   transition={{ duration: 0.5 }}
                   dy=".35em"
                   textAnchor="middle"
-                  className={`text-xs font-bold pointer-events-none select-none ${bgColor === '#ffffff' ? 'fill-slate-900' : 'fill-white'}`}
+                  className={`text-xs font-bold pointer-events-none select-none ${
+                    isLight 
+                      ? (bgColor === '#ffffff' || bgColor === '#f8fafc' || bgColor === '#f1f5f9' || bgColor === '#e2e8f0' ? 'fill-slate-900' : 'fill-white')
+                      : (bgColor === '#ffffff' ? 'fill-slate-900' : 'fill-white')
+                  }`}
                   style={{ fontSize: (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || isFordFulkerson) ? '10px' : ((algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) ? '9px' : '12px') }}
                 >
                   {node.label}
                 </motion.text>
                 )}
                 
-                  {showBadge && (
+                {showBadge && (
                   <motion.g 
                     initial={false}
                     animate={{ x: node.x + (algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK ? 6 : (algorithm === AlgorithmType.TARJAN ? 8 : 12)), y: node.y - (algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK ? 8 : (algorithm === AlgorithmType.TARJAN ? 10 : 12)) }}
                   >
-                    <rect x="0" y="-10" width={algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.TARJAN ? 34 : 24} height="14" rx="4" fill="#0f172a" stroke="#334155" strokeWidth="1" />
-                    <text x={algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.TARJAN ? 17 : 12} y="-1" textAnchor="middle" className="text-[9px] fill-white font-mono">
+                    <rect x="0" y="-10" width={algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.TARJAN ? 34 : 24} height="14" rx="4" fill={isLight ? "#ffffff" : "#0f172a"} stroke={isLight ? "#cbd5e1" : "#334155"} strokeWidth="1" />
+                    <text x={algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.TARJAN ? 17 : 12} y="-1" textAnchor="middle" className={`text-[9px] font-mono ${isLight ? 'fill-slate-900 font-semibold' : 'fill-white'}`}>
                       {badgeText}
                     </text>
                   </motion.g>

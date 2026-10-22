@@ -3,6 +3,8 @@ import React, { useRef, useEffect, useMemo } from 'react';
 import { AlgorithmStep, AlgorithmType, Graph } from '@/types/graph';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Infinity as InfinityIcon } from 'lucide-react';
+import { useAlgorithmsTheme } from '@/context/AlgorithmsThemeContext';
+import clsx from 'clsx';
 
 interface DataPanelProps {
   step: AlgorithmStep;
@@ -12,6 +14,7 @@ interface DataPanelProps {
 
 // --- INTERNAL COMPONENT: SEARCH TREE VISUALIZER ---
 const SearchTreeVisualizer: React.FC<{ step: AlgorithmStep; algorithm: AlgorithmType }> = ({ step, algorithm }) => {
+    const { isLight } = useAlgorithmsTheme();
     
     const treeData = useMemo(() => {
         const nodes: { id: string, x: number, y: number }[] = [];
@@ -87,7 +90,7 @@ const SearchTreeVisualizer: React.FC<{ step: AlgorithmStep; algorithm: Algorithm
     }, [step.parents, step.distances, step.discoveryTimes, algorithm]);
 
     if (treeData.nodes.length === 0) {
-        return <div className="h-full flex items-center justify-center text-slate-600 text-sm italic">Tree Empty</div>;
+        return <div className={clsx("h-full flex items-center justify-center text-sm italic", isLight ? "text-slate-400" : "text-slate-600")}>Tree Empty</div>;
     }
 
     // Scaling
@@ -110,9 +113,9 @@ const SearchTreeVisualizer: React.FC<{ step: AlgorithmStep; algorithm: Algorithm
                         const src = treeData.nodes.find(n => n.id === link.source)!;
                         const tgt = treeData.nodes.find(n => n.id === link.target)!;
                         
-                        // Use static grey for tree links in the search tree visualization
-                        const color = '#475569';
-                        const strokeWidth = 2;
+                        // Tree links color
+                        const color = isLight ? '#64748b' : '#475569';
+                        const strokeWidth = isLight ? 2.5 : 2;
 
                         return (
                             <motion.line
@@ -133,6 +136,20 @@ const SearchTreeVisualizer: React.FC<{ step: AlgorithmStep; algorithm: Algorithm
                     {treeData.nodes.map(node => {
                         const isCurrent = node.id === step.currentNodeId;
                         const isNeighbor = node.id === step.currentNeighborId;
+
+                        let fillColor = isLight ? '#ffffff' : '#1e293b';
+                        let strokeColor = isLight ? '#94a3b8' : '#64748b';
+                        let textColor = isLight ? 'fill-slate-900' : 'fill-slate-200';
+
+                        if (isCurrent) {
+                            fillColor = isLight ? '#d97706' : '#eab308';
+                            strokeColor = isLight ? '#b45309' : '#fff';
+                            textColor = 'fill-white';
+                        } else if (isNeighbor) {
+                            fillColor = isLight ? '#2563eb' : '#3b82f6';
+                            strokeColor = isLight ? '#1d4ed8' : '#fff';
+                            textColor = 'fill-white';
+                        }
                         
                         return (
                             <g key={node.id} transform={`translate(${node.x * X_SCALE}, ${node.y * Y_SCALE})`}>
@@ -140,14 +157,14 @@ const SearchTreeVisualizer: React.FC<{ step: AlgorithmStep; algorithm: Algorithm
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
                                     r={RADIUS}
-                                    fill={isCurrent ? '#eab308' : (isNeighbor ? '#3b82f6' : '#1e293b')}
-                                    stroke={isCurrent ? '#fff' : '#64748b'}
+                                    fill={fillColor}
+                                    stroke={strokeColor}
                                     strokeWidth="2"
                                 />
                                 <text
                                     dy=".35em"
                                     textAnchor="middle"
-                                    className="text-[10px] font-bold fill-slate-200 pointer-events-none"
+                                    className={clsx("text-[10px] font-bold pointer-events-none", textColor)}
                                 >
                                     {node.id}
                                 </text>
@@ -162,7 +179,7 @@ const SearchTreeVisualizer: React.FC<{ step: AlgorithmStep; algorithm: Algorithm
 
 
 const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
-  
+  const { isLight } = useAlgorithmsTheme();
   const listRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<HTMLDivElement>(null);
   const activeEdgeRef = useRef<HTMLDivElement>(null);
@@ -308,16 +325,23 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
       if (!clean) return null;
       const nums = clean.split(',').map(s => parseInt(s.trim()));
       
+      const containerStyle = isContributing
+          ? (isLight ? 'bg-fuchsia-100 border-fuchsia-400 shadow-sm' : 'bg-fuchsia-900/40 border-fuchsia-500 shadow-[0_0_8px_rgba(232,121,249,0.3)]')
+          : (isLight ? 'bg-white border-slate-300' : 'bg-slate-800 border-slate-600');
+      const braceColor = isContributing
+          ? (isLight ? 'text-fuchsia-700' : 'text-fuchsia-300')
+          : (isLight ? 'text-slate-600' : 'text-slate-500');
+
       return (
-          <div className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded border ${isContributing ? 'bg-fuchsia-900/40 border-fuchsia-500 shadow-[0_0_8px_rgba(232,121,249,0.3)]' : 'bg-slate-800 border-slate-600'}`}>
-             <span className={`text-[10px] mr-1 ${isContributing ? 'text-fuchsia-300' : 'text-slate-500'}`}>&#123;</span>
+          <div className={clsx("flex items-center gap-0.5 px-1.5 py-0.5 rounded border", containerStyle)}>
+             <span className={clsx("text-[10px] mr-1", braceColor)}>&#123;</span>
               {nums.map((n, i) => {
-                  const colorHex = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4'][n-1] || '#94a3b8';
+                  const colorHex = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4'][n-1] || (isLight ? '#94a3b8' : '#64748b');
                   return (
-                      <div key={i} className="w-2 h-2 rounded-full" style={{backgroundColor: colorHex}} title={`Color ${n}`} />
+                      <div key={i} className="w-2 h-2 rounded-full border border-black/10" style={{backgroundColor: colorHex}} title={`Color ${n}`} />
                   );
               })}
-             <span className={`text-[10px] ml-1 ${isContributing ? 'text-fuchsia-300' : 'text-slate-500'}`}>&#125;</span>
+             <span className={clsx("text-[10px] ml-1", braceColor)}>&#125;</span>
           </div>
       );
   };
@@ -381,14 +405,16 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                 <div className="p-3 overflow-auto flex-1 font-mono text-sm">
                    {step.stack && step.stack.length > 0 ? (
                        <div className="flex flex-wrap items-center gap-2">
-                           <span className="text-slate-500 mr-2">Order:</span>
+                           <span className={clsx("mr-2 font-bold", isLight ? "text-slate-700" : "text-slate-500")}>Order:</span>
                            {step.stack.map((node, i) => {
                                const isCurrent = step.currentNodeId === node;
                                
                                // Determine style based on state
                                const isColored = step.nodeColors && step.nodeColors[node];
-                               const fillClass = isColored ? "bg-green-700 text-green-100" : "bg-slate-700 text-slate-400";
-                               const currentClass = isCurrent ? "ring-2 ring-yellow-500 font-bold" : "";
+                               const fillClass = isColored 
+                                   ? (isLight ? "bg-emerald-600 text-white font-bold shadow-sm" : "bg-green-700 text-green-100") 
+                                   : (isLight ? "bg-slate-100 border border-slate-300 text-slate-900 font-semibold" : "bg-slate-700 text-slate-400");
+                               const currentClass = isCurrent ? (isLight ? "ring-2 ring-amber-500 font-bold shadow-sm" : "ring-2 ring-yellow-500 font-bold") : "";
                                const styleClass = `${fillClass} ${currentClass}`;
                                
                                return (
@@ -397,21 +423,21 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                                            {node}
                                        </span>
                                        {i < step.stack!.length - 1 && (
-                                           <span className="text-slate-600 mx-1">→</span>
+                                           <span className={clsx("mx-1 font-bold", isLight ? "text-slate-700" : "text-slate-600")}>→</span>
                                        )}
                                    </div>
                                );
                            })}
                        </div>
                    ) : (
-                       <div className="text-slate-500 italic">Determining Order...</div>
+                       <div className={clsx("italic", isLight ? "text-slate-500 font-medium" : "text-slate-500")}>Determining Order...</div>
                    )}
                    
                    {/* Legend for Colors */}
-                   <div className="mt-4 pt-4 border-t border-slate-700/50 flex gap-4 text-xs text-slate-400">
-                      <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-slate-700 rounded-sm ring-2 ring-yellow-500"></div> Current</div>
-                      <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-green-700 rounded-sm"></div> Colored</div>
-                      <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-slate-700 rounded-sm"></div> Pending</div>
+                   <div className={clsx("mt-4 pt-4 border-t flex gap-4 text-xs font-medium", isLight ? "border-slate-200 text-slate-700" : "border-slate-700/50 text-slate-400")}>
+                      <div className="flex items-center gap-1.5"><div className={clsx("w-3 h-3 rounded-sm ring-2", isLight ? "bg-amber-100 ring-amber-500" : "bg-slate-700 ring-yellow-500")}></div> Current</div>
+                      <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-emerald-600 rounded-sm"></div> Colored</div>
+                      <div className="flex items-center gap-1.5"><div className={clsx("w-3 h-3 rounded-sm border", isLight ? "bg-slate-100 border-slate-300" : "bg-slate-700 border-transparent")}></div> Pending</div>
                    </div>
                 </div>
             </div>
@@ -457,13 +483,13 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                     <svg width="100%" height="100%" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid meet">
                          <defs>
                             <marker id="arrowhead-teal" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
-                                <polygon points="0 0, 6 2, 0 4" fill="#2dd4bf" />
+                                <polygon points="0 0, 6 2, 0 4" fill={isLight ? "#0f766e" : "#2dd4bf"} />
                             </marker>
                             <marker id="arrowhead-amber" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
-                                <polygon points="0 0, 6 2, 0 4" fill="#f59e0b" />
+                                <polygon points="0 0, 6 2, 0 4" fill={isLight ? "#b45309" : "#f59e0b"} />
                             </marker>
                             <marker id="arrowhead-green" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
-                                <polygon points="0 0, 6 2, 0 4" fill="#22c55e" />
+                                <polygon points="0 0, 6 2, 0 4" fill={isLight ? "#15803d" : "#22c55e"} />
                             </marker>
                         </defs>
                         
@@ -517,7 +543,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
 
                             // Determine Edge Color based on Backward (Reversed) status
                             const isBackward = edge.isBackward;
-                            const edgeColor = isBackward ? "#f59e0b" : "#2dd4bf"; // Amber-500 vs Teal-400
+                            const edgeColor = isBackward ? (isLight ? "#b45309" : "#f59e0b") : (isLight ? "#0f766e" : "#2dd4bf");
 
                             // Highlight Logic: Is this edge part of the found path?
                             // path is node ID list
@@ -532,16 +558,16 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                                 <g key={`${i}-res`}>
                                     <path 
                                         d={pathD} 
-                                        stroke={isPath ? "#22c55e" : edgeColor} // Green-500 if path, else edge color
+                                        stroke={isPath ? (isLight ? "#15803d" : "#22c55e") : edgeColor}
                                         strokeWidth={isPath ? 3 : 1.5}
                                         fill="none" 
                                         markerEnd={isPath ? "url(#arrowhead-green)" : (isBackward ? "url(#arrowhead-amber)" : "url(#arrowhead-teal)")}
-                                        opacity={0.8}
+                                        opacity={0.85}
                                     />
-                                    <circle cx={labelX} cy={labelY} r="8" fill="#0f172a" />
+                                    <circle cx={labelX} cy={labelY} r="8" fill={isLight ? "#ffffff" : "#0f172a"} stroke={isLight ? "#cbd5e1" : undefined} strokeWidth={isLight ? 1 : undefined} />
                                     <text 
                                         x={labelX} y={labelY} dy=".3em" textAnchor="middle" 
-                                        className={`text-[10px] font-mono font-bold ${isPath ? 'fill-green-500' : (isBackward ? 'fill-amber-500' : 'fill-teal-400')}`}
+                                        className={`text-[10px] font-mono font-bold ${isPath ? (isLight ? 'fill-emerald-800' : 'fill-green-500') : (isBackward ? (isLight ? 'fill-amber-800' : 'fill-amber-500') : (isLight ? 'fill-teal-800' : 'fill-teal-400'))}`}
                                     >
                                         {edge.capacity}
                                     </text>
@@ -557,14 +583,14 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                                     fill={
                                         step.minCutSetS 
                                         ? (step.minCutSetS.includes(node.id) ? '#22c55e' : '#ef4444') 
-                                        : (node.id === 's' ? '#22c55e' : (node.id === 't' ? '#ef4444' : '#1e293b'))
+                                        : (node.id === 's' ? '#22c55e' : (node.id === 't' ? '#ef4444' : (isLight ? '#ffffff' : '#1e293b')))
                                     } 
-                                    stroke="#334155" 
-                                    strokeWidth="1"
+                                    stroke={isLight ? '#94a3b8' : '#334155'} 
+                                    strokeWidth="1.5"
                                 />
                                 <text 
                                     x={node.x} y={node.y} dy=".35em" textAnchor="middle" 
-                                    className="text-[10px] fill-slate-300 font-bold pointer-events-none"
+                                    className={clsx("text-[10px] font-bold pointer-events-none", (node.id === 's' || node.id === 't' || step.minCutSetS) ? 'fill-white' : (isLight ? 'fill-slate-800' : 'fill-slate-300'))}
                                 >
                                     {node.label}
                                 </text>
@@ -573,18 +599,18 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                     </svg>
                     
                     {/* Legend */}
-                     <div className="absolute bottom-4 left-4 flex gap-4 text-[10px] bg-slate-900/80 p-2 rounded backdrop-blur-sm border border-slate-700">
+                     <div className={clsx("absolute bottom-4 left-4 flex gap-4 text-[10px] p-2 rounded backdrop-blur-sm border shadow-sm", isLight ? "bg-white/95 border-slate-300" : "bg-slate-900/80 border-slate-700")}>
                           <div className="flex items-center gap-1">
-                              <div className="w-3 h-0.5 bg-teal-400"></div>
-                              <span className="text-teal-400">Residual Edge</span>
+                              <div className="w-3 h-0.5 bg-teal-500"></div>
+                              <span className={isLight ? "text-teal-800 font-semibold" : "text-teal-400"}>Residual Edge</span>
                           </div>
                           <div className="flex items-center gap-1">
-                              <div className="w-3 h-0.5 bg-amber-400"></div>
-                              <span className="text-amber-400">Backward Edge</span>
+                              <div className="w-3 h-0.5 bg-amber-500"></div>
+                              <span className={isLight ? "text-amber-800 font-semibold" : "text-amber-400"}>Backward Edge</span>
                           </div>
                           <div className="flex items-center gap-1">
                               <div className="w-3 h-1 bg-green-500"></div>
-                              <span className="text-green-500">Augmenting Path</span>
+                              <span className={isLight ? "text-emerald-800 font-semibold" : "text-green-500"}>Augmenting Path</span>
                           </div>
                      </div>
                </div>
@@ -613,7 +639,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                             
                             {graph.nodes.sort((a,b) => a.id.localeCompare(b.id)).map((node, i) => {
                                 const color = step.nodeColors?.[node.id] || 0;
-                                const colorHex = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4'][color-1] || '#334155';
+                                const colorHex = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4'][color-1] || (isLight ? '#cbd5e1' : '#334155');
                                 const setsPrev = step.longPathDPPrev?.[node.id] || [];
                                 const setsCurr = step.longPathDP?.[node.id] || [];
                                 const isCurrentNode = step.currentNodeId === node.id;
@@ -820,10 +846,10 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                         <div className="flex flex-wrap items-center gap-1">
                             {step.eulerTour.map((node, i) => (
                                 <React.Fragment key={i}>
-                                    <span className={`${node === step.currentNodeId ? 'text-yellow-400 font-bold underline' : 'text-slate-300'}`}>
+                                    <span className={`${node === step.currentNodeId ? (isLight ? 'text-amber-800 font-extrabold underline decoration-2' : 'text-yellow-400 font-bold underline') : (isLight ? 'text-slate-900 font-semibold' : 'text-slate-300')}`}>
                                         {node}
                                     </span>
-                                    {i < step.eulerTour!.length - 1 && <span className="text-slate-600">→</span>}
+                                    {i < step.eulerTour!.length - 1 && <span className={isLight ? "text-slate-500 font-bold" : "text-slate-600"}>→</span>}
                                 </React.Fragment>
                             ))}
                         </div>
@@ -840,8 +866,8 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                           <div className="flex flex-wrap items-center gap-1">
                               {step.eulerSubTour.map((node, i) => (
                                   <React.Fragment key={i}>
-                                      <span className="text-cyan-200">{node}</span>
-                                      {i < step.eulerSubTour!.length - 1 && <span className="text-cyan-700">→</span>}
+                                      <span className={isLight ? "bg-cyan-100 border border-cyan-400 text-cyan-950 font-bold px-2 py-0.5 rounded shadow-sm" : "text-cyan-200"}>{node}</span>
+                                      {i < step.eulerSubTour!.length - 1 && <span className={isLight ? "text-cyan-800 font-bold" : "text-cyan-700"}>→</span>}
                                   </React.Fragment>
                               ))}
                           </div>
@@ -862,7 +888,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                           {step.mstEdges.map((edge, idx) => (
                             <div 
                               key={`${edge.source}-${edge.target}-${idx}`}
-                              className="flex items-center gap-2 bg-violet-900/30 border border-violet-700/50 px-3 py-1.5 rounded text-violet-200"
+                              className={isLight ? "flex items-center gap-2 bg-violet-100 border-2 border-violet-500 px-3 py-1.5 rounded-lg text-violet-950 font-extrabold shadow-sm" : "flex items-center gap-2 bg-violet-900/30 border border-violet-700/50 px-3 py-1.5 rounded text-violet-200"}
                             >
                               <span>{`{${edge.source}, ${edge.target}}`}</span>
                             </div>
@@ -966,18 +992,18 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                                      const isInAugmentingPath = augmentingPathEdges.has(edgeKey1) || augmentingPathEdges.has(edgeKey2);
                                      
                                      // Determine color: green for augmenting paths, purple for matching, gray for others
-                                     let strokeColor = '#94a3b8'; // even brighter gray
+                                     let strokeColor = isLight ? '#cbd5e1' : '#94a3b8';
                                      let strokeWidth = 2;
-                                     let strokeOpacity = 0.7;
+                                     let strokeOpacity = isLight ? 0.9 : 0.7;
                                      
                                      if (isInAugmentingPath) {
-                                       strokeColor = '#10b981'; // green for augmenting paths
+                                       strokeColor = isLight ? '#059669' : '#10b981'; // green for augmenting paths
                                        strokeWidth = 4;
-                                       strokeOpacity = 0.9;
+                                       strokeOpacity = 0.95;
                                      } else if (isMatching) {
-                                       strokeColor = '#a855f7'; // purple for matching
-                                       strokeWidth = 2;
-                                       strokeOpacity = 0.8;
+                                       strokeColor = isLight ? '#9333ea' : '#a855f7'; // purple for matching
+                                       strokeWidth = 2.5;
+                                       strokeOpacity = 0.9;
                                      }
                                      
                                      edges.push(
@@ -1011,9 +1037,9 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                              const isEven = pos.layer % 2 === 0;
                              const isMatched = matchedNodes.has(node);
 
-                             const fillColor = isEven ? '#3b82f6' : '#f97316'; // blue : orange
+                             const fillColor = isEven ? (isLight ? '#2563eb' : '#3b82f6') : (isLight ? '#ea580c' : '#f97316');
                              // If matched, use purple border; otherwise use lighter variant of fill
-                             const strokeColor = isMatched ? '#a855f7' : (isEven ? '#60a5fa' : '#fb923c');
+                             const strokeColor = isMatched ? (isLight ? '#9333ea' : '#a855f7') : (isEven ? '#60a5fa' : '#fb923c');
                              const strokeWidth = isMatched ? 4 : 2;
                              
                              nodes.push(
@@ -1052,7 +1078,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                                  y={layerY}
                                  textAnchor="start"
                                  dominantBaseline="middle"
-                                 fill= {layerNum % 2 === 0 ? '#3b82f6' : '#f97316'} // blue : orange
+                                 fill={layerNum % 2 === 0 ? (isLight ? '#1d4ed8' : '#3b82f6') : (isLight ? '#c2410c' : '#f97316')}
                                  fontSize="14"
                                  fontWeight="bold"
                                  fontFamily="monospace"
@@ -1118,12 +1144,12 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                              <span className="text-xs font-mono text-slate-500 w-8 shrink-0">
                                P{idx + 1}:
                              </span>
-                             <div className="flex items-center gap-1 bg-emerald-900/20 border border-emerald-700/40 px-3 py-1.5 rounded flex-wrap">
+                             <div className={isLight ? "flex items-center gap-1 bg-emerald-100 border-2 border-emerald-500 px-3 py-1.5 rounded-lg flex-wrap shadow-sm" : "flex items-center gap-1 bg-emerald-900/20 border border-emerald-700/40 px-3 py-1.5 rounded flex-wrap"}>
                                {path.map((node, nodeIdx) => (
                                  <React.Fragment key={nodeIdx}>
-                                   <span className="text-emerald-200 font-mono text-sm font-bold">{node}</span>
+                                   <span className={isLight ? "text-emerald-950 font-mono text-sm font-extrabold" : "text-emerald-200 font-mono text-sm font-bold"}>{node}</span>
                                    {nodeIdx < path.length - 1 && (
-                                     <span className="text-emerald-600 mx-1">→</span>
+                                     <span className={isLight ? "text-emerald-700 font-extrabold mx-1" : "text-emerald-600 mx-1"}>→</span>
                                    )}
                                  </React.Fragment>
                                ))}
@@ -1160,7 +1186,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                          initial={{ opacity: 0, y: -10 }}
                          animate={{ opacity: 1, y: 0 }}
                          exit={{ opacity: 0, y: -10 }}
-                         className="bg-purple-900/30 border-l-2 border-purple-500 px-3 py-2 rounded text-sm text-purple-200 font-mono shrink-0"
+                         className={isLight ? "bg-purple-100 border-l-4 border-purple-600 px-3 py-2 rounded text-sm text-purple-950 font-bold font-mono shrink-0 shadow-sm" : "bg-purple-900/30 border-l-2 border-purple-500 px-3 py-2 rounded text-sm text-purple-200 font-mono shrink-0"}
                        >
                          DFS-VISIT({nodeId})
                        </motion.div>
@@ -1175,7 +1201,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                          key={`${edge.source}-${edge.target}-${idx}`}
                          initial={{ opacity: 0, x: -10 }}
                          animate={{ opacity: 1, x: 0 }}
-                         className="flex items-center justify-between bg-amber-900/30 border border-amber-700/50 px-3 py-2 rounded text-sm text-amber-200 font-mono shrink-0"
+                         className={isLight ? "flex items-center justify-between bg-amber-100 border-2 border-amber-500 px-3 py-2 rounded text-sm text-amber-950 font-bold font-mono shrink-0 shadow-sm" : "flex items-center justify-between bg-amber-900/30 border border-amber-700/50 px-3 py-2 rounded text-sm text-amber-200 font-mono shrink-0"}
                        >
                          <span>&#123;{edge.source}, {edge.target}&#125;</span>
                        </motion.div>
@@ -1192,10 +1218,10 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                          initial={{ opacity: 0, scale: 0.8 }}
                          animate={{ opacity: 1, scale: 1 }}
                          exit={{ opacity: 0, scale: 0.8 }}
-                         className="flex justify-between items-center bg-slate-700/50 px-3 py-2 rounded text-sm shrink-0"
+                         className={isLight ? "flex justify-between items-center bg-slate-100 border border-slate-300 px-3 py-2 rounded text-sm shrink-0 shadow-sm" : "flex justify-between items-center bg-slate-700/50 px-3 py-2 rounded text-sm shrink-0"}
                        >
-                         <span className="font-bold text-slate-200">{item.nodeId}</span>
-                         <span className="bg-slate-900 text-slate-400 px-2 py-0.5 rounded text-xs font-mono">
+                         <span className={isLight ? "font-extrabold text-slate-900" : "font-bold text-slate-200"}>{item.nodeId}</span>
+                         <span className={isLight ? "bg-blue-100 border border-blue-400 text-blue-950 px-2 py-0.5 rounded text-xs font-mono font-bold" : "bg-slate-900 text-slate-400 px-2 py-0.5 rounded text-xs font-mono"}>
                              {item.distance === Infinity ? '∞' : item.distance}
                          </span>
                        </motion.div>
@@ -1254,10 +1280,10 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                        const dist = Number(distStr);
                        return (
                          <div key={dist} className="flex items-center gap-2">
-                           <span className="text-xs font-mono text-slate-500 w-12">Dist {dist}:</span>
+                           <span className={isLight ? "text-xs font-mono text-slate-700 font-bold w-14" : "text-xs font-mono text-slate-500 w-12"}>Dist {dist}:</span>
                            <div className="flex gap-1">
                              {levelSets[dist].sort().map(node => (
-                               <span key={node} className="flex items-center justify-center w-6 h-6 bg-green-900/30 border border-green-700 text-green-300 rounded text-xs font-bold">
+                               <span key={node} className={isLight ? "flex items-center justify-center w-7 h-7 bg-emerald-100 border-2 border-emerald-600 text-emerald-950 rounded text-xs font-extrabold shadow-sm" : "flex items-center justify-center w-6 h-6 bg-green-900/30 border border-green-700 text-green-300 rounded text-xs font-bold"}>
                                  {node}
                                </span>
                              ))}
@@ -1310,7 +1336,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                                      </div>
                                      <div className="flex flex-wrap gap-1">
                                          {componentSets[root].sort().map(node => (
-                                             <span key={node} className={`flex items-center justify-center w-5 h-5 border rounded text-[10px] font-bold ${isActive ? 'bg-purple-900/40 border-purple-500/50 text-purple-300' : 'bg-indigo-900/40 border-indigo-500/50 text-indigo-300'}`}>
+                                             <span key={node} className={`flex items-center justify-center w-5 h-5 border rounded text-[10px] font-bold ${isLight ? (isActive ? 'bg-purple-100 border-2 border-purple-500 text-purple-950 font-extrabold shadow-sm' : 'bg-indigo-100 border border-indigo-400 text-indigo-950 font-bold') : (isActive ? 'bg-purple-900/40 border-purple-500/50 text-purple-300' : 'bg-indigo-900/40 border-indigo-500/50 text-indigo-300')}`}>
                                                  {node}
                                              </span>
                                          ))}
@@ -1323,10 +1349,10 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                      // KRUSKAL
                      <div className="space-y-2">
                          {Object.values(componentSets).map((set, i) => (
-                             <div key={i} className="flex items-center gap-2 flex-wrap bg-slate-700/30 p-1.5 rounded border border-slate-700/50">
-                                 <span className="text-xs text-slate-500 mr-1">{`Set ${i+1}:`}</span>
+                             <div key={i} className={clsx("flex items-center gap-2 flex-wrap p-2 rounded-lg border", isLight ? "bg-slate-100 border-slate-300" : "bg-slate-700/30 border-slate-700/50")}>
+                                 <span className={clsx("text-xs font-bold mr-1", isLight ? "text-slate-700" : "text-slate-500")}>{`Set ${i+1}:`}</span>
                                  {set.sort().map(node => (
-                                     <span key={node} className="flex items-center justify-center w-6 h-6 bg-indigo-900/40 border border-indigo-500/50 text-indigo-300 rounded text-xs font-bold">
+                                     <span key={node} className={isLight ? "flex items-center justify-center w-7 h-7 bg-indigo-100 border-2 border-indigo-500 text-indigo-950 rounded text-xs font-extrabold shadow-sm" : "flex items-center justify-center w-6 h-6 bg-indigo-900/40 border border-indigo-500/50 text-indigo-300 rounded text-xs font-bold"}>
                                          {node}
                                      </span>
                                  ))}
@@ -1337,7 +1363,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                    // Standard Visited Set View
                    <div className="flex flex-wrap content-start gap-2">
                        {step.processedSet.map((id) => (
-                         <span key={id} className="flex items-center justify-center w-8 h-8 bg-green-900/30 border border-green-700 text-green-300 rounded-full text-sm font-bold">
+                         <span key={id} className={isLight ? "flex items-center justify-center w-8 h-8 bg-emerald-100 border-2 border-emerald-600 text-emerald-950 rounded-full text-sm font-extrabold shadow-sm" : "flex items-center justify-center w-8 h-8 bg-green-900/30 border border-green-700 text-green-300 rounded-full text-sm font-bold"}>
                              {id}
                          </span>
                        ))}
@@ -1371,7 +1397,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
           </div>
           <div className="overflow-auto flex-1">
             <table className="w-full text-sm text-left text-slate-400">
-              <thead className="text-xs text-slate-500 uppercase bg-slate-900/50 sticky top-0 backdrop-blur-sm">
+              <thead className={clsx("text-xs uppercase sticky top-0 backdrop-blur-sm", isLight ? "bg-slate-100 text-slate-900 font-extrabold border-b-2 border-slate-300" : "bg-slate-900/50 text-slate-500")}>
                 <tr>
                   <th className="px-4 py-2">Node</th>
                   <th className={`px-4 py-2 ${(algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD) ? 'normal-case' : ''}`}>
@@ -1403,14 +1429,14 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                   } else if (algorithm === AlgorithmType.PRIM) {
                       const inS = step.processedSet.includes(nodeId);
                       valueDisplay = inS 
-                          ? <span className="text-green-400 font-bold">YES</span> 
-                          : <span className="text-slate-600">NO</span>;
+                          ? <span className={isLight ? "text-emerald-700 font-extrabold" : "text-green-400 font-bold"}>YES</span> 
+                          : <span className={isLight ? "text-slate-500 font-bold" : "text-slate-600"}>NO</span>;
                   } else if (algorithm === AlgorithmType.KRUSKAL) {
-                      valueDisplay = <span className="font-mono text-indigo-300 font-bold">{step.parents[nodeId]}</span>;
+                      valueDisplay = <span className={clsx("font-mono font-bold", isLight ? "text-indigo-900 font-extrabold" : "text-indigo-300")}>{step.parents[nodeId]}</span>;
                   }
                   return (
-                    <tr key={nodeId} className={isUpdated ? "bg-blue-900/20 transition-colors" : "border-b border-slate-700/50"}>
-                      <td className="px-4 py-2 font-bold text-slate-200">{nodeId}</td>
+                    <tr key={nodeId} className={isUpdated ? (isLight ? "bg-blue-100 border-l-4 border-blue-600 font-semibold" : "bg-blue-900/20 transition-colors") : (isLight ? "border-b border-slate-200" : "border-b border-slate-700/50")}>
+                      <td className={clsx("px-4 py-2 font-bold", isLight ? "text-slate-950 font-extrabold" : "text-slate-200")}>{nodeId}</td>
                       <td className="px-4 py-2 font-mono">
                         {valueDisplay}
                       </td>

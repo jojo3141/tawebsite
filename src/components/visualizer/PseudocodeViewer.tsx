@@ -30,6 +30,7 @@ import { clsx } from 'clsx';
 import { Code } from 'lucide-react';
 import 'katex/dist/katex.min.css';
 import { InlineMath } from 'react-katex';
+import { useAlgorithmsTheme } from '@/context/AlgorithmsThemeContext';
 
 interface PseudocodeViewerProps {
   activeLine: number | number[];
@@ -86,6 +87,9 @@ const ALGORITHM_RUNTIMES: Record<string, string> = {
 };
 
 const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorithm, isDirected = true, dpApproach = 'BOTTOM_UP' }) => {
+  const { theme } = useAlgorithmsTheme();
+  const isLight = theme === 'light';
+
   const containerRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLDivElement>(null);
 
@@ -200,14 +204,14 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
   const runtime = ALGORITHM_RUNTIMES[algorithm];
 
   return (
-    <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col h-full">
-      <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 flex justify-between items-center">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-          <Code size={14} />
+    <div data-pseudocode-panel className={`rounded-xl border overflow-hidden flex flex-col h-full ${isLight ? 'bg-white border-slate-300 shadow-sm' : 'bg-slate-800 border-slate-700'}`}>
+      <div className={`px-3 py-2 border-b flex justify-between items-center ${isLight ? 'bg-slate-100 border-slate-300' : 'bg-slate-900 border-slate-700'}`}>
+        <div className={`flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider ${isLight ? 'text-slate-900' : 'text-slate-400'}`}>
+          <Code size={14} className={isLight ? "text-indigo-700" : "text-indigo-400"} />
           <span>{algorithm === 'EULER' ? 'EULER TOUR' : algorithm === 'GREEDY_MATCHING' ? 'GREEDY MATCHING' : algorithm === 'HOPCROFT_KARP' ? 'HOPCROFT-KARP' : algorithm === 'HAMILTON_PATH' ? 'HAMILTON CYCLE' : algorithm.replace(/_/g, ' ')}</span>
         </div>
         {runtime && (
-             <span className="text-xs text-blue-300">
+             <span className={`text-xs ${isLight ? 'text-blue-950 font-bold' : 'text-blue-300'}`}>
                 <InlineMath math={runtime} />
              </span>
         )}
@@ -227,12 +231,13 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
                 ref={isFirstActive ? activeRef : null}
                 className={clsx(
                   "px-2 py-1 rounded transition-colors duration-200",
-                  isActive ? "bg-yellow-900/60 text-yellow-200 border-l-2 border-yellow-500" : "text-slate-400 hover:bg-slate-700/30",
-                  
+                  isActive 
+                    ? (isLight ? "pseudocode-line-active bg-amber-100 text-black border-l-4 border-amber-600 font-semibold shadow-sm" : "bg-yellow-900/60 text-yellow-200 border-l-2 border-yellow-500 font-semibold") 
+                    : (isLight ? "pseudocode-line text-black font-normal hover:bg-slate-100 border-l-4 border-white hover:border-slate-100" : "text-slate-400 hover:bg-slate-700/30")
                 )}
                 style={{ paddingLeft: `${item.indent * 12 + 8}px` }}
               >
-                <span className="inline-block w-6 text-slate-600 select-none text-[10px] mr-2">{item.line}</span>
+                <span className={`pseudocode-line-num inline-block w-6 select-none text-[10px] mr-2 font-mono ${isLight ? 'text-slate-500 font-medium' : 'text-slate-600'}`}>{item.line}</span>
                 {item.text}
               </div>
             );
@@ -240,23 +245,23 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
 
           {/* Tarjan Explanation Box */}
           {algorithm === AlgorithmType.TARJAN && (
-             <div className="mt-6 p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg text-xs text-slate-300">
-                <div className="font-bold mb-2 text-indigo-300 uppercase tracking-wider text-[10px]">Conditions</div>
+             <div className={`mt-6 p-3 rounded-lg text-xs border ${isLight ? 'bg-slate-50 border-slate-300 text-slate-950' : 'bg-slate-700/30 border-slate-600/50 text-slate-300'}`}>
+                <div className={`font-extrabold mb-2 uppercase tracking-wider text-[10px] ${isLight ? 'text-indigo-900' : 'text-indigo-300'}`}>Conditions</div>
                 <div className="space-y-3">
                    <div className="flex items-start gap-2">
                        <div className="mt-0.5">
-                         <span className="font-semibold text-slate-200 block mb-0.5">Articulation Point</span> 
-                         <ul className="list-disc pl-3 space-y-1 text-slate-400 marker:text-slate-600">
+                         <span className={`font-extrabold block mb-0.5 ${isLight ? 'text-black' : 'text-slate-200'}`}>Articulation Point</span> 
+                         <ul className={`list-disc pl-3 space-y-1 ${isLight ? 'text-black font-semibold marker:text-slate-700' : 'text-slate-400 marker:text-slate-600'}`}>
                             <li>For non-root <InlineMath math="u"/>: if child <InlineMath math="v"/> has <InlineMath math="low[v] \ge dfs[u]"/></li>
                             <li>For root <InlineMath math="u"/>: if it has <InlineMath math="> 1"/> child in DFS tree</li>
                          </ul>
                       </div>
                    </div>
                    <div className="flex items-start gap-2">
-                      <div className="mt-0.5">
-                         <span className="font-semibold text-slate-200 block mb-0.5">Bridge</span> 
-                         <span className="text-slate-400">If edge <InlineMath math="(u, v)"/> satisfies <InlineMath math="low[v] > dfs[u]"/></span>
-                      </div>
+                       <div className="mt-0.5">
+                          <span className={`font-extrabold block mb-0.5 ${isLight ? 'text-black' : 'text-slate-200'}`}>Bridge</span> 
+                          <span className={isLight ? 'text-black font-semibold' : 'text-slate-400'}>If edge <InlineMath math="(u, v)"/> satisfies <InlineMath math="low[v] > dfs[u]"/></span>
+                       </div>
                    </div>
                 </div>
              </div>
