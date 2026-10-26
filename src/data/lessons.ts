@@ -41,6 +41,12 @@ export const lessonsAD: Lesson[] = [
     title: "Sortieren und Max-Heaps",
     description: "Quick-Sort, Max-Heaps, Heap-Sort, ADTs, more Function calls",
     pdf: "/lessons/AuD_HS26/week-5.pdf",
+  },
+  {
+    week: 6,
+    title: "Trees und DP",
+    description: "BSTs, 2-3 Trees, DP: Fibonacci, MSS, Jump Game, LGT, Edit distance",
+    pdf: "/lessons/AuD_HS26/week-6.pdf",
   }
 ];
 

@@ -16,24 +16,11 @@ export const calculateFibonacciBottomUp = (n: number): DPStep[] => {
         gridDimensions: { rows: 1, cols: n + 1 }
     });
 
-    if (n <= 1) {
-        steps.push({
-            stepId: stepId++,
-            lineNumber: 2,
-            description: `n=${n} is ≤ 1, return ${n}`,
-            dpTable: [...dpTable],
-            highlights: [],
-            variables: { n },
-            gridDimensions: { rows: 1, cols: n + 1 }
-        });
-        return steps;
-    }
-
     // Base Case F[0]
     dpTable[0] = 0;
     steps.push({
         stepId: stepId++,
-        lineNumber: 3,
+        lineNumber: 2,
         description: "Initialize F[0] = 0",
         dpTable: [...dpTable],
         highlights: [{ indices: [0], type: 'write', target: 'dp' }],
@@ -45,7 +32,7 @@ export const calculateFibonacciBottomUp = (n: number): DPStep[] => {
     dpTable[1] = 1;
     steps.push({
         stepId: stepId++,
-        lineNumber: 4,
+        lineNumber: 3,
         description: "Initialize F[1] = 1",
         dpTable: [...dpTable],
         highlights: [{ indices: [1], type: 'write', target: 'dp' }],
@@ -57,7 +44,7 @@ export const calculateFibonacciBottomUp = (n: number): DPStep[] => {
     for (let i = 2; i <= n; i++) {
         steps.push({
             stepId: stepId++,
-            lineNumber: 5,
+            lineNumber: 4,
             description: `Iterate i=${i}`,
             dpTable: [...dpTable],
             highlights: [{ indices: [i], type: 'current', target: 'dp' }],
@@ -72,7 +59,7 @@ export const calculateFibonacciBottomUp = (n: number): DPStep[] => {
 
         steps.push({
             stepId: stepId++,
-            lineNumber: 6,
+            lineNumber: 5,
             description: `F[${i}] = F[${i - 1}] (${val1}) + F[${i - 2}] (${val2}) = ${res}`,
             dpTable: [...dpTable],
             highlights: [
@@ -86,7 +73,7 @@ export const calculateFibonacciBottomUp = (n: number): DPStep[] => {
 
     steps.push({
         stepId: stepId++,
-        lineNumber: 7,
+        lineNumber: 6,
         description: `Return F[${n}] = ${dpTable[n]}`,
         dpTable: [...dpTable],
         highlights: [{ indices: [n], type: 'read', target: 'dp' }],

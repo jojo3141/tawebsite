@@ -139,12 +139,11 @@ export interface DPStep {
 // --- BOTTOM UP ---
 export const PSEUDOCODE_FIBONACCI = [
     { line: 1, text: "FIBONACCI(n)", indent: 0 },
-    { line: 2, text: "if n ≤ 1 return n", indent: 2 },
-    { line: 3, text: "F[0] ← 0", indent: 2 },
-    { line: 4, text: "F[1] ← 1", indent: 2 },
-    { line: 5, text: "for i ← 2,...,n do", indent: 2 },
-    { line: 6, text: "F[i] ← F[i-1] + F[i-2]", indent: 4 },
-    { line: 7, text: "return F[n]", indent: 2 },
+    { line: 2, text: "F[0] ← 0", indent: 2 },
+    { line: 3, text: "F[1] ← 1", indent: 2 },
+    { line: 4, text: "for i ← 2,...,n do", indent: 2 },
+    { line: 5, text: "F[i] ← F[i-1] + F[i-2]", indent: 4 },
+    { line: 6, text: "return F[n]", indent: 2 },
 ];
 
 export const PSEUDOCODE_MAX_SUBARRAY = [
@@ -163,8 +162,8 @@ export const PSEUDOCODE_FIBONACCI_TOP_DOWN = [
     { line: 2, text: "initialize F[0...n] with -1", indent: 2 },
     { line: 3, text: "return compute(n)", indent: 2 },
     { line: 4, text: "compute(i)", indent: 0 },
-    { line: 5, text: "if F[i] ≠ -1 return F[i]", indent: 2 },
-    { line: 6, text: "if i ≤ 1 F[i] ← i", indent: 2 },
+    { line: 5, text: "if F[i] ≠ -1: return F[i]", indent: 2 },
+    { line: 6, text: "if i ≤ 1: F[i] ← i", indent: 2 },
     { line: 7, text: "else F[i] ← compute(i-1) + compute(i-2)", indent: 2 },
     { line: 8, text: "return F[i]", indent: 2 },
 ];
