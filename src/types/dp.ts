@@ -71,16 +71,15 @@ export const PSEUDOCODE_KNAPSACK_TOP_DOWN = [
 
 export const PSEUDOCODE_LAS = [
     { line: 1, text: "LAS(A)", indent: 0 },
-    { line: 2, text: "initialize DP[0...n][0...n] with ∞", indent: 2 },
-    { line: 3, text: "DP[0...n][0] ← -∞, DP[0][1...n] ← ∞", indent: 2 },
-    { line: 4, text: "for i ← 1,...,n do", indent: 2 },
-    { line: 5, text: "for l ← 1,...,n do", indent: 4 },
-    { line: 6, text: "exclude ← DP[i-1][l]", indent: 6 },
-    { line: 7, text: "include ← ∞", indent: 6 },
-    { line: 8, text: "if DP[i-1][l-1] < A[i]", indent: 6 },
-    { line: 9, text: "include ← A[i]", indent: 8 },
-    { line: 10, text: "DP[i][l] ← min(exclude, include)", indent: 6 },
-    { line: 11, text: "return max l where DP[n][l] < ∞", indent: 2 },
+    { line: 2, text: "DP[1][1] ← A[1]; DP[1][2...n] = ∞", indent: 2 },
+    { line: 3, text: "for i ← 2,...,n do", indent: 2 },
+    { line: 4, text: "for l ← 1,...,n do", indent: 4 },
+    { line: 5, text: "exclude ← DP[i-1][l]", indent: 6 },
+    { line: 6, text: "include ← ∞", indent: 6 },
+    { line: 7, text: "if l = 1 or DP[i-1][l-1] < A[i]", indent: 6 },
+    { line: 8, text: "include ← A[i]", indent: 8 },
+    { line: 9, text: "DP[i][l] ← min(exclude, include)", indent: 6 },
+    { line: 10, text: "return max l where DP[n][l] < ∞", indent: 2 },
 ];
 
 

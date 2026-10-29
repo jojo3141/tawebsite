@@ -93,13 +93,13 @@ export const DP_EXPLANATIONS: Record<DPAlgorithmType, DPExplanation> = {
     [DPAlgorithmType.LAS]: {
         problem: "Find the length of the longest ascending subsequence.",
         subproblem: "$DP[i][l] =$ smallest ending value of an increasing subseq. of length $l$ using first $i$ elements.",
-        baseCase: "$DP[0][0] = -\\infty, \\text{ others } \\infty$.",
-        recurrence: "$DP[i][l] = \\begin{cases} \\min(DP[i-1][l], A[i]) & \\text{if } A[i] > DP[i-1][l-1] \\\\ DP[i-1][l] & \\text{otherwise} \\end{cases}$",
-        justification: "We want to extend an increasing subsequence of length $l-1$ using $A[i]$. To make it as easy as possible to extend further later, we want the ending element of our subsequence to be as small as possible. If $A[i]$ is greater than the smallest ending value for length $l-1$ ($DP[i-1][l-1]$), we can form a sequence of length $l$ ending in $A[i]$. We update $DP[i][l]$ to be the minimum of the previous ending value and $A[i]$.",
-        orderOfComputation: "for i ← 1,...,n\n    for l ← 1,...,n",
+        baseCase: "$DP[1][1] = A[1], \\quad DP[1][l] = \\infty \\text{ for } l = 2,\\ldots,n$.",
+        recurrence: "$DP[i][l] = \\begin{cases} \\min(DP[i-1][l], A[i]) & \\text{if } l = 1 \\text{ or } A[i] > DP[i-1][l-1] \\\\ DP[i-1][l] & \\text{otherwise} \\end{cases}$",
+        justification: "We want to extend an increasing subsequence of length $l-1$ using $A[i]$. To make it as easy as possible to extend further later, we want the ending element of our subsequence to be as small as possible. For $l = 1$, any element can start a subsequence of length 1, so we always take the minimum of the previous smallest and $A[i]$. For $l \\ge 2$, if $A[i]$ is greater than the smallest ending value for length $l-1$ ($DP[i-1][l-1]$), we can form a sequence of length $l$ ending in $A[i]$. We update $DP[i][l]$ to be the minimum of the previous ending value and $A[i]$.",
+        orderOfComputation: "for i ← 2,...,n\n    for l ← 1,...,n",
         solution: "Max $l$ such that $DP[n][l] < \\infty$.",
         complexity: "Time: $O(n^2)$ (or $O(n \\log n)$ optimized)\nSpace: $O(n^2)$ (or $O(n)$ optimized).",
-        dimension: "$DP[0...n][0...n]$"
+        dimension: "$DP[1...n][1...n]$"
     }
 };
 

@@ -2757,19 +2757,15 @@ export const calculateLASBottomUp = (A: number[]): DPStep[] => {
     let stepId = 0;
     const n = A.length;
 
-    // DP Table is (n+1) x (n+1)
-    // Rows 0..n (index i), Cols 0..n (length l)
-    const rows = n + 1;
-    const cols = n + 1;
+    // DP Table is n x n (1-indexed: rows 1..n, cols 1..n)
+    const rows = n;
+    const cols = n;
 
-    // Initialization: Fill with appropriate infinities
-    // We want to detect "empty" or "invalid" states.
-    // Standard LAS: M[0][0] = -Infinity, M[0][l] = Infinity
     const INF = Infinity;
-    const NEG_INF = -Infinity;
 
-    const dpTable: number[] = Array.from({ length: rows * cols }, () => INF);
-    const getIndex = (r: number, c: number) => r * cols + c;
+    // Flat array storage: getIndex maps 1-based (i, l) to 0-based flat index
+    const dpTable: (number | null)[] = Array(rows * cols).fill(null);
+    const getIndex = (i: number, l: number) => (i - 1) * cols + (l - 1);
 
     // 1. Initial State
     steps.push({
@@ -2782,63 +2778,53 @@ export const calculateLASBottomUp = (A: number[]): DPStep[] => {
         gridDimensions: { rows, cols }
     });
 
-    // Initialize row 0 and col 0 base cases safely.
-    // M[0][0] = -∞
-    // M[i][0] = -∞ for all i (length 0 ends with -∞ virtual element)
-    // M[0][l] = ∞ for l > 0
-
-    for (let c = 0; c <= n; c++) dpTable[getIndex(0, c)] = c === 0 ? NEG_INF : INF;
-    for (let r = 1; r <= n; r++) dpTable[getIndex(r, 0)] = NEG_INF; // Pre-fill col 0
+    // 2. Base cases: DP[1][1] = A[1], DP[1][l] = ∞ for l = 2..n
+    dpTable[getIndex(1, 1)] = A[0]; // A[1] in 1-based = A[0] in 0-based
+    for (let l = 2; l <= n; l++) {
+        dpTable[getIndex(1, l)] = INF;
+    }
 
     steps.push({
         stepId: stepId++,
-        lineNumber: 3,
-        description: `Init DP[0...n][0]=${NEG_INF}, DP[0][1..n]=${INF}`,
+        lineNumber: 2,
+        description: n > 1 ? `Init DP[1][1] = A[1] = ${A[0]}, DP[1][2..${n}] = ∞` : `Init DP[1][1] = A[1] = ${A[0]}`,
         dpTable: [...dpTable],
         highlights: [
-            ...Array.from({ length: cols }, (_, c) => ({ indices: [getIndex(0, c)], type: 'write' as const, target: 'dp' as const })),
-            ...Array.from({ length: rows - 1 }, (_, r) => ({ indices: [getIndex(r + 1, 0)], type: 'write' as const, target: 'dp' as const }))
+            { indices: [getIndex(1, 1)], type: 'write' as const, target: 'dp' as const },
+            ...Array.from({ length: n - 1 }, (_, k) => ({ indices: [getIndex(1, k + 2)], type: 'write' as const, target: 'dp' as const }))
         ],
         variables: { n },
         gridDimensions: { rows, cols }
     });
 
-    // 2. Loop
-    for (let i = 1; i <= n; i++) {
-        const val = A[i - 1];
+    // 3. Loop from i=2 to n
+    for (let i = 2; i <= n; i++) {
+        const val = A[i - 1]; // A[i] in 1-based = A[i-1] in 0-based
 
         for (let l = 1; l <= n; l++) {
-            // Pseudocode:
-            // 6: exclude <- DP[i-1][l]
-            // 7: include <- INF
-            // 8: if DP[i-1][l-1] < A[i]
-            // 9: include <- A[i]
-            // 10: DP[i][l] <- min(exclude, include)
-
-            const exclude = dpTable[getIndex(i - 1, l)]; // Should be valid number or infinity
+            const exclude = dpTable[getIndex(i - 1, l)]!;
             let include = INF;
-            const prev = dpTable[getIndex(i - 1, l - 1)];
 
-            // Step for checking extension (Line 8)
-            // We can implicitly show exclude/include setup or just focus on the check.
-            steps.push({
-                stepId: stepId++,
-                lineNumber: 8,
-                description: `For i=${i} (val=${val}), l=${l}. Check: DP[${i - 1}][${l - 1}] (${prev}) < ${val}?`,
-                dpTable: [...dpTable],
-                highlights: [
-                    { indices: [getIndex(i, l)], type: 'current', target: 'dp' },
-                    { indices: [getIndex(i - 1, l), getIndex(i - 1, l - 1)], type: 'read', target: 'dp' }
-                ],
-                variables: { i, l, val, prev, exclude },
-                gridDimensions: { rows, cols }
-            });
+            if (l === 1) {
+                // l=1: any element can start a length-1 subsequence
+                // Step for checking (Line 7)
+                steps.push({
+                    stepId: stepId++,
+                    lineNumber: 7,
+                    description: `For i=${i} (val=${val}), l=${l}. l = 1, so include condition is satisfied.`,
+                    dpTable: [...dpTable],
+                    highlights: [
+                        { indices: [getIndex(i, l)], type: 'current', target: 'dp' },
+                        { indices: [getIndex(i - 1, l)], type: 'read', target: 'dp' }
+                    ],
+                    variables: { i, l, val, exclude },
+                    gridDimensions: { rows, cols }
+                });
 
-            if (prev !== undefined && prev < val) {
                 include = val;
                 steps.push({
                     stepId: stepId++,
-                    lineNumber: 9,
+                    lineNumber: 8,
                     description: `Yes. Extend! include = ${val}`,
                     dpTable: [...dpTable],
                     highlights: [],
@@ -2846,24 +2832,52 @@ export const calculateLASBottomUp = (A: number[]): DPStep[] => {
                     gridDimensions: { rows, cols }
                 });
             } else {
-                // If not extending, include remains INF.
+                // l >= 2: check DP[i-1][l-1] < A[i]
+                const prev = dpTable[getIndex(i - 1, l - 1)]!;
+
                 steps.push({
                     stepId: stepId++,
-                    lineNumber: 8, // Stay on check line? or maybe 9 (skipped)? Stay on 8 implies check failed.
-                    description: `No. Cannot extend. include = ∞`,
+                    lineNumber: 7,
+                    description: `For i=${i} (val=${val}), l=${l}. Check: DP[${i - 1}][${l - 1}] (${prev}) < ${val}?`,
                     dpTable: [...dpTable],
-                    highlights: [],
-                    variables: { i, l, include },
+                    highlights: [
+                        { indices: [getIndex(i, l)], type: 'current', target: 'dp' },
+                        { indices: [getIndex(i - 1, l), getIndex(i - 1, l - 1)], type: 'read', target: 'dp' }
+                    ],
+                    variables: { i, l, val, prev, exclude },
                     gridDimensions: { rows, cols }
                 });
+
+                if (prev !== undefined && prev !== null && prev < val) {
+                    include = val;
+                    steps.push({
+                        stepId: stepId++,
+                        lineNumber: 8,
+                        description: `Yes. Extend! include = ${val}`,
+                        dpTable: [...dpTable],
+                        highlights: [],
+                        variables: { i, l, include },
+                        gridDimensions: { rows, cols }
+                    });
+                } else {
+                    steps.push({
+                        stepId: stepId++,
+                        lineNumber: 7,
+                        description: `No. Cannot extend. include = ∞`,
+                        dpTable: [...dpTable],
+                        highlights: [],
+                        variables: { i, l, include },
+                        gridDimensions: { rows, cols }
+                    });
+                }
             }
 
-            const newVal = Math.min(exclude!, include);
+            const newVal = Math.min(exclude, include);
             dpTable[getIndex(i, l)] = newVal;
 
             steps.push({
                 stepId: stepId++,
-                lineNumber: 10,
+                lineNumber: 9,
                 description: `DP[${i}][${l}] = min(${exclude}, ${include}) = ${newVal}`,
                 dpTable: [...dpTable],
                 highlights: [{ indices: [getIndex(i, l)], type: 'write', target: 'dp' }],
@@ -2873,9 +2887,9 @@ export const calculateLASBottomUp = (A: number[]): DPStep[] => {
         }
     }
 
-    // 3. Find Result
+    // 4. Find Result
     let maxL = 0;
-    for (let l = n; l >= 0; l--) {
+    for (let l = n; l >= 1; l--) {
         if (dpTable[getIndex(n, l)]! < INF) {
             maxL = l;
             break;
@@ -2884,7 +2898,7 @@ export const calculateLASBottomUp = (A: number[]): DPStep[] => {
 
     steps.push({
         stepId: stepId++,
-        lineNumber: 11,
+        lineNumber: 10,
         description: `Max length is ${maxL} (largest l where DP[n][l] < ∞)`,
         dpTable: [...dpTable],
         highlights: [{ indices: [getIndex(n, maxL)], type: 'read', target: 'dp' }],
@@ -2892,18 +2906,28 @@ export const calculateLASBottomUp = (A: number[]): DPStep[] => {
         gridDimensions: { rows, cols }
     });
 
-    // 4. Backtracking
+    // 5. Backtracking
     const pathIndices: number[] = [];
-    const solutionIndices: number[] = []; // Indices of A that are part of the solution
+    const solutionIndices: number[] = []; // 0-based indices of A that are part of the solution
     const solutionDPIndices: number[] = []; // Indices in DP table for highlighting
     let curI = n;
     let curL = maxL;
 
-    while (curI > 0 && curL > 0) {
+    while (curI >= 1 && curL >= 1) {
         const currentIdx = getIndex(curI, curL);
         pathIndices.push(currentIdx);
 
         const currentVal = dpTable[currentIdx]!;
+
+        if (curI === 1) {
+            // Row 1 base case: if DP[1][curL] < ∞, then A[1] is part of the solution
+            if (currentVal < INF) {
+                solutionIndices.push(curI - 1); // 0-based
+                solutionDPIndices.push(currentIdx);
+            }
+            break;
+        }
+
         const prevVal = dpTable[getIndex(curI - 1, curL)]!;
 
         if (currentVal === prevVal) {
@@ -2911,14 +2935,12 @@ export const calculateLASBottomUp = (A: number[]): DPStep[] => {
             curI--;
         } else {
             // Must have come from Diagonal (Include A[i])
-            solutionIndices.push(curI - 1);
+            solutionIndices.push(curI - 1); // 0-based
             solutionDPIndices.push(currentIdx);
             curI--;
             curL--;
         }
     }
-    // Add the start point
-    pathIndices.push(getIndex(curI, curL));
 
     const forwardPath = pathIndices.reverse();
     const arrows: Record<number, string> = {};
@@ -2928,10 +2950,9 @@ export const calculateLASBottomUp = (A: number[]): DPStep[] => {
         const next = forwardPath[k + 1];
 
         const currRow = Math.floor(curr / cols);
-        // const currCol = curr % cols;
+        const currCol = curr % cols;
         const nextRow = Math.floor(next / cols);
         const nextCol = next % cols;
-        const currCol = curr % cols;
 
         if (nextRow > currRow && nextCol > currCol) {
             arrows[next] = '↘';
@@ -2942,7 +2963,7 @@ export const calculateLASBottomUp = (A: number[]): DPStep[] => {
 
     steps.push({
         stepId: stepId++,
-        lineNumber: 11,
+        lineNumber: 10,
         description: `Backtracking completed. Subsequence elements: ${solutionIndices.reverse().map(i => A[i]).join(', ')}`,
         dpTable: [...dpTable],
         highlights: [

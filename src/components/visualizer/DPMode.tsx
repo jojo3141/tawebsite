@@ -472,8 +472,8 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                                                 {/* Top-Left Corner (Empty) */}
                                                 <div className="w-10 h-10"></div> 
                                                 
-                                                {/* Column 0 Header (Hidden for MSS) */}
-                                                {algorithm !== DPAlgorithmType.MAXIMUM_SUBARRAY_SUM && (
+                                                {/* Column 0 Header (Hidden for MSS and LAS) */}
+                                                {algorithm !== DPAlgorithmType.MAXIMUM_SUBARRAY_SUM && algorithm !== DPAlgorithmType.LAS && (
                                                     <div className="w-10 h-10 flex items-center justify-center font-bold text-slate-500">
                                                         {(algorithm === DPAlgorithmType.LCS || algorithm === DPAlgorithmType.EDIT_DISTANCE) ? 'ε' : '0'}
                                                     </div>
@@ -481,13 +481,12 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                                                 
                                                 {/* Remaining Column Headers */}
                                                 {(algorithm === DPAlgorithmType.SUBSET_SUM || algorithm === DPAlgorithmType.KNAPSACK || algorithm === DPAlgorithmType.LAS || algorithm === DPAlgorithmType.FIBONACCI || algorithm === DPAlgorithmType.MAXIMUM_SUBARRAY_SUM || algorithm === DPAlgorithmType.JUMP_GAME) ? (
-                                                    // LAS: 0 to n. Here col 0 is 0. Cols from 1 to n correspond to lengths 1 to n.
-                                                    // Dimensions: rows = n+1, cols = n+1.
-                                                    // Headers should be 1 to n
-                                                    // LAS: 0 to n. Here col 0 is 0. Cols from 1 to n correspond to lengths 1 to n.
-                                                    // Dimensions: rows = n+1, cols = n+1.
-                                                    // Headers should be 1 to n
-                                                     Array.from({ length: currentStep.gridDimensions!.cols - 1 }, (_, i) => i + 1).map((val, i) => (
+                                                    // LAS: 1..n (no col 0). Dimensions: rows = n, cols = n. Headers 1 to n.
+                                                    // Other algorithms: col 0 header shown separately. Remaining cols 1 to n from (cols - 1) items.
+                                                     Array.from(
+                                                         { length: algorithm === DPAlgorithmType.LAS ? currentStep.gridDimensions!.cols : currentStep.gridDimensions!.cols - 1 },
+                                                         (_, i) => i + 1
+                                                     ).map((val, i) => (
                                                           <div key={`head-col-${i}`} className="w-10 h-10 flex items-center justify-center font-bold text-slate-400">{val}</div>
                                                      ))
                                                 ) : (
@@ -562,7 +561,7 @@ const DPMode: React.FC<DPModeProps> = ({ mode, setMode, onBack }) => {
                                                                 : algorithm === DPAlgorithmType.KNAPSACK
                                                                     ? (row === 0 ? '0' : knapsackWeights[row - 1])
                                                                     : algorithm === DPAlgorithmType.LAS 
-                                                                        ? (row === 0 ? '0' : inputArray[row - 1])
+                                                                        ? inputArray[row]
                                                                         : algorithm === DPAlgorithmType.FIBONACCI
                                                                             ? "F"
                                                                             : algorithm === DPAlgorithmType.MAXIMUM_SUBARRAY_SUM
