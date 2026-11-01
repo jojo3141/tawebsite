@@ -47,6 +47,12 @@ export const lessonsAD: Lesson[] = [
     title: "Trees und DP",
     description: "BSTs, 2-3 Trees, DP: Fibonacci, MSS, Jump Game, LGT, Edit distance",
     pdf: "/lessons/AuD_HS26/week-6.pdf",
+  },
+  {
+    week: 7,
+    title: "More DP",
+    description: "Subset Sum, Rucksack, LAT, viele weitere DP Übungsaufgaben",
+    pdf: "/lessons/AuD_HS26/week-7.pdf",
   }
 ];
 
