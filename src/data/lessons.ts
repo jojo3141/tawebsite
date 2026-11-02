@@ -52,7 +52,7 @@ export const lessonsAD: Lesson[] = [
     week: 7,
     title: "More DP",
     description: "Subset Sum, Rucksack, LAT, viele weitere DP Übungsaufgaben",
-    pdf: "/lessons/AuD_HS26/week-7v2.pdf",
+    pdf: "/lessons/AuD_HS26/week-7.pdf",
   }
 ];
 
