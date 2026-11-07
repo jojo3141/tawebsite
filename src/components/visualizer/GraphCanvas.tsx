@@ -298,7 +298,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
         </div>
     );
   }
-  const NODE_RADIUS = (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || algorithm === AlgorithmType.FORD_FULKERSON || algorithm === AlgorithmType.HAMILTON_PATH || algorithm === AlgorithmType.FINDING_DUPLICATES_FLOYD) ? 14 : 18;
+  const NODE_RADIUS = (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.EULER_AD || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || algorithm === AlgorithmType.FORD_FULKERSON || algorithm === AlgorithmType.HAMILTON_PATH || algorithm === AlgorithmType.FINDING_DUPLICATES_FLOYD) ? 14 : 18;
   const showArrows = graph.isDirected !== false;
   const isMstAlgo = algorithm === AlgorithmType.PRIM || algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA;
   const isNodeHighlightDisabled = algorithm === AlgorithmType.KRUSKAL;
@@ -482,7 +482,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
     const orangeEdgeColor = isLight ? '#ea580c' : '#f97316';
     const amberEdgeColor = isLight ? '#d97706' : '#f59e0b';
 
-    if (isActive && algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.EULER && algorithm !== AlgorithmType.GREEDY_MATCHING && algorithm !== AlgorithmType.HOPCROFT_KARP && algorithm !== AlgorithmType.FORD_FULKERSON && algorithm !== AlgorithmType.METRIC_TSP && algorithm !== AlgorithmType.METRIC_TSP_15) {
+    if (isActive && algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.EULER && algorithm !== AlgorithmType.EULER_AD && algorithm !== AlgorithmType.GREEDY_MATCHING && algorithm !== AlgorithmType.HOPCROFT_KARP && algorithm !== AlgorithmType.FORD_FULKERSON && algorithm !== AlgorithmType.METRIC_TSP && algorithm !== AlgorithmType.METRIC_TSP_15) {
         if (algorithm === AlgorithmType.BELLMAN_FORD) return blueEdgeColor;
         return redEdgeColor;
     }
@@ -583,7 +583,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
        if (isInF) return amberEdgeColor;
     }
 
-    const isParent = !isMstAlgo && algorithm !== AlgorithmType.EULER && (
+    const isParent = !isMstAlgo && algorithm !== AlgorithmType.EULER && algorithm !== AlgorithmType.EULER_AD && (
         currentStep.parents[target] === source || 
         (graph.isDirected === false && currentStep.parents[source] === target)
     );
@@ -591,7 +591,10 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
     if (isParent) return greenEdgeColor;
 
     // EULER TOUR
-    if (algorithm === AlgorithmType.EULER) {
+    if (algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.EULER_AD) {
+        if (algorithm === AlgorithmType.EULER_AD && isActive) {
+            return currentStep.eulerSubTour ? cyanEdgeColor : orangeEdgeColor;
+        }
         if (currentStep.eulerSubTour) {
             for (let i = 0; i < currentStep.eulerSubTour.length - 1; i++) {
                 const u = currentStep.eulerSubTour[i];
@@ -678,7 +681,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
     
     // Euler Bold Logic
     let isEuler = false;
-    if (algorithm === AlgorithmType.EULER && (currentStep.eulerTour || currentStep.eulerSubTour)) {
+    if ((algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.EULER_AD) && (currentStep.eulerTour || currentStep.eulerSubTour)) {
          // Check if edge is in either tour
          const checkTour = (tour: string[] | undefined) => {
              if (!tour) return false;
@@ -983,7 +986,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                 }
 
                 // Curved Edges (Random 50/50 but stable)
-                if (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.LONG_PATH || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.BFS || algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD || algorithm === AlgorithmType.BORUVKA || algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.PRIM) {
+                if (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.LONG_PATH || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.EULER_AD || algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.BFS || algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD || algorithm === AlgorithmType.BORUVKA || algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.PRIM) {
                     // Deterministic random based on edge IDs to strictly avoid jitter on re-render
                     // Simple hash of source + target
                     const sum = (edge.source + edge.target).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -1029,7 +1032,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                 arrowY = end.y - (end.y - cy) / (arrDist || 1) * NODE_RADIUS;
                 
                 // Middle Arrow Logic for Directed Algorithms
-                const isMidArrowAlgo = [AlgorithmType.DFS, AlgorithmType.BFS, AlgorithmType.DIJKSTRA, AlgorithmType.BELLMAN_FORD, AlgorithmType.TARJAN, AlgorithmType.EULER, AlgorithmType.FORD_FULKERSON].includes(algorithm);
+                const isMidArrowAlgo = [AlgorithmType.DFS, AlgorithmType.BFS, AlgorithmType.DIJKSTRA, AlgorithmType.BELLMAN_FORD, AlgorithmType.TARJAN, AlgorithmType.EULER, AlgorithmType.EULER_AD, AlgorithmType.FORD_FULKERSON].includes(algorithm);
                 if (isMidArrowAlgo) {
                      const hasLabel = showWeights || isFordFulkerson; 
                      // If label exists (weights/flow), move to t=0.65 to avoid overlap. Else t=0.5 (perfect middle).
@@ -1060,7 +1063,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                 tRevClass = currentStep.edgeClassifications?.[`${edge.target}-${edge.source}`];
                 tNormalParent = currentStep.parents[edge.target] === edge.source;
                 tRevParent = currentStep.parents[edge.source] === edge.target;
-            } else if (algorithm === AlgorithmType.EULER) {
+            } else if (algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.EULER_AD) {
                 // Euler check logic similar...
                 tNormalClass = isInLoop(currentStep.eulerTour, edge.source, edge.target) || isInLoop(currentStep.eulerSubTour, edge.source, edge.target);
                 tRevClass = isInLoop(currentStep.eulerTour, edge.target, edge.source) || isInLoop(currentStep.eulerSubTour, edge.target, edge.source);
@@ -1093,7 +1096,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                          else tarjanReverse = true;
                      }
                  }
-            } else if (algorithm === AlgorithmType.EULER) {
+            } else if (algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.EULER_AD) {
                  if (tNormalClass) { showEulerArrow = true; eulerReverse = false; }
                  else if (tRevClass) { showEulerArrow = true; eulerReverse = true; }
             }
@@ -1104,6 +1107,10 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                  const isEulerVisited = tNormalClass || tRevClass;
                  const isFinal = currentStep.description.startsWith("Algorithm Complete") || currentStep.description.startsWith("Eulerian Circuit found") || currentStep.description.startsWith("Graph has");
                  if (isEulerVisited && !isFinal) opacity = 0;
+            } else if (algorithm === AlgorithmType.EULER_AD) {
+                 const isDeleted = !!(currentStep.edgeClassifications?.[`${edge.source}-${edge.target}`] || currentStep.edgeClassifications?.[`${edge.target}-${edge.source}`]);
+                 const isFinal = currentStep.description.startsWith("Algorithm Complete");
+                 if (isDeleted && !isFinal) opacity = 0;
             }
 
             if (algorithm === AlgorithmType.GREEDY_MATCHING) {
@@ -1195,7 +1202,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                if (d) badgeText = `${d}/${low !== undefined ? low : '?'}`; else showBadge = false;
             } else if (algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR) {
                  showBadge = false;
-            } else if (isMstAlgo || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING || isFordFulkerson || algorithm === AlgorithmType.LONG_PATH || algorithm === AlgorithmType.HAMILTON_PATH || algorithm === AlgorithmType.MINIMUM_EDGE_CUT || algorithm === AlgorithmType.FINDING_DUPLICATES_FLOYD || algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) {
+            } else if (isMstAlgo || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.EULER_AD || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING || isFordFulkerson || algorithm === AlgorithmType.LONG_PATH || algorithm === AlgorithmType.HAMILTON_PATH || algorithm === AlgorithmType.MINIMUM_EDGE_CUT || algorithm === AlgorithmType.FINDING_DUPLICATES_FLOYD || algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) {
                 showBadge = false;
             }
 
@@ -1297,7 +1304,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                       ? (bgColor === '#ffffff' || bgColor === '#f8fafc' || bgColor === '#f1f5f9' || bgColor === '#e2e8f0' ? 'fill-slate-900' : 'fill-white')
                       : (bgColor === '#ffffff' ? 'fill-slate-900' : 'fill-white')
                   }`}
-                  style={{ fontSize: (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || isFordFulkerson) ? '10px' : ((algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) ? '9px' : '12px') }}
+                  style={{ fontSize: (algorithm === AlgorithmType.TARJAN || algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.EULER_AD || algorithm === AlgorithmType.GREEDY_MATCHING || algorithm === AlgorithmType.HOPCROFT_KARP || isFordFulkerson) ? '10px' : ((algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) ? '9px' : '12px') }}
                 >
                   {node.label}
                 </motion.text>
@@ -1352,6 +1359,42 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
              })}
           </div>
       )}
+
+      {/* Euler A&D: Turtle and Rabbit Emojis */}
+      {algorithm === AlgorithmType.EULER_AD && (currentStep.eulerTurtleNodeId || currentStep.eulerRabbitNodeId) && (() => {
+          const turtleNode = currentStep.eulerTurtleNodeId ? graph.nodes.find(n => n.id === currentStep.eulerTurtleNodeId) : null;
+          const rabbitNode = currentStep.eulerRabbitNodeId ? graph.nodes.find(n => n.id === currentStep.eulerRabbitNodeId) : null;
+          const sameNode = Boolean(turtleNode && rabbitNode && turtleNode.id === rabbitNode.id);
+
+          return (
+              <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-50">
+                  {turtleNode && (
+                      <motion.div
+                          key="euler-turtle"
+                          initial={false}
+                          animate={{ x: turtleNode.x + (sameNode ? -11 : 0), y: turtleNode.y - 28 }}
+                          transition={{ duration: 0.3 }}
+                          className="absolute top-0 left-0 text-lg pointer-events-none select-none flex items-center justify-center -translate-x-1/2 -translate-y-1/2"
+                          style={{ fontSize: '20px', width: 32, height: 32 }}
+                      >
+                          🐢
+                      </motion.div>
+                  )}
+                  {rabbitNode && (
+                      <motion.div
+                          key="euler-rabbit"
+                          initial={false}
+                          animate={{ x: rabbitNode.x + (sameNode ? 11 : 0), y: rabbitNode.y - 28 }}
+                          transition={{ duration: 0.3 }}
+                          className="absolute top-0 left-0 text-lg pointer-events-none select-none flex items-center justify-center -translate-x-1/2 -translate-y-1/2"
+                          style={{ fontSize: '20px', width: 32, height: 32 }}
+                      >
+                          🐇
+                      </motion.div>
+                  )}
+              </div>
+          );
+      })()}
 
       {/* Legend for Ford-Fulkerson */}
       {isFordFulkerson && (

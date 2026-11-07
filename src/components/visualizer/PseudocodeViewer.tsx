@@ -5,7 +5,7 @@ import {
     PSEUDOCODE_BFS, PSEUDOCODE_BFS_UNDIRECTED,
     PSEUDOCODE_DFS, PSEUDOCODE_DFS_UNDIRECTED,
     PSEUDOCODE_BELLMAN_FORD, PSEUDOCODE_BELLMAN_FORD_UNDIRECTED,
-    PSEUDOCODE_PRIM, PSEUDOCODE_KRUSKAL, PSEUDOCODE_BORUVKA, PSEUDOCODE_TARJAN, PSEUDOCODE_EULER,
+    PSEUDOCODE_PRIM, PSEUDOCODE_KRUSKAL, PSEUDOCODE_BORUVKA, PSEUDOCODE_TARJAN, PSEUDOCODE_EULER, PSEUDOCODE_EULER_AD,
     PSEUDOCODE_GREEDY_MATCHING, PSEUDOCODE_HOPCROFT_KARP,
     PSEUDOCODE_GREEDY_COLORING, PSEUDOCODE_SMALLEST_LAST_COLORING, PSEUDOCODE_FORD_FULKERSON, PSEUDOCODE_LONG_PATH, PSEUDOCODE_HAMILTON_PATH, PSEUDOCODE_MIN_EDGE_CUT, PSEUDOCODE_SMALLEST_ENCLOSING_DISK, PSEUDOCODE_JARVIS_WRAP, PSEUDOCODE_LOCAL_REPAIR, PSEUDOCODE_FINDING_DUPLICATES_HASH, PSEUDOCODE_BLOOM_FILTER, PSEUDOCODE_FINDING_DUPLICATES_FLOYD, PSEUDOCODE_METRIC_TSP, PSEUDOCODE_METRIC_TSP_15,
     AlgorithmType 
@@ -50,6 +50,7 @@ const ALGORITHM_RUNTIMES: Record<string, string> = {
     [AlgorithmType.BORUVKA]: "\\mathcal{O}((n+m) \\cdot \\log n)",
     [AlgorithmType.TARJAN]: "\\mathcal{O}(m)",
     [AlgorithmType.EULER]: "\\mathcal{O}(m)",
+    [AlgorithmType.EULER_AD]: "\\mathcal{O}(m)",
     [AlgorithmType.GREEDY_MATCHING]: "\\mathcal{O}(m)",
     [AlgorithmType.HOPCROFT_KARP]: "\\mathcal{O}(m\\sqrt{n})",
     [AlgorithmType.GREEDY_COLORING]: "\\mathcal{O}(n+m)",
@@ -135,6 +136,7 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
       else if (graphAlgo === AlgorithmType.BORUVKA) lines = PSEUDOCODE_BORUVKA;
       else if (graphAlgo === AlgorithmType.TARJAN) lines = PSEUDOCODE_TARJAN;
       else if (graphAlgo === AlgorithmType.EULER) lines = PSEUDOCODE_EULER;
+      else if (graphAlgo === AlgorithmType.EULER_AD) lines = PSEUDOCODE_EULER_AD;
       else if (graphAlgo === AlgorithmType.GREEDY_MATCHING) lines = PSEUDOCODE_GREEDY_MATCHING;
       else if (graphAlgo === AlgorithmType.HOPCROFT_KARP) lines = PSEUDOCODE_HOPCROFT_KARP;
       else if (graphAlgo === AlgorithmType.GREEDY_COLORING) lines = PSEUDOCODE_GREEDY_COLORING;
@@ -208,7 +210,7 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
       <div className={`px-3 py-2 border-b flex justify-between items-center ${isLight ? 'bg-slate-100 border-slate-300' : 'bg-slate-900 border-slate-700'}`}>
         <div className={`flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider ${isLight ? 'text-slate-900' : 'text-slate-400'}`}>
           <Code size={14} className={isLight ? "text-indigo-700" : "text-indigo-400"} />
-          <span>{algorithm === 'EULER' ? 'EULER TOUR' : algorithm === 'GREEDY_MATCHING' ? 'GREEDY MATCHING' : algorithm === 'HOPCROFT_KARP' ? 'HOPCROFT-KARP' : algorithm === 'HAMILTON_PATH' ? 'HAMILTON CYCLE' : algorithm.replace(/_/g, ' ')}</span>
+          <span>{(algorithm === 'EULER' || algorithm === 'EULER_AD') ? 'EULER TOUR' : algorithm === 'GREEDY_MATCHING' ? 'GREEDY MATCHING' : algorithm === 'HOPCROFT_KARP' ? 'HOPCROFT-KARP' : algorithm === 'HAMILTON_PATH' ? 'HAMILTON CYCLE' : algorithm.replace(/_/g, ' ')}</span>
         </div>
         {runtime && (
              <span className={`text-xs ${isLight ? 'text-blue-950 font-bold' : 'text-blue-300'}`}>
@@ -238,7 +240,15 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
                 style={{ paddingLeft: `${item.indent * 12 + 8}px` }}
               >
                 <span className={`pseudocode-line-num inline-block w-6 select-none text-[10px] mr-2 font-mono ${isLight ? 'text-slate-500 font-medium' : 'text-slate-600'}`}>{item.line}</span>
-                {item.text}
+                {algorithm === AlgorithmType.EULER_AD
+                  ? item.text.split(/(vₗ₊₁|vₗ|v₀|v₁)/g).map((part, i) => {
+                      if (part === 'vₗ₊₁') return <React.Fragment key={i}>v<sub className="text-[0.75em] leading-none">ℓ+1</sub></React.Fragment>;
+                      if (part === 'vₗ') return <React.Fragment key={i}>v<sub className="text-[0.75em] leading-none">ℓ</sub></React.Fragment>;
+                      if (part === 'v₀') return <React.Fragment key={i}>v<sub className="text-[0.75em] leading-none">0</sub></React.Fragment>;
+                      if (part === 'v₁') return <React.Fragment key={i}>v<sub className="text-[0.75em] leading-none">1</sub></React.Fragment>;
+                      return part;
+                    })
+                  : item.text}
               </div>
             );
           })}

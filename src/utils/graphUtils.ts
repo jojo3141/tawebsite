@@ -1815,6 +1815,159 @@ export const calculateEulerSteps = (graph: Graph, startNodeId: string): Algorith
   return steps;
 };
 
+// --- EULER A&D SOLVER ---
+export const calculateEulerADSteps = (graph: Graph, startNodeId: string): AlgorithmStep[] => {
+  const steps: AlgorithmStep[] = [];
+
+  const availableEdges = new Set<string>();
+  const edgeObjMap: Record<string, Edge> = {};
+  const traversedDirectionalEdges = new Set<string>();
+
+  const getEdgeKey = (u: string, v: string) => u < v ? `${u}-${v}` : `${v}-${u}`;
+
+  graph.edges.forEach(e => {
+    const key = getEdgeKey(e.source, e.target);
+    availableEdges.add(key);
+    edgeObjMap[key] = e;
+  });
+
+  let stepCounter = 0;
+  let turtleNodeId: string | null = startNodeId;
+  let turtleIndex: number = 0;
+  let rabbitNodeId: string | null = null;
+
+  const pushStep = (
+    line: number,
+    desc: string,
+    tour: string[],
+    subTour: string[] | null = null,
+    u: string | null = null,
+    v: string | null = null,
+    activeEdgeKey: string | null = null
+  ) => {
+    const classifications: Record<string, EdgeType> = {};
+    traversedDirectionalEdges.forEach(k => {
+      classifications[k] = EdgeType.TREE;
+    });
+
+    steps.push({
+      stepId: stepCounter++,
+      lineNumber: line,
+      description: desc,
+      distances: {},
+      parents: {},
+      discoveryTimes: {},
+      finishTimes: {},
+      edgeClassifications: classifications,
+      mstEdges: [],
+      boruvkaMinEdges: [],
+      queue: [],
+      stack: [],
+      processedSet: [],
+      currentNodeId: u,
+      currentNeighborId: v,
+      activeEdge: activeEdgeKey ? edgeObjMap[activeEdgeKey] : null,
+      eulerTour: [...tour],
+      eulerSubTour: subTour ? [...subTour] : undefined,
+      eulerTurtleNodeId: turtleNodeId,
+      eulerTurtleIndex: turtleIndex,
+      eulerRabbitNodeId: rabbitNodeId,
+    });
+  };
+
+  let W: string[] = [startNodeId];
+
+  pushStep(1, `Start EULERZYKLUS(${startNodeId})`, W, null, startNodeId);
+  rabbitNodeId = startNodeId;
+  pushStep(2, `Call FINDEZYKLUS(${startNodeId}) to find initial cycle W`, W, null, startNodeId);
+
+  const findeZyklus = (uStart: string, isMain: boolean): string[] => {
+    const W_temp: string[] = [uStart];
+    let u = uStart;
+    let l = 0;
+    rabbitNodeId = uStart;
+
+    pushStep(9, `FINDEZYKLUS(${uStart})`, isMain ? W_temp : W, isMain ? null : W_temp, u);
+    pushStep(10, `Initialize ℓ ← 0 (v₀ = ${uStart})`, isMain ? W_temp : W, isMain ? null : W_temp, u);
+
+    while (true) {
+      pushStep(11, `Repeat: check incident edges of v_${l} = ${u}`, isMain ? W_temp : W, isMain ? null : W_temp, u);
+
+      const neighbors: string[] = [];
+      graph.edges.forEach(e => {
+        const key = getEdgeKey(e.source, e.target);
+        if (availableEdges.has(key)) {
+          if (e.source === u) neighbors.push(e.target);
+          else if (e.target === u) neighbors.push(e.source);
+        }
+      });
+
+      if (neighbors.length === 0) {
+        pushStep(12, `No incident edge for v_${l} = ${u} in E`, isMain ? W_temp : W, isMain ? null : W_temp, u);
+        pushStep(16, `Return cycle (${W_temp.join(", ")})`, isMain ? W_temp : W, isMain ? null : W_temp, u);
+        break;
+      }
+
+      const v = neighbors[Math.floor(Math.random() * neighbors.length)];
+      const key = getEdgeKey(u, v);
+
+      pushStep(12, `Found incident edge e = {${u}, ${v}} in E`, isMain ? W_temp : W, isMain ? null : W_temp, u, v, key);
+
+      W_temp.push(v);
+      pushStep(13, `v_${l + 1} ← ${v} (Add ${v} to ${isMain ? "W" : "Z"})`, isMain ? W_temp : W, isMain ? null : W_temp, u, v, key);
+
+      l = l + 1;
+      rabbitNodeId = v;
+      pushStep(14, `ℓ ← ${l}`, isMain ? W_temp : W, isMain ? null : W_temp, v, null, key);
+
+      availableEdges.delete(key);
+      traversedDirectionalEdges.add(`${u}-${v}`);
+      pushStep(15, `Delete edge e = {${u}, ${v}} from E`, isMain ? W_temp : W, isMain ? null : W_temp, v);
+
+      u = v;
+    }
+
+    return W_temp;
+  };
+
+  W = findeZyklus(startNodeId, true);
+  rabbitNodeId = null;
+  pushStep(2, `Initial cycle W: ${W.join("->")}`, W, null, startNodeId);
+
+  let vIndex = 0;
+  while (vIndex < W.length) {
+    const v = W[vIndex];
+    turtleNodeId = v;
+    turtleIndex = vIndex;
+    rabbitNodeId = null;
+    pushStep(3, `Walk along W: visit node ${v} (Index ${vIndex})`, W, null, v);
+
+    const degreeCurrent = graph.edges.filter(e => {
+      const key = getEdgeKey(e.source, e.target);
+      return availableEdges.has(key) && (e.source === v || e.target === v);
+    }).length;
+
+    pushStep(4, `Check deg(${v}) > 0 in remaining G: deg(${v}) = ${degreeCurrent}`, W, null, v);
+
+    if (degreeCurrent > 0) {
+      rabbitNodeId = v;
+      pushStep(5, `deg(${v}) > 0! Call FINDEZYKLUS(${v}) for sub-tour Z`, W, null, v);
+      const Z = findeZyklus(v, false);
+      rabbitNodeId = null;
+
+      pushStep(6, `Insert Z into W at current node ${v} (index ${vIndex})`, W, Z, v);
+      W.splice(vIndex + 1, 0, ...Z.slice(1));
+      pushStep(6, `New W: ${W.join("->")}`, W, null, v);
+    }
+
+    vIndex++;
+  }
+
+  rabbitNodeId = null;
+  pushStep(7, "Algorithm Complete. Eulerian Circuit Found.", W);
+  return steps;
+};
+
 // =============================================================================
 // GREEDY MATCHING ALGORITHM
 // =============================================================================

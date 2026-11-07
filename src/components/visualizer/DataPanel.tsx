@@ -303,7 +303,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
     if (algorithm === AlgorithmType.DFS) return 'Recursion Stack';
     if (algorithm === AlgorithmType.DIJKSTRA) return 'Priority Queue (Q)';
     if (algorithm === AlgorithmType.PRIM || algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA) return 'MST EDGES (F)';
-    if (algorithm === AlgorithmType.EULER) return 'Current Tour (W)';
+    if (algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.EULER_AD) return 'Current Tour (W)';
     return 'Queue (Q)';
   }
 
@@ -349,7 +349,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
 
   const isBellman = algorithm === AlgorithmType.BELLMAN_FORD;
   const isKruskal = algorithm === AlgorithmType.KRUSKAL;
-  const isEuler = algorithm === AlgorithmType.EULER;
+  const isEuler = algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.EULER_AD;
   const isGreedyMatching = algorithm === AlgorithmType.GREEDY_MATCHING;
   const isHopcroftKarp = algorithm === AlgorithmType.HOPCROFT_KARP;
   const isGreedyColoring = algorithm === AlgorithmType.GREEDY_COLORING;
@@ -843,15 +843,24 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                   </div>
                   <div className="p-3 overflow-auto flex-1 font-mono text-sm">
                       {step.eulerTour && step.eulerTour.length > 0 ? (
-                        <div className="flex flex-wrap items-center gap-1">
-                            {step.eulerTour.map((node, i) => (
-                                <React.Fragment key={i}>
-                                    <span className={`${node === step.currentNodeId ? (isLight ? 'text-amber-800 font-extrabold underline decoration-2' : 'text-yellow-400 font-bold underline') : (isLight ? 'text-slate-900 font-semibold' : 'text-slate-300')}`}>
-                                        {node}
-                                    </span>
-                                    {i < step.eulerTour!.length - 1 && <span className={isLight ? "text-slate-500 font-bold" : "text-slate-600"}>→</span>}
-                                </React.Fragment>
-                            ))}
+                        <div className={`flex flex-wrap items-center gap-1 ${algorithm === AlgorithmType.EULER_AD ? 'pt-4 gap-y-5' : ''}`}>
+                            {step.eulerTour.map((node, i) => {
+                                const isTurtleHere = algorithm === AlgorithmType.EULER_AD && step.eulerTurtleIndex === i;
+                                const isHighlighted = algorithm === AlgorithmType.EULER_AD ? isTurtleHere : node === step.currentNodeId;
+                                return (
+                                    <React.Fragment key={i}>
+                                        <span className={`relative inline-block ${isHighlighted ? (isLight ? 'text-amber-800 font-extrabold underline decoration-2' : 'text-yellow-400 font-bold underline') : (isLight ? 'text-slate-900 font-semibold' : 'text-slate-300')}`}>
+                                            {isTurtleHere && (
+                                                <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-xs leading-none select-none pointer-events-none">
+                                                    🐢
+                                                </span>
+                                            )}
+                                            {node}
+                                        </span>
+                                        {i < step.eulerTour!.length - 1 && <span className={isLight ? "text-slate-500 font-bold" : "text-slate-600"}>→</span>}
+                                    </React.Fragment>
+                                );
+                            })}
                         </div>
                       ) : <span className="text-slate-600 italic">Starting...</span>}
                   </div>
@@ -860,7 +869,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
               {step.eulerSubTour && (
                   <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden w-full">
                       <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-cyan-400 uppercase tracking-wider">
-                          Sub-Tour (W&apos;)
+                          {algorithm === AlgorithmType.EULER_AD ? 'Sub-Tour (Z)' : <>Sub-Tour (W&apos;)</>}
                       </div>
                       <div className="p-3 overflow-auto flex-1 font-mono text-sm">
                           <div className="flex flex-wrap items-center gap-1">
@@ -1390,7 +1399,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
       )}
 
       {/* --- BOTTOM SECTION: TABLE (Hidden for Boruvka and select A&W algorithms) --- */}
-      {algorithm !== AlgorithmType.BORUVKA && algorithm !== AlgorithmType.EULER && algorithm !== AlgorithmType.GREEDY_MATCHING && algorithm !== AlgorithmType.HOPCROFT_KARP && algorithm !== AlgorithmType.GREEDY_COLORING && algorithm !== AlgorithmType.SMALLEST_LAST_COLORING && algorithm !== AlgorithmType.FORD_FULKERSON && algorithm !== AlgorithmType.LONG_PATH && algorithm !== AlgorithmType.HAMILTON_PATH && algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algorithm !== AlgorithmType.JARVIS_WRAP && algorithm !== AlgorithmType.LOCAL_REPAIR && algorithm !== AlgorithmType.MINIMUM_EDGE_CUT && algorithm !== AlgorithmType.FINDING_DUPLICATES_HASH && algorithm !== AlgorithmType.BLOOM_FILTER && algorithm !== AlgorithmType.FINDING_DUPLICATES_FLOYD && algorithm !== AlgorithmType.METRIC_TSP && algorithm !== AlgorithmType.METRIC_TSP_15 && (
+      {algorithm !== AlgorithmType.BORUVKA && algorithm !== AlgorithmType.EULER && algorithm !== AlgorithmType.EULER_AD && algorithm !== AlgorithmType.GREEDY_MATCHING && algorithm !== AlgorithmType.HOPCROFT_KARP && algorithm !== AlgorithmType.GREEDY_COLORING && algorithm !== AlgorithmType.SMALLEST_LAST_COLORING && algorithm !== AlgorithmType.FORD_FULKERSON && algorithm !== AlgorithmType.LONG_PATH && algorithm !== AlgorithmType.HAMILTON_PATH && algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algorithm !== AlgorithmType.JARVIS_WRAP && algorithm !== AlgorithmType.LOCAL_REPAIR && algorithm !== AlgorithmType.MINIMUM_EDGE_CUT && algorithm !== AlgorithmType.FINDING_DUPLICATES_HASH && algorithm !== AlgorithmType.BLOOM_FILTER && algorithm !== AlgorithmType.FINDING_DUPLICATES_FLOYD && algorithm !== AlgorithmType.METRIC_TSP && algorithm !== AlgorithmType.METRIC_TSP_15 && (
         <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden h-[26rem]">
           <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-slate-300 uppercase tracking-wider">
               {algorithm === AlgorithmType.DFS ? 'Tracking Table' : (algorithm === AlgorithmType.PRIM ? 'Node Status' : (algorithm === AlgorithmType.KRUSKAL ? 'Union-Find Structure' : 'Tracking Table'))}

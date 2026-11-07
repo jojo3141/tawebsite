@@ -31,6 +31,7 @@ export enum AlgorithmType {
   BORUVKA = 'BORUVKA',
   TARJAN = 'TARJAN',
   EULER = 'EULER',
+  EULER_AD = 'EULER_AD',
   GREEDY_MATCHING = 'GREEDY_MATCHING',
   HOPCROFT_KARP = 'HOPCROFT_KARP',
   GREEDY_COLORING = 'GREEDY_COLORING',
@@ -94,6 +95,9 @@ export interface AlgorithmStep {
   // Euler Specific
   eulerTour?: string[]; // The main tour W
   eulerSubTour?: string[]; // The current random tour W'
+  eulerTurtleNodeId?: string | null; // Current node v in "laufe W ab" (🐢)
+  eulerTurtleIndex?: number; // Current index in W for "laufe W ab" (🐢)
+  eulerRabbitNodeId?: string | null; // Current node v_ℓ in FINDEZYKLUS (🐇)
 
   // Hopcroft-Karp Specific
   hopcroftLayers?: Record<number, string[]>; // Layers L0, L1, L2, ... stored as {0: [...], 1: [...], ...}
@@ -461,6 +465,25 @@ export const PSEUDOCODE_EULER = [
   { line: 15, text: "Remove edge {u, v}", indent: 4 },
   { line: 16, text: "u ← v", indent: 4 },
   { line: 17, text: "return W_temp", indent: 2 },
+];
+
+export const PSEUDOCODE_EULER_AD = [
+  { line: 1, text: "EULERZYKLUS(v₀)", indent: 0 },
+  { line: 2, text: "W ← FINDEZYKLUS(v₀)", indent: 2 },
+  { line: 3, text: "laufe W ab; for jeden besuchten Knoten v:", indent: 2 },
+  { line: 4, text: "if deg(v) > 0 then", indent: 4 },
+  { line: 5, text: "Z ← FINDEZYKLUS(v)", indent: 6 },
+  { line: 6, text: "füge Z an der aktuellen Stelle in W ein", indent: 6 },
+  { line: 7, text: "return W", indent: 2 },
+  { line: 8, text: "", indent: 0 },
+  { line: 9, text: "FINDEZYKLUS(v₀)", indent: 0 },
+  { line: 10, text: "ℓ ← 0", indent: 2 },
+  { line: 11, text: "repeat", indent: 2 },
+  { line: 12, text: "if es gibt in E eine zu vₗ inzidente Kante e = {vₗ, u} then", indent: 4 },
+  { line: 13, text: "vₗ₊₁ ← u", indent: 6 },
+  { line: 14, text: "ℓ ← ℓ + 1", indent: 6 },
+  { line: 15, text: "lösche e aus E", indent: 6 },
+  { line: 16, text: "else return W = (v₀, v₁, ..., vₗ)", indent: 4 },
 ];
 
 export const PSEUDOCODE_GREEDY_MATCHING = [

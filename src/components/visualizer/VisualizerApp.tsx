@@ -12,6 +12,7 @@ type VisualizerMode = 'SELECTION' | CategoryType;
 
 // Helper constant for A&D Graph Algorithms
 const AD_GRAPH_ALGORITHMS = [
+  AlgorithmType.EULER_AD,
   AlgorithmType.DFS,
   AlgorithmType.BFS,
   AlgorithmType.DIJKSTRA,

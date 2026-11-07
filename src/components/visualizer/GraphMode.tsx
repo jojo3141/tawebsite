@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { generateRandomGraph, generateTarjanGraph, generateEulerianGraph, generateGreedyMatchingGraph, generateHopcroftKarpGraph, generateColoringGraph, generateFordFulkersonGraph, generateLongPathGraph, generateHamiltonPathGraph, generateMinEdgeCutGraph, calculateDijkstraSteps, calculateBFSSteps, calculateDFSSteps, calculateBellmanFordSteps, calculatePrimSteps, calculateKruskalSteps, calculateBoruvkaSteps, calculateTarjanSteps, calculateEulerSteps, calculateGreedyMatchingSteps, calculateHopcroftKarpSteps, calculateGreedyColoringSteps, calculateSmallestLastColoringSteps, calculateFordFulkersonSteps, calculateLongPathSteps, calculateHamiltonPathSteps, calculateMinEdgeCutSteps } from '@/utils/graphUtils';
+import { generateRandomGraph, generateTarjanGraph, generateEulerianGraph, generateGreedyMatchingGraph, generateHopcroftKarpGraph, generateColoringGraph, generateFordFulkersonGraph, generateLongPathGraph, generateHamiltonPathGraph, generateMinEdgeCutGraph, calculateDijkstraSteps, calculateBFSSteps, calculateDFSSteps, calculateBellmanFordSteps, calculatePrimSteps, calculateKruskalSteps, calculateBoruvkaSteps, calculateTarjanSteps, calculateEulerSteps, calculateEulerADSteps, calculateGreedyMatchingSteps, calculateHopcroftKarpSteps, calculateGreedyColoringSteps, calculateSmallestLastColoringSteps, calculateFordFulkersonSteps, calculateLongPathSteps, calculateHamiltonPathSteps, calculateMinEdgeCutSteps } from '@/utils/graphUtils';
 import { generateSmallestEnclosingDiskGraph, calculateSmallestEnclosingDiskSteps } from '@/utils/sedUtils';
 import { generateJarvisWrapGraph, calculateJarvisWrapSteps, calculateLocalRepairSteps } from '@/utils/hullUtils';
 import { generateFindingDuplicatesHashGraph, calculateFindingDuplicatesHashSteps, calculateBloomFilterSteps } from '@/utils/hashUtils';
@@ -68,7 +68,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
   const isTarjan = (algo: AlgorithmType) => algo === AlgorithmType.TARJAN;
   
   // Helper: These algorithms support the toggle (Exclude MST, Bellman-Ford, Tarjan, Euler, Matching, and Coloring algorithms)
-  const supportsDirectionToggle = (algo: AlgorithmType) => !isMstAlgo(algo) && !isTarjan(algo) && algo !== AlgorithmType.BELLMAN_FORD && algo !== AlgorithmType.EULER && algo !== AlgorithmType.GREEDY_MATCHING && algo !== AlgorithmType.HOPCROFT_KARP && algo !== AlgorithmType.GREEDY_COLORING && algo !== AlgorithmType.SMALLEST_LAST_COLORING && algo !== AlgorithmType.FORD_FULKERSON && algo !== AlgorithmType.LONG_PATH && algo !== AlgorithmType.HAMILTON_PATH && algo !== AlgorithmType.MINIMUM_EDGE_CUT && algo !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algo !== AlgorithmType.JARVIS_WRAP && algo !== AlgorithmType.LOCAL_REPAIR && algo !== AlgorithmType.FINDING_DUPLICATES_HASH && algo !== AlgorithmType.BLOOM_FILTER && algo !== AlgorithmType.FINDING_DUPLICATES_FLOYD && algo !== AlgorithmType.METRIC_TSP && algo !== AlgorithmType.METRIC_TSP_15;
+  const supportsDirectionToggle = (algo: AlgorithmType) => !isMstAlgo(algo) && !isTarjan(algo) && algo !== AlgorithmType.BELLMAN_FORD && algo !== AlgorithmType.EULER && algo !== AlgorithmType.EULER_AD && algo !== AlgorithmType.GREEDY_MATCHING && algo !== AlgorithmType.HOPCROFT_KARP && algo !== AlgorithmType.GREEDY_COLORING && algo !== AlgorithmType.SMALLEST_LAST_COLORING && algo !== AlgorithmType.FORD_FULKERSON && algo !== AlgorithmType.LONG_PATH && algo !== AlgorithmType.HAMILTON_PATH && algo !== AlgorithmType.MINIMUM_EDGE_CUT && algo !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algo !== AlgorithmType.JARVIS_WRAP && algo !== AlgorithmType.LOCAL_REPAIR && algo !== AlgorithmType.FINDING_DUPLICATES_HASH && algo !== AlgorithmType.BLOOM_FILTER && algo !== AlgorithmType.FINDING_DUPLICATES_FLOYD && algo !== AlgorithmType.METRIC_TSP && algo !== AlgorithmType.METRIC_TSP_15;
 
   // Memoized solver to be stable for useEffect deps
   const solveGraph = useCallback((g: Graph, algo: AlgorithmType) => {
@@ -94,6 +94,8 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
       solutionSteps = calculateTarjanSteps(g, startNode);
     } else if (algo === AlgorithmType.EULER) {
       solutionSteps = calculateEulerSteps(g, startNode);
+    } else if (algo === AlgorithmType.EULER_AD) {
+      solutionSteps = calculateEulerADSteps(g, startNode);
     } else if (algo === AlgorithmType.GREEDY_MATCHING) {
       solutionSteps = calculateGreedyMatchingSteps(g);
     } else if (algo === AlgorithmType.HOPCROFT_KARP) {
@@ -148,7 +150,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
     }
 
     // EULER Specific Graph (Even Degrees)
-    if (algorithm === AlgorithmType.EULER) {
+    if (algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.EULER_AD) {
         const newGraph = generateEulerianGraph(width, height);
         setGraph(newGraph);
         solveGraph(newGraph, algorithm);
@@ -283,7 +285,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
     if (graph) {
        const isBoruvka = algorithm === AlgorithmType.BORUVKA;
        const isTarjan = algorithm === AlgorithmType.TARJAN;
-       const isEuler = algorithm === AlgorithmType.EULER;
+       const isEuler = algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.EULER_AD;
        const isGreedyMatching = algorithm === AlgorithmType.GREEDY_MATCHING;
        const isHopcroftKarp = algorithm === AlgorithmType.HOPCROFT_KARP;
        const graphHasUniqueWeights = graph.hasUniqueWeights === true;

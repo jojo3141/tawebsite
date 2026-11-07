@@ -94,7 +94,7 @@ const VisualizerHeader: React.FC<VisualizerHeaderProps> = ({
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                       />
                     )}
-                    {algo === 'EULER' ? 'EULER TOUR' : algo === 'GREEDY_MATCHING' ? 'GREEDY MATCHING' : algo === 'HOPCROFT_KARP' ? 'HOPCROFT-KARP' : algo === 'HAMILTON_PATH' ? 'HAMILTON CYCLE' : algo === 'METRIC_TSP' ? 'METRIC TSP 2-APPROX' : algo === 'METRIC_TSP_15' ? 'METRIC TSP 1.5-APPROX' : algo.replace(/_/g, ' ')}
+                    {(algo === 'EULER' || algo === 'EULER_AD') ? 'EULER TOUR' : algo === 'GREEDY_MATCHING' ? 'GREEDY MATCHING' : algo === 'HOPCROFT_KARP' ? 'HOPCROFT-KARP' : algo === 'HAMILTON_PATH' ? 'HAMILTON CYCLE' : algo === 'METRIC_TSP' ? 'METRIC TSP 2-APPROX' : algo === 'METRIC_TSP_15' ? 'METRIC TSP 1.5-APPROX' : algo.replace(/_/g, ' ')}
                 </button>
               );
             })}
