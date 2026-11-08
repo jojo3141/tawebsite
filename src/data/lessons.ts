@@ -53,6 +53,12 @@ export const lessonsAD: Lesson[] = [
     title: "More DP",
     description: "Subset Sum, Rucksack, LAT, viele weitere DP Übungsaufgaben",
     pdf: "/lessons/AuD_HS26/week-7.pdf",
+  },
+  {
+    week: 8,
+    title: "Graphs",
+    description: "Definitionen, Eulerzyklus, Hamiltonkreis, Adjazenz-Matrix/Listen, Graphen Beweise",
+    pdf: "/lessons/AuD_HS26/week-8.pdf",
   }
 ];
 
