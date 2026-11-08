@@ -76,6 +76,8 @@ export interface AlgorithmStep {
   discoveryTimes: Record<string, number>; // d[v] (Pre-order)
   finishTimes: Record<string, number>;    // f[v] (Post-order)
   edgeClassifications: Record<string, EdgeType>; // Key: "source-target"
+  topologicalOrder?: string[]; // Topological sorting order for DFS (TOPOLOGICAL SORT)
+  deletedNodes?: string[]; // Nodes deleted from G during DFS (TOPOLOGICAL SORT)
 
   // Tarjan Specific
   lowLinks?: Record<string, number>; // low[v]
@@ -299,59 +301,78 @@ export const PSEUDOCODE_DIJKSTRA_UNDIRECTED = [
 ];
 
 export const PSEUDOCODE_BFS = [
-  { line: 1, text: "for each v ∈ V do", indent: 0 },
-  { line: 2, text: "visited[v] = false; dist[v] = ∞", indent: 2 },
+  { line: 1, text: "dist[s] ← 0", indent: 0 },
+  { line: 2, text: "dist[v] ← ∞ for all v ≠ s", indent: 0 },
   { line: 3, text: "Q ← Ø", indent: 0 },
-  { line: 4, text: "visited[s] ← true; dist[s] ← 0", indent: 0 },
-  { line: 5, text: "ENQUEUE(s, Q)", indent: 0 },
-  { line: 6, text: "while Q ≠ Ø do", indent: 0 },
-  { line: 7, text: "u ← DEQUEUE(Q)", indent: 2 },
-  { line: 8, text: "for each (u, v) ∈ E do", indent: 2 },
-  { line: 9, text: "if visited[v] == false then", indent: 4 },
-  { line: 10, text: "visited[v] ← true", indent: 6 },
-  { line: 11, text: "dist[v] ← dist[u] + 1", indent: 6 },
-  { line: 12, text: "ENQUEUE(v, Q)", indent: 6 },
+  { line: 4, text: "ENQUEUE(s, Q)", indent: 0 },
+  { line: 5, text: "while Q ≠ Ø do", indent: 0 },
+  { line: 6, text: "u ← DEQUEUE(Q)", indent: 2 },
+  { line: 7, text: "for each (u, v) ∈ E do", indent: 2 },
+  { line: 8, text: "if dist[v] == ∞ then", indent: 4 },
+  { line: 9, text: "dist[v] ← dist[u] + 1", indent: 6 },
+  { line: 10, text: "ENQUEUE(v, Q)", indent: 6 },
 ];
 
 export const PSEUDOCODE_BFS_UNDIRECTED = [
-  { line: 1, text: "for each v ∈ V do", indent: 0 },
-  { line: 2, text: "visited[v] = false; dist[v] = ∞", indent: 2 },
+  { line: 1, text: "dist[s] ← 0", indent: 0 },
+  { line: 2, text: "dist[v] ← ∞ for all v ≠ s", indent: 0 },
   { line: 3, text: "Q ← Ø", indent: 0 },
-  { line: 4, text: "visited[s] ← true; dist[s] ← 0", indent: 0 },
-  { line: 5, text: "ENQUEUE(s, Q)", indent: 0 },
-  { line: 6, text: "while Q ≠ Ø do", indent: 0 },
-  { line: 7, text: "u ← DEQUEUE(Q)", indent: 2 },
-  { line: 8, text: "for each {u, v} ∈ E do", indent: 2 },
-  { line: 9, text: "if visited[v] == false then", indent: 4 },
-  { line: 10, text: "visited[v] ← true", indent: 6 },
-  { line: 11, text: "dist[v] ← dist[u] + 1", indent: 6 },
-  { line: 12, text: "ENQUEUE(v, Q)", indent: 6 },
+  { line: 4, text: "ENQUEUE(s, Q)", indent: 0 },
+  { line: 5, text: "while Q ≠ Ø do", indent: 0 },
+  { line: 6, text: "u ← DEQUEUE(Q)", indent: 2 },
+  { line: 7, text: "for each {u, v} ∈ E do", indent: 2 },
+  { line: 8, text: "if dist[v] == ∞ then", indent: 4 },
+  { line: 9, text: "dist[v] ← dist[u] + 1", indent: 6 },
+  { line: 10, text: "ENQUEUE(v, Q)", indent: 6 },
 ];
+
+export type DFSMode = 'TIMESTAMPS' | 'TOPOLOGICAL_SORT';
 
 export const PSEUDOCODE_DFS = [
   { line: 1, text: "DFS(G):", indent: 0 },
-  { line: 2, text: "for each v ∈ V do", indent: 2 },
-  { line: 3, text: "if v is not visited then", indent: 4 },
-  { line: 4, text: "DFS-VISIT(G, v)", indent: 6 },
-  { line: 5, text: "", indent: 0 }, // Spacer
-  { line: 6, text: "DFS-VISIT(G, v):", indent: 0 },
-  { line: 7, text: "Mark v as visited", indent: 2 },
-  { line: 8, text: "for each (v, w) ∈ E do", indent: 2 },
-  { line: 9, text: "if w is not visited then", indent: 4 },
-  { line: 10, text: "DFS-VISIT(G, w)", indent: 6 },
+  { line: 2, text: "T ← 1", indent: 2 },
+  { line: 3, text: "for each v ∈ V do", indent: 2 },
+  { line: 4, text: "if v is not visited then", indent: 4 },
+  { line: 5, text: "DFS-VISIT(G, v)", indent: 6 },
+  { line: 6, text: "", indent: 0 }, // Spacer
+  { line: 7, text: "DFS-VISIT(G, v):", indent: 0 },
+  { line: 8, text: "Mark v as visited", indent: 2 },
+  { line: 9, text: "pre[v] ← T; T ← T + 1", indent: 2 },
+  { line: 10, text: "for each (v, w) ∈ E do", indent: 2 },
+  { line: 11, text: "if w is not visited then", indent: 4 },
+  { line: 12, text: "DFS-VISIT(G, w)", indent: 6 },
+  { line: 13, text: "post[v] ← T; T ← T + 1", indent: 2 },
 ];
 
 export const PSEUDOCODE_DFS_UNDIRECTED = [
   { line: 1, text: "DFS(G):", indent: 0 },
-  { line: 2, text: "for each v ∈ V do", indent: 2 },
-  { line: 3, text: "if v is not visited then", indent: 4 },
-  { line: 4, text: "DFS-VISIT(G, v)", indent: 6 },
+  { line: 2, text: "T ← 1", indent: 2 },
+  { line: 3, text: "for each v ∈ V do", indent: 2 },
+  { line: 4, text: "if v is not visited then", indent: 4 },
+  { line: 5, text: "DFS-VISIT(G, v)", indent: 6 },
+  { line: 6, text: "", indent: 0 }, // Spacer
+  { line: 7, text: "DFS-VISIT(G, v):", indent: 0 },
+  { line: 8, text: "Mark v as visited", indent: 2 },
+  { line: 9, text: "pre[v] ← T; T ← T + 1", indent: 2 },
+  { line: 10, text: "for each {v, w} ∈ E do", indent: 2 },
+  { line: 11, text: "if w is not visited then", indent: 4 },
+  { line: 12, text: "DFS-VISIT(G, w)", indent: 6 },
+  { line: 13, text: "post[v] ← T; T ← T + 1", indent: 2 },
+];
+
+export const PSEUDOCODE_DFS_TOPO = [
+  { line: 1, text: "DFS(G)", indent: 0 },
+  { line: 2, text: "topologische Sortierung ← leere Liste;", indent: 2 },
+  { line: 3, text: "while es gibt einen unmarkierten Knoten u₀ do", indent: 2 },
+  { line: 4, text: "VISIT(u₀)", indent: 4 },
   { line: 5, text: "", indent: 0 }, // Spacer
-  { line: 6, text: "DFS-VISIT(G, v):", indent: 0 },
-  { line: 7, text: "Mark v as visited", indent: 2 },
-  { line: 8, text: "for each {v, w} ∈ E do", indent: 2 },
-  { line: 9, text: "if w is not visited then", indent: 4 },
-  { line: 10, text: "DFS-VISIT(G, w)", indent: 6 },
+  { line: 6, text: "VISIT(u)", indent: 0 },
+  { line: 7, text: "markiere u", indent: 2 },
+  { line: 8, text: "while u hat einen unmarkierten Nachfolger v do VISIT(v)", indent: 2 },
+  { line: 9, text: "if u ist im Restgraphen eine Senke then", indent: 2 },
+  { line: 10, text: "füge u vorne an die topologische Sortierung an", indent: 4 },
+  { line: 11, text: "lösche u aus G", indent: 4 },
+  { line: 12, text: "else return \"gerichteter Zyklus gefunden\"", indent: 2 },
 ];
 
 export const PSEUDOCODE_BELLMAN_FORD = [

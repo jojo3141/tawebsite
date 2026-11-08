@@ -357,26 +357,23 @@ export const calculateBFSSteps = (graph: Graph, startNodeId: string): AlgorithmS
     distances[n.id] = Infinity;
     parents[n.id] = null;
   });
-  pushStep(1, "Initialize all nodes: visited = false, dist = ∞");
-  pushStep(2, "Initialize all nodes: visited = false, dist = ∞");
+  distances[startNodeId] = 0;
+  visited.push(startNodeId);
+  pushStep(1, `Set dist[${startNodeId}] ← 0`, startNodeId);
+  pushStep(2, `Set dist[v] ← ∞ for all v ≠ ${startNodeId}`);
 
   // 3. Q Init
   pushStep(3, "Initialize empty queue Q");
 
-  // 4. Start Node
+  // 4. Enqueue Start Node
   time++;
   discoveryTimes[startNodeId] = time; // Enter Time
-  visited.push(startNodeId);
-  distances[startNodeId] = 0;
-  pushStep(4, `Mark start node ${startNodeId} as visited, dist = 0`, startNodeId);
-
-  // 5. Enqueue
   queue.push({ nodeId: startNodeId, distance: 0 });
-  pushStep(5, `Enqueue ${startNodeId} into Q`, startNodeId);
+  pushStep(4, `Enqueue ${startNodeId} into Q`, startNodeId);
 
-  // 6. Loop
+  // 5. Loop
   while (queue.length > 0) {
-    pushStep(6, "Check if Q is not empty");
+    pushStep(5, "Check if Q is not empty");
 
     const uItem = queue.shift()!;
     const u = uItem.nodeId;
@@ -384,7 +381,7 @@ export const calculateBFSSteps = (graph: Graph, startNodeId: string): AlgorithmS
     time++;
     finishTimes[u] = time; // Leave Time
 
-    pushStep(7, `Dequeue node ${u}`, u);
+    pushStep(6, `Dequeue node ${u}`, u);
 
     // --- NEIGHBOR EXTRACTION & SORTING ---
     const neighbors: { id: string, edge: Edge }[] = [];
@@ -397,33 +394,30 @@ export const calculateBFSSteps = (graph: Graph, startNodeId: string): AlgorithmS
     neighbors.sort((a, b) => a.id.localeCompare(b.id));
 
     for (const { id: v, edge } of neighbors) {
-      pushStep(8, `Inspect neighbor ${v} of ${u}`, u, v, edge);
+      pushStep(7, `Inspect neighbor ${v} of ${u}`, u, v, edge);
 
-      // 9. check visited
-      if (!visited.includes(v)) {
-        pushStep(9, `Node ${v} is not visited`, u, v, edge);
+      // 8. check dist[v] == ∞
+      if (distances[v] === Infinity) {
+        pushStep(8, `dist[${v}] == ∞ (${v} not visited yet)`, u, v, edge);
 
-        // 10. mark visited
-        time++;
-        discoveryTimes[v] = time; // Enter Time
-        visited.push(v);
-        pushStep(10, `Mark ${v} as visited`, u, v, edge);
-
-        // 11. update dist
+        // 9. update dist
         distances[v] = distances[u] + 1;
         parents[v] = u;
-        pushStep(11, `Set dist[${v}] = ${distances[v]}`, u, v, edge);
+        visited.push(v);
+        pushStep(9, `Set dist[${v}] ← ${distances[v]}`, u, v, edge);
 
-        // 12. enqueue
+        // 10. enqueue
+        time++;
+        discoveryTimes[v] = time; // Enter Time
         queue.push({ nodeId: v, distance: distances[v] });
-        pushStep(12, `Enqueue ${v} into Q`, u, v, edge);
+        pushStep(10, `Enqueue ${v} into Q`, u, v, edge);
       } else {
-        pushStep(9, `Node ${v} already visited, skip`, u, v, edge);
+        pushStep(8, `dist[${v}] = ${distances[v]} ≠ ∞ (already visited), skip`, u, v, edge);
       }
     }
   }
 
-  pushStep(6, "Queue is empty. Algorithm Complete.");
+  pushStep(5, "Queue is empty. Algorithm Complete.");
   return steps;
 };
 
@@ -436,7 +430,7 @@ export const calculateDFSSteps = (graph: Graph, startNodeId: string): AlgorithmS
   const distances: Record<string, number> = {}; // Used for 'visited' color logic in Canvas
 
   // Time Tracking for Pre/Post order
-  let time = 0;
+  let time = 1;
   const discoveryTimes: Record<string, number> = {};
   const finishTimes: Record<string, number> = {};
 
@@ -469,17 +463,19 @@ export const calculateDFSSteps = (graph: Graph, startNodeId: string): AlgorithmS
 
   // Helper for DFS-Visit
   const dfsVisit = (u: string) => {
-    // Pre-order
-    time++;
-    discoveryTimes[u] = time;
-
     stack.push(u);
     visited.push(u);
     distances[u] = 0; // Mark as visited for canvas
 
-    pushStep(7, `DFS-VISIT(${u}): Mark ${u} as visited. Start Time: ${time}`, u);
+    // Line 8: Mark v as visited
+    pushStep(8, `DFS-VISIT(G, ${u}): Mark ${u} as visited`, u);
 
-    // Line 8: Iterate neighbors - SORTED ALPHABETICALLY
+    // Line 9: pre[v] ← T; T ← T + 1
+    discoveryTimes[u] = time;
+    time++;
+    pushStep(9, `Set pre[${u}] ← ${discoveryTimes[u]}; T ← ${time}`, u);
+
+    // Line 10: Iterate neighbors - SORTED ALPHABETICALLY
     const neighbors: { id: string, edge: Edge }[] = [];
     graph.edges.forEach(e => {
       if (e.source === u) neighbors.push({ id: e.target, edge: e });
@@ -489,34 +485,35 @@ export const calculateDFSSteps = (graph: Graph, startNodeId: string): AlgorithmS
     neighbors.sort((a, b) => a.id.localeCompare(b.id));
 
     for (const { id: w, edge } of neighbors) {
-      pushStep(8, `Check edge ${graph.isDirected !== false ? `(${u}, ${w})` : `{${u}, ${w}}`}`, u, w, edge);
+      pushStep(10, `Check edge ${graph.isDirected !== false ? `(${u}, ${w})` : `{${u}, ${w}}`}`, u, w, edge);
 
-      // Line 9: If not visited
+      // Line 11: If not visited
       if (!visited.includes(w)) {
-        pushStep(9, `${w} is not visited`, u, w, edge);
+        pushStep(11, `${w} is not visited`, u, w, edge);
         parents[w] = u;
 
-        // Line 10: Recurse
-        pushStep(10, `Call DFS-VISIT(${w})`, u, w, edge);
+        // Line 12: Recurse
+        pushStep(12, `Call DFS-VISIT(G, ${w})`, u, w, edge);
         dfsVisit(w);
 
         // Return from recursion
-        pushStep(10, `Returned from DFS-VISIT(${w}), back to ${u}`, u);
+        pushStep(12, `Returned from DFS-VISIT(G, ${w}), back to ${u}`, u);
       } else {
-        pushStep(9, `${w} already visited`, u, w, edge);
+        pushStep(11, `${w} already visited`, u, w, edge);
       }
     }
 
-    // Post-order
-    time++;
+    // Line 13: post[v] ← T; T ← T + 1
     finishTimes[u] = time;
-    pushStep(6, `Finished processing ${u}. End Time: ${time}`, u);
+    time++;
+    pushStep(13, `Set post[${u}] ← ${finishTimes[u]}; T ← ${time}`, u);
 
     stack.pop();
   };
 
   // Main Loop
   pushStep(1, "Start DFS(G)");
+  pushStep(2, "Initialize T ← 1");
 
   const sortedNodes = [
     graph.nodes.find(n => n.id === startNodeId)!,
@@ -524,10 +521,10 @@ export const calculateDFSSteps = (graph: Graph, startNodeId: string): AlgorithmS
   ];
 
   for (const node of sortedNodes) {
-    pushStep(2, `Check main loop node ${node.id}`, node.id);
+    pushStep(3, `Check main loop node ${node.id}`, node.id);
     if (!visited.includes(node.id)) {
-      pushStep(3, `Node ${node.id} not visited. Call DFS-VISIT`, node.id);
-      pushStep(4, `Calling DFS-VISIT(${node.id})`, node.id);
+      pushStep(4, `Node ${node.id} not visited. Call DFS-VISIT`, node.id);
+      pushStep(5, `Calling DFS-VISIT(G, ${node.id})`, node.id);
       dfsVisit(node.id);
     }
   }
@@ -570,6 +567,164 @@ export const calculateDFSSteps = (graph: Graph, startNodeId: string): AlgorithmS
     pushStep(1, "Classify Edges", null, null, null, edgeClassifications);
   }
 
+  return steps;
+};
+
+// Helper to find an edge index that closes a directed cycle (or -1 if acyclic)
+const findDirectedCycleEdgeIndex = (nodes: Node[], edges: Edge[]): number => {
+  const state: Record<string, number> = {}; // 0 = unvisited, 1 = visiting (on stack), 2 = finished
+  nodes.forEach(n => { state[n.id] = 0; });
+
+  const dfs = (u: string): number => {
+    state[u] = 1;
+    for (let i = 0; i < edges.length; i++) {
+      const e = edges[i];
+      if (e.source === u) {
+        const v = e.target;
+        if (state[v] === 1) {
+          return i; // Back edge closing a directed cycle
+        }
+        if (state[v] === 0) {
+          const res = dfs(v);
+          if (res !== -1) return res;
+        }
+      }
+    }
+    state[u] = 2;
+    return -1;
+  };
+
+  for (const node of nodes) {
+    if (state[node.id] === 0) {
+      const idx = dfs(node.id);
+      if (idx !== -1) return idx;
+    }
+  }
+  return -1;
+};
+
+export const hasDirectedCycle = (graph: Graph): boolean => {
+  return findDirectedCycleEdgeIndex(graph.nodes, graph.edges) !== -1;
+};
+
+// Remove edges from a graph as long as there is a directed cycle
+export const removeCyclesFromGraph = (graph: Graph): Graph => {
+  const edges = [...graph.edges];
+  let cycleEdgeIdx = findDirectedCycleEdgeIndex(graph.nodes, edges);
+  while (cycleEdgeIdx !== -1) {
+    edges.splice(cycleEdgeIdx, 1);
+    cycleEdgeIdx = findDirectedCycleEdgeIndex(graph.nodes, edges);
+  }
+  return {
+    ...graph,
+    isDirected: true,
+    edges,
+  };
+};
+
+// --- DFS TOPOLOGICAL SORT SOLVER ---
+export const calculateDFSTopoSteps = (graph: Graph, startNodeId: string): AlgorithmStep[] => {
+  const steps: AlgorithmStep[] = [];
+  const visited: string[] = [];
+  const stack: string[] = [];
+  const parents: Record<string, string | null> = {};
+  const distances: Record<string, number> = {};
+  const topologicalOrder: string[] = [];
+  const deletedNodes: string[] = [];
+
+  let stepCounter = 0;
+  const pushStep = (
+    line: number,
+    desc: string,
+    u: string | null = null,
+    v: string | null = null,
+    edge: { source: string; target: string } | null = null
+  ) => {
+    steps.push({
+      stepId: stepCounter++,
+      lineNumber: line,
+      description: desc,
+      distances: { ...distances },
+      parents: { ...parents },
+      discoveryTimes: {},
+      finishTimes: {},
+      edgeClassifications: {},
+      topologicalOrder: [...topologicalOrder],
+      deletedNodes: [...deletedNodes],
+      mstEdges: [],
+      boruvkaMinEdges: [],
+      queue: [],
+      stack: [...stack],
+      processedSet: [...visited],
+      currentNodeId: u,
+      currentNeighborId: v,
+      activeEdge: edge,
+    });
+  };
+
+  graph.nodes.forEach(n => {
+    distances[n.id] = Infinity;
+    parents[n.id] = null;
+  });
+
+  const visit = (u: string) => {
+    stack.push(u);
+    visited.push(u);
+    distances[u] = 0;
+
+    // Line 7: markiere u
+    pushStep(7, `VISIT(${u}): Mark ${u}`, u);
+
+    // Line 8: while u hat einen unmarkierten Nachfolger v do VISIT(v)
+    const neighbors: { id: string; edge: Edge }[] = [];
+    graph.edges.forEach(e => {
+      if (e.source === u && !deletedNodes.includes(e.target)) {
+        neighbors.push({ id: e.target, edge: e });
+      }
+    });
+    neighbors.sort((a, b) => a.id.localeCompare(b.id));
+
+    for (const { id: v, edge } of neighbors) {
+      if (!visited.includes(v)) {
+        pushStep(8, `Unmarked successor ${v} of ${u} found → Call VISIT(${v})`, u, v, edge);
+        parents[v] = u;
+        visit(v);
+        pushStep(8, `Returned from VISIT(${v}) to ${u}`, u);
+      }
+    }
+
+    pushStep(8, `No unmarked successors left for ${u}`, u);
+
+    // Line 9: if u ist im Restgraphen eine Senke then
+    pushStep(9, `${u} is a sink in the remaining graph`, u);
+
+    // Line 10: füge u vorne an die topologische Sortierung an
+    topologicalOrder.unshift(u);
+    pushStep(10, `Prepend ${u} to topological sorting`, u);
+
+    // Line 11: lösche u aus G
+    deletedNodes.push(u);
+    stack.pop();
+    pushStep(11, `Delete ${u} from G`, u);
+  };
+
+  pushStep(1, "Start DFS(G)");
+  pushStep(2, "Initialize topological sorting ← empty list");
+
+  const sortedNodes = [
+    graph.nodes.find(n => n.id === startNodeId)!,
+    ...graph.nodes.filter(n => n.id !== startNodeId).sort((a, b) => a.id.localeCompare(b.id)),
+  ];
+
+  for (const node of sortedNodes) {
+    if (!visited.includes(node.id)) {
+      pushStep(3, `Unmarked node u₀ = ${node.id} found`, node.id);
+      pushStep(4, `Call VISIT(${node.id})`, node.id);
+      visit(node.id);
+    }
+  }
+
+  pushStep(1, "Algorithm Complete");
   return steps;
 };
 

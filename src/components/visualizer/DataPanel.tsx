@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect, useMemo } from 'react';
-import { AlgorithmStep, AlgorithmType, Graph } from '@/types/graph';
+import { AlgorithmStep, AlgorithmType, DFSMode, Graph } from '@/types/graph';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Infinity as InfinityIcon } from 'lucide-react';
 import { useAlgorithmsTheme } from '@/context/AlgorithmsThemeContext';
@@ -10,6 +10,7 @@ interface DataPanelProps {
   step: AlgorithmStep;
   algorithm: AlgorithmType;
   graph: Graph;
+  dfsMode?: DFSMode;
 }
 
 // --- INTERNAL COMPONENT: SEARCH TREE VISUALIZER ---
@@ -30,6 +31,7 @@ const SearchTreeVisualizer: React.FC<{ step: AlgorithmStep; algorithm: Algorithm
                 if (d !== Infinity) validNodes.add(id);
             });
         } else if (algorithm === AlgorithmType.DFS) {
+            step.processedSet.forEach(id => validNodes.add(id));
             Object.keys(step.discoveryTimes).forEach(id => validNodes.add(id));
         }
 
@@ -87,7 +89,7 @@ const SearchTreeVisualizer: React.FC<{ step: AlgorithmStep; algorithm: Algorithm
         });
 
         return { nodes, links, width: leafCounter };
-    }, [step.parents, step.distances, step.discoveryTimes, algorithm]);
+    }, [step.parents, step.distances, step.discoveryTimes, step.processedSet, algorithm]);
 
     if (treeData.nodes.length === 0) {
         return <div className={clsx("h-full flex items-center justify-center text-sm italic", isLight ? "text-slate-400" : "text-slate-600")}>Tree Empty</div>;
@@ -178,7 +180,7 @@ const SearchTreeVisualizer: React.FC<{ step: AlgorithmStep; algorithm: Algorithm
 };
 
 
-const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
+const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph, dfsMode = 'TIMESTAMPS' }) => {
   const { isLight } = useAlgorithmsTheme();
   const listRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<HTMLDivElement>(null);
@@ -1197,7 +1199,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
                          exit={{ opacity: 0, y: -10 }}
                          className={isLight ? "bg-purple-100 border-l-4 border-purple-600 px-3 py-2 rounded text-sm text-purple-950 font-bold font-mono shrink-0 shadow-sm" : "bg-purple-900/30 border-l-2 border-purple-500 px-3 py-2 rounded text-sm text-purple-200 font-mono shrink-0"}
                        >
-                         DFS-VISIT({nodeId})
+                         {dfsMode === 'TOPOLOGICAL_SORT' ? `VISIT(${nodeId})` : `DFS-VISIT(${nodeId})`}
                        </motion.div>
                      ))
                    )}
@@ -1386,8 +1388,57 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
     )}
       </div>
 
+      {/* --- TOPOLOGICAL SORTING PANEL (DFS TOPOLOGICAL SORT Only) --- */}
+      {algorithm === AlgorithmType.DFS && dfsMode === 'TOPOLOGICAL_SORT' && (
+          <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden w-full">
+              <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-amber-500 uppercase tracking-wider">
+                  Topological Sorting
+              </div>
+              <div className="p-4 overflow-auto flex-1 font-mono text-sm">
+                  {step.topologicalOrder && step.topologicalOrder.length > 0 ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                          <AnimatePresence initial={false}>
+                              {step.topologicalOrder.map((node, i) => {
+                                  const isNewest = i === 0 && step.lineNumber === 10 && step.currentNodeId === node;
+                                  return (
+                                      <motion.div
+                                          key={node}
+                                          layout
+                                          initial={{ opacity: 0, scale: 0.8, x: -12 }}
+                                          animate={{ opacity: 1, scale: 1, x: 0 }}
+                                          className="flex items-center gap-2"
+                                      >
+                                          <span
+                                              className={clsx(
+                                                  "flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold transition-colors",
+                                                  isNewest
+                                                      ? (isLight
+                                                          ? "bg-amber-100 border-2 border-amber-500 text-amber-950 font-extrabold shadow-sm ring-2 ring-amber-400/50"
+                                                          : "bg-amber-500/20 border-2 border-amber-400 text-amber-200 shadow-sm")
+                                                      : (isLight
+                                                          ? "bg-indigo-100 border-2 border-indigo-500 text-indigo-950 font-extrabold shadow-sm"
+                                                          : "bg-indigo-900/40 border border-indigo-500/50 text-indigo-200")
+                                              )}
+                                          >
+                                              {node}
+                                          </span>
+                                          {i < step.topologicalOrder!.length - 1 && (
+                                              <span className={isLight ? "text-slate-500 font-bold" : "text-slate-600"}>→</span>
+                                          )}
+                                      </motion.div>
+                                  );
+                              })}
+                          </AnimatePresence>
+                      </div>
+                  ) : (
+                      <div className="text-slate-500 italic text-xs py-1">Empty list</div>
+                  )}
+              </div>
+          </div>
+      )}
+
       {/* --- MIDDLE SECTION: SEARCH TREE (DFS/BFS/DIJKSTRA/BELLMAN-FORD Only) --- */}
-      {(algorithm === AlgorithmType.DFS || algorithm === AlgorithmType.BFS || algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD) && (
+      {((algorithm === AlgorithmType.DFS && dfsMode !== 'TOPOLOGICAL_SORT') || algorithm === AlgorithmType.BFS || algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD) && (
           <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden h-auto min-h-[300px]">
               <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-sky-400 uppercase tracking-wider">
                   {algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD ? 'Shortest Path Tree' : 'Search Tree'}
@@ -1399,7 +1450,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph }) => {
       )}
 
       {/* --- BOTTOM SECTION: TABLE (Hidden for Boruvka and select A&W algorithms) --- */}
-      {algorithm !== AlgorithmType.BORUVKA && algorithm !== AlgorithmType.EULER && algorithm !== AlgorithmType.EULER_AD && algorithm !== AlgorithmType.GREEDY_MATCHING && algorithm !== AlgorithmType.HOPCROFT_KARP && algorithm !== AlgorithmType.GREEDY_COLORING && algorithm !== AlgorithmType.SMALLEST_LAST_COLORING && algorithm !== AlgorithmType.FORD_FULKERSON && algorithm !== AlgorithmType.LONG_PATH && algorithm !== AlgorithmType.HAMILTON_PATH && algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algorithm !== AlgorithmType.JARVIS_WRAP && algorithm !== AlgorithmType.LOCAL_REPAIR && algorithm !== AlgorithmType.MINIMUM_EDGE_CUT && algorithm !== AlgorithmType.FINDING_DUPLICATES_HASH && algorithm !== AlgorithmType.BLOOM_FILTER && algorithm !== AlgorithmType.FINDING_DUPLICATES_FLOYD && algorithm !== AlgorithmType.METRIC_TSP && algorithm !== AlgorithmType.METRIC_TSP_15 && (
+      {!(algorithm === AlgorithmType.DFS && dfsMode === 'TOPOLOGICAL_SORT') && algorithm !== AlgorithmType.BORUVKA && algorithm !== AlgorithmType.EULER && algorithm !== AlgorithmType.EULER_AD && algorithm !== AlgorithmType.GREEDY_MATCHING && algorithm !== AlgorithmType.HOPCROFT_KARP && algorithm !== AlgorithmType.GREEDY_COLORING && algorithm !== AlgorithmType.SMALLEST_LAST_COLORING && algorithm !== AlgorithmType.FORD_FULKERSON && algorithm !== AlgorithmType.LONG_PATH && algorithm !== AlgorithmType.HAMILTON_PATH && algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algorithm !== AlgorithmType.JARVIS_WRAP && algorithm !== AlgorithmType.LOCAL_REPAIR && algorithm !== AlgorithmType.MINIMUM_EDGE_CUT && algorithm !== AlgorithmType.FINDING_DUPLICATES_HASH && algorithm !== AlgorithmType.BLOOM_FILTER && algorithm !== AlgorithmType.FINDING_DUPLICATES_FLOYD && algorithm !== AlgorithmType.METRIC_TSP && algorithm !== AlgorithmType.METRIC_TSP_15 && (
         <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden h-[26rem]">
           <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-slate-300 uppercase tracking-wider">
               {algorithm === AlgorithmType.DFS ? 'Tracking Table' : (algorithm === AlgorithmType.PRIM ? 'Node Status' : (algorithm === AlgorithmType.KRUSKAL ? 'Union-Find Structure' : 'Tracking Table'))}

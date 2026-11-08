@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { 
     PSEUDOCODE_DIJKSTRA, PSEUDOCODE_DIJKSTRA_UNDIRECTED, 
     PSEUDOCODE_BFS, PSEUDOCODE_BFS_UNDIRECTED,
-    PSEUDOCODE_DFS, PSEUDOCODE_DFS_UNDIRECTED,
+    PSEUDOCODE_DFS, PSEUDOCODE_DFS_UNDIRECTED, PSEUDOCODE_DFS_TOPO, DFSMode,
     PSEUDOCODE_BELLMAN_FORD, PSEUDOCODE_BELLMAN_FORD_UNDIRECTED,
     PSEUDOCODE_PRIM, PSEUDOCODE_KRUSKAL, PSEUDOCODE_BORUVKA, PSEUDOCODE_TARJAN, PSEUDOCODE_EULER, PSEUDOCODE_EULER_AD,
     PSEUDOCODE_GREEDY_MATCHING, PSEUDOCODE_HOPCROFT_KARP,
@@ -37,6 +37,7 @@ interface PseudocodeViewerProps {
   algorithm: AlgorithmType | SortingAlgorithmType | DPAlgorithmType;
   isDirected?: boolean;
   dpApproach?: DPApproach;
+  dfsMode?: DFSMode;
 }
 
 const ALGORITHM_RUNTIMES: Record<string, string> = {
@@ -87,7 +88,7 @@ const ALGORITHM_RUNTIMES: Record<string, string> = {
     [DPAlgorithmType.LAS]: "\\mathcal{O}(n^2)",
 };
 
-const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorithm, isDirected = true, dpApproach = 'BOTTOM_UP' }) => {
+const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorithm, isDirected = true, dpApproach = 'BOTTOM_UP', dfsMode = 'TIMESTAMPS' }) => {
   const { theme } = useAlgorithmsTheme();
   const isLight = theme === 'light';
 
@@ -128,7 +129,7 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
       } else if (graphAlgo === AlgorithmType.BFS) {
           lines = isDirected ? PSEUDOCODE_BFS : PSEUDOCODE_BFS_UNDIRECTED;
       } else if (graphAlgo === AlgorithmType.DFS) {
-          lines = isDirected ? PSEUDOCODE_DFS : PSEUDOCODE_DFS_UNDIRECTED;
+          lines = dfsMode === 'TOPOLOGICAL_SORT' ? PSEUDOCODE_DFS_TOPO : (isDirected ? PSEUDOCODE_DFS : PSEUDOCODE_DFS_UNDIRECTED);
       } else if (graphAlgo === AlgorithmType.BELLMAN_FORD) {
           lines = isDirected ? PSEUDOCODE_BELLMAN_FORD : PSEUDOCODE_BELLMAN_FORD_UNDIRECTED;
       } else if (graphAlgo === AlgorithmType.PRIM) lines = PSEUDOCODE_PRIM;
@@ -246,6 +247,12 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
                       if (part === 'vₗ') return <React.Fragment key={i}>v<sub className="text-[0.75em] leading-none">ℓ</sub></React.Fragment>;
                       if (part === 'v₀') return <React.Fragment key={i}>v<sub className="text-[0.75em] leading-none">0</sub></React.Fragment>;
                       if (part === 'v₁') return <React.Fragment key={i}>v<sub className="text-[0.75em] leading-none">1</sub></React.Fragment>;
+                      return part;
+                    })
+                  : (algorithm === AlgorithmType.DFS && dfsMode === 'TOPOLOGICAL_SORT')
+                  ? item.text.split(/(u₀|vorne)/g).map((part, i) => {
+                      if (part === 'u₀') return <React.Fragment key={i}>u<sub className="text-[0.75em] leading-none">0</sub></React.Fragment>;
+                      if (part === 'vorne') return <em key={i} className="italic">vorne</em>;
                       return part;
                     })
                   : item.text}

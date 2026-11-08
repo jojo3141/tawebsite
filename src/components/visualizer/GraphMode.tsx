@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { generateRandomGraph, generateTarjanGraph, generateEulerianGraph, generateGreedyMatchingGraph, generateHopcroftKarpGraph, generateColoringGraph, generateFordFulkersonGraph, generateLongPathGraph, generateHamiltonPathGraph, generateMinEdgeCutGraph, calculateDijkstraSteps, calculateBFSSteps, calculateDFSSteps, calculateBellmanFordSteps, calculatePrimSteps, calculateKruskalSteps, calculateBoruvkaSteps, calculateTarjanSteps, calculateEulerSteps, calculateEulerADSteps, calculateGreedyMatchingSteps, calculateHopcroftKarpSteps, calculateGreedyColoringSteps, calculateSmallestLastColoringSteps, calculateFordFulkersonSteps, calculateLongPathSteps, calculateHamiltonPathSteps, calculateMinEdgeCutSteps } from '@/utils/graphUtils';
+import { generateRandomGraph, generateTarjanGraph, generateEulerianGraph, generateGreedyMatchingGraph, generateHopcroftKarpGraph, generateColoringGraph, generateFordFulkersonGraph, generateLongPathGraph, generateHamiltonPathGraph, generateMinEdgeCutGraph, calculateDijkstraSteps, calculateBFSSteps, calculateDFSSteps, calculateDFSTopoSteps, hasDirectedCycle, removeCyclesFromGraph, calculateBellmanFordSteps, calculatePrimSteps, calculateKruskalSteps, calculateBoruvkaSteps, calculateTarjanSteps, calculateEulerSteps, calculateEulerADSteps, calculateGreedyMatchingSteps, calculateHopcroftKarpSteps, calculateGreedyColoringSteps, calculateSmallestLastColoringSteps, calculateFordFulkersonSteps, calculateLongPathSteps, calculateHamiltonPathSteps, calculateMinEdgeCutSteps } from '@/utils/graphUtils';
 import { generateSmallestEnclosingDiskGraph, calculateSmallestEnclosingDiskSteps } from '@/utils/sedUtils';
 import { generateJarvisWrapGraph, calculateJarvisWrapSteps, calculateLocalRepairSteps } from '@/utils/hullUtils';
 import { generateFindingDuplicatesHashGraph, calculateFindingDuplicatesHashSteps, calculateBloomFilterSteps } from '@/utils/hashUtils';
@@ -11,7 +11,8 @@ import GraphCanvas from '@/components/visualizer/GraphCanvas';
 import PseudocodeViewer from '@/components/visualizer/PseudocodeViewer';
 import DataPanel from '@/components/visualizer/DataPanel';
 import VisualizerHeader, { VisualizerMode } from '@/components/visualizer/VisualizerHeader';
-import { Graph, AlgorithmStep, AlgorithmType } from '@/types/graph';
+import { Graph, AlgorithmStep, AlgorithmType, DFSMode } from '@/types/graph';
+import { clsx } from 'clsx';
 import { Play, ArrowRight, ArrowLeft, SkipForward, SkipBack } from 'lucide-react';
 import { useAlgorithmsTheme } from '@/context/AlgorithmsThemeContext';
 
@@ -59,6 +60,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
   };
 
   const [algorithm, setAlgorithm] = useState<AlgorithmType>(getInitialAlgo());
+  const [dfsMode, setDfsMode] = useState<DFSMode>('TIMESTAMPS');
   
   // User preference for graph direction (only applies to non-MST algorithms)
   const [userPreferredDirected, setUserPreferredDirected] = useState<boolean>(true);
@@ -68,10 +70,10 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
   const isTarjan = (algo: AlgorithmType) => algo === AlgorithmType.TARJAN;
   
   // Helper: These algorithms support the toggle (Exclude MST, Bellman-Ford, Tarjan, Euler, Matching, and Coloring algorithms)
-  const supportsDirectionToggle = (algo: AlgorithmType) => !isMstAlgo(algo) && !isTarjan(algo) && algo !== AlgorithmType.BELLMAN_FORD && algo !== AlgorithmType.EULER && algo !== AlgorithmType.EULER_AD && algo !== AlgorithmType.GREEDY_MATCHING && algo !== AlgorithmType.HOPCROFT_KARP && algo !== AlgorithmType.GREEDY_COLORING && algo !== AlgorithmType.SMALLEST_LAST_COLORING && algo !== AlgorithmType.FORD_FULKERSON && algo !== AlgorithmType.LONG_PATH && algo !== AlgorithmType.HAMILTON_PATH && algo !== AlgorithmType.MINIMUM_EDGE_CUT && algo !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algo !== AlgorithmType.JARVIS_WRAP && algo !== AlgorithmType.LOCAL_REPAIR && algo !== AlgorithmType.FINDING_DUPLICATES_HASH && algo !== AlgorithmType.BLOOM_FILTER && algo !== AlgorithmType.FINDING_DUPLICATES_FLOYD && algo !== AlgorithmType.METRIC_TSP && algo !== AlgorithmType.METRIC_TSP_15;
+  const supportsDirectionToggle = (algo: AlgorithmType) => !(algo === AlgorithmType.DFS && dfsMode === 'TOPOLOGICAL_SORT') && !isMstAlgo(algo) && !isTarjan(algo) && algo !== AlgorithmType.BELLMAN_FORD && algo !== AlgorithmType.EULER && algo !== AlgorithmType.EULER_AD && algo !== AlgorithmType.GREEDY_MATCHING && algo !== AlgorithmType.HOPCROFT_KARP && algo !== AlgorithmType.GREEDY_COLORING && algo !== AlgorithmType.SMALLEST_LAST_COLORING && algo !== AlgorithmType.FORD_FULKERSON && algo !== AlgorithmType.LONG_PATH && algo !== AlgorithmType.HAMILTON_PATH && algo !== AlgorithmType.MINIMUM_EDGE_CUT && algo !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algo !== AlgorithmType.JARVIS_WRAP && algo !== AlgorithmType.LOCAL_REPAIR && algo !== AlgorithmType.FINDING_DUPLICATES_HASH && algo !== AlgorithmType.BLOOM_FILTER && algo !== AlgorithmType.FINDING_DUPLICATES_FLOYD && algo !== AlgorithmType.METRIC_TSP && algo !== AlgorithmType.METRIC_TSP_15;
 
   // Memoized solver to be stable for useEffect deps
-  const solveGraph = useCallback((g: Graph, algo: AlgorithmType) => {
+  const solveGraph = useCallback((g: Graph, algo: AlgorithmType, currentDfsMode: DFSMode = dfsMode) => {
     setIsAutoPlaying(false);
     const startNode = g.nodes.length > 0 ? g.nodes[0].id : '';
     
@@ -81,7 +83,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
     } else if (algo === AlgorithmType.BFS) {
       solutionSteps = calculateBFSSteps(g, startNode);
     } else if (algo === AlgorithmType.DFS) {
-      solutionSteps = calculateDFSSteps(g, startNode);
+      solutionSteps = currentDfsMode === 'TOPOLOGICAL_SORT' ? calculateDFSTopoSteps(g, startNode) : calculateDFSSteps(g, startNode);
     } else if (algo === AlgorithmType.BELLMAN_FORD) {
       solutionSteps = calculateBellmanFordSteps(g, startNode);
     } else if (algo === AlgorithmType.PRIM) {
@@ -133,7 +135,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
     
     setSteps(solutionSteps);
     setCurrentStepIndex(0);
-  }, []);
+  }, [dfsMode]);
 
   // Memoize graph generation
   const generateNewGraph = useCallback(() => {
@@ -257,9 +259,9 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
     const uniqueWeights = algorithm === AlgorithmType.BORUVKA;
     
     // If it's an MST algo, force Undirected. 
-    // If it's Bellman-Ford or Ford-Fulkerson, force Directed.
+    // If it's Bellman-Ford, Ford-Fulkerson, or DFS (Topological Sort), force Directed.
     // Else use user preference.
-    const isDirected = isMstAlgo(algorithm) ? false : (algorithm === AlgorithmType.BELLMAN_FORD ? true : userPreferredDirected);
+    const isDirected = isMstAlgo(algorithm) ? false : ((algorithm === AlgorithmType.BELLMAN_FORD || (algorithm === AlgorithmType.DFS && dfsMode === 'TOPOLOGICAL_SORT')) ? true : userPreferredDirected);
     
     // Use negative weights for Bellman-Ford AND MST Algorithms
     const hasNegativeWeights = algorithm === AlgorithmType.BELLMAN_FORD || isMstAlgo(algorithm);
@@ -269,10 +271,13 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
     const minEdges = isUndirectedPathfinding ? 11 : 15;
     const maxEdges = isUndirectedPathfinding ? 14 : 20;
 
-    const newGraph = generateRandomGraph(9, width, height, isDirected, uniqueWeights, hasNegativeWeights, minEdges, maxEdges);
+    let newGraph = generateRandomGraph(9, width, height, isDirected, uniqueWeights, hasNegativeWeights, minEdges, maxEdges);
+    if (algorithm === AlgorithmType.DFS && dfsMode === 'TOPOLOGICAL_SORT') {
+        newGraph = removeCyclesFromGraph(newGraph);
+    }
     setGraph(newGraph);
-    solveGraph(newGraph, algorithm);
-  }, [algorithm, userPreferredDirected, solveGraph]);
+    solveGraph(newGraph, algorithm, dfsMode);
+  }, [algorithm, dfsMode, userPreferredDirected, solveGraph]);
 
   // Init
   useEffect(() => {
@@ -290,7 +295,7 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
        const isHopcroftKarp = algorithm === AlgorithmType.HOPCROFT_KARP;
        const graphHasUniqueWeights = graph.hasUniqueWeights === true;
        
-       const shouldBeDirected = (isMstAlgo(algorithm) || isTarjan || isEuler || isGreedyMatching || isHopcroftKarp || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING || algorithm === AlgorithmType.LONG_PATH || algorithm === AlgorithmType.HAMILTON_PATH || algorithm === AlgorithmType.MINIMUM_EDGE_CUT || algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK || algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR || algorithm === AlgorithmType.FINDING_DUPLICATES_HASH || algorithm === AlgorithmType.BLOOM_FILTER || algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) ? false : (algorithm === AlgorithmType.BELLMAN_FORD || algorithm === AlgorithmType.FORD_FULKERSON || algorithm === AlgorithmType.FINDING_DUPLICATES_FLOYD ? true : userPreferredDirected);
+       const shouldBeDirected = (isMstAlgo(algorithm) || isTarjan || isEuler || isGreedyMatching || isHopcroftKarp || algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING || algorithm === AlgorithmType.LONG_PATH || algorithm === AlgorithmType.HAMILTON_PATH || algorithm === AlgorithmType.MINIMUM_EDGE_CUT || algorithm === AlgorithmType.SMALLEST_ENCLOSING_DISK || algorithm === AlgorithmType.JARVIS_WRAP || algorithm === AlgorithmType.LOCAL_REPAIR || algorithm === AlgorithmType.FINDING_DUPLICATES_HASH || algorithm === AlgorithmType.BLOOM_FILTER || algorithm === AlgorithmType.METRIC_TSP || algorithm === AlgorithmType.METRIC_TSP_15) ? false : (algorithm === AlgorithmType.BELLMAN_FORD || algorithm === AlgorithmType.FORD_FULKERSON || algorithm === AlgorithmType.FINDING_DUPLICATES_FLOYD || (algorithm === AlgorithmType.DFS && dfsMode === 'TOPOLOGICAL_SORT') ? true : userPreferredDirected);
        const graphIsDirected = graph.isDirected !== false; // Default to true if undefined
 
        const isBellmanFord = algorithm === AlgorithmType.BELLMAN_FORD;
@@ -323,11 +328,15 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
            generateNewGraph();
        } else if (!shouldHaveNegative && graphHasNegative) {
            generateNewGraph();
+       } else if (algorithm === AlgorithmType.DFS && dfsMode === 'TOPOLOGICAL_SORT' && hasDirectedCycle(graph)) {
+           const acyclicGraph = removeCyclesFromGraph(graph);
+           setGraph(acyclicGraph);
+           solveGraph(acyclicGraph, algorithm, dfsMode);
        } else {
-           solveGraph(graph, algorithm);
+           solveGraph(graph, algorithm, dfsMode);
        }
     }
-  }, [algorithm, userPreferredDirected, graph, generateNewGraph, solveGraph]);
+  }, [algorithm, dfsMode, userPreferredDirected, graph, generateNewGraph, solveGraph]);
 
   // Auto Play Logic
   useEffect(() => {
@@ -554,18 +563,47 @@ const GraphMode: React.FC<GraphModeProps> = ({ mode, setMode, onBack, initialAlg
               transition={{ duration: 0.3 }}
               className="flex flex-col gap-6"
             >
+              {/* DFS Mode Switcher */}
+              {algorithm === AlgorithmType.DFS && (
+                <div className={clsx("flex p-1 rounded-lg border w-fit", isLight ? "bg-slate-200/70 border-slate-300" : "bg-slate-800/50 border-slate-800")}>
+                  <button
+                    onClick={() => setDfsMode('TOPOLOGICAL_SORT')}
+                    className={clsx(
+                      "px-3 py-1.5 text-xs font-bold rounded-md transition-all",
+                      dfsMode === 'TOPOLOGICAL_SORT'
+                        ? "bg-indigo-600 text-white shadow-sm"
+                        : (isLight ? "text-slate-600 hover:text-slate-900" : "text-slate-500 hover:text-slate-300")
+                    )}
+                  >
+                    DFS (TOPOLOGICAL SORT)
+                  </button>
+                  <button
+                    onClick={() => setDfsMode('TIMESTAMPS')}
+                    className={clsx(
+                      "px-3 py-1.5 text-xs font-bold rounded-md transition-all",
+                      dfsMode === 'TIMESTAMPS'
+                        ? "bg-indigo-600 text-white shadow-sm"
+                        : (isLight ? "text-slate-600 hover:text-slate-900" : "text-slate-500 hover:text-slate-300")
+                    )}
+                  >
+                    DFS (TIMESTAMPS)
+                  </button>
+                </div>
+              )}
+
               {/* Pseudocode */}
               <div className="shrink-0 h-auto">
                  <PseudocodeViewer 
                    activeLine={currentStep.lineNumber} 
                    algorithm={algorithm} 
                    isDirected={graph.isDirected !== false}
+                   dfsMode={dfsMode}
                  />
               </div>
               
               {/* Data Visualizers */}
               <div className="shrink-0 pb-4">
-                 <DataPanel step={currentStep} algorithm={algorithm} graph={graph!} />
+                 <DataPanel step={currentStep} algorithm={algorithm} graph={graph!} dfsMode={dfsMode} />
               </div>
             </motion.div>
           </AnimatePresence>

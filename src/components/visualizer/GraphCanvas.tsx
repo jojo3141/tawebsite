@@ -1126,6 +1126,13 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
                 if (isSourceRemoved || isTargetRemoved) opacity = 0;
             }
 
+            if (algorithm === AlgorithmType.DFS && currentStep.deletedNodes) {
+                const isFinal = currentStep.description.startsWith("Algorithm Complete");
+                if (!isFinal && (currentStep.deletedNodes.includes(edge.source) || currentStep.deletedNodes.includes(edge.target))) {
+                    opacity = 0;
+                }
+            }
+
             return (
               <g key={edge.id || `${edge.source}-${edge.target}-${i}`}>
                 {/* The Edge Line */}
@@ -1215,6 +1222,12 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
             }
             if (algorithm === AlgorithmType.SMALLEST_LAST_COLORING) {
                 if (currentStep.processedSet?.includes(node.id)) nodeOpacity = 0;
+            }
+            if (algorithm === AlgorithmType.DFS && currentStep.deletedNodes) {
+                const isFinal = currentStep.description.startsWith("Algorithm Complete");
+                if (!isFinal && currentStep.deletedNodes.includes(node.id)) {
+                    nodeOpacity = 0;
+                }
             }
 
             return (
