@@ -59,13 +59,13 @@ export const lessonsAD: Lesson[] = [
     title: "Graphs",
     description: "Definitionen, Eulerzyklus, Hamiltonkreis, Adjazenz-Matrix/Listen, Graphen Beweise",
     pdf: "/lessons/AuD_HS26/week-8.pdf",
-  },
+  }/*,
   {
     week: 9,
     title: "DFS & BFS",
     description: "DAGs, DFS, Topologische Sortierung, Kantenklassifizierung, BFS",
     pdf: "/lessons/AuD_HS26/week-9.pdf",
-  }
+  }*/
 ];
 
 export const lessonsAW: Lesson[] = [
