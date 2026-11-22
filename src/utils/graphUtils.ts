@@ -733,10 +733,16 @@ export const calculateBellmanFordSteps = (graph: Graph, startNodeId: string): Al
   const steps: AlgorithmStep[] = [];
   const distances: Record<string, number> = {};
   const parents: Record<string, string | null> = {};
-  // queue unused
 
   let stepCounter = 0;
-  const pushStep = (line: number, desc: string, u: string | null = null, v: string | null = null, edge: { source: string, target: string } | null = null) => {
+  const pushStep = (
+    line: number,
+    desc: string,
+    u: string | null = null,
+    v: string | null = null,
+    edge: { source: string, target: string } | null = null,
+    edges: { source: string, target: string }[] = []
+  ) => {
     steps.push({
       stepId: stepCounter++,
       lineNumber: line,
@@ -753,83 +759,77 @@ export const calculateBellmanFordSteps = (graph: Graph, startNodeId: string): Al
       processedSet: [], // BF re-visits nodes, 'processed' isn't a strict set like Dijkstra
       currentNodeId: u,
       currentNeighborId: v,
-      activeEdge: edge
+      activeEdge: edge,
+      activeEdges: edges
     });
   };
 
   // 1. Initialization
   graph.nodes.forEach(n => {
-    if (n.id !== startNodeId) {
-      distances[n.id] = Infinity;
-      parents[n.id] = null;
-    }
+    distances[n.id] = n.id === startNodeId ? 0 : Infinity;
+    parents[n.id] = null;
   });
-  pushStep(1, "Initialize all v ≠ s:");
-  pushStep(2, "d[v] ← ∞");
-  pushStep(3, "p[v] ← null");
-
-  distances[startNodeId] = 0;
-  parents[startNodeId] = null;
-  pushStep(4, `Initialize start node ${startNodeId}: d=0`, startNodeId);
+  pushStep(1, `Initialize T[${startNodeId}] ← 0, T[v] ← ∞ for all v ∈ V \\ {${startNodeId}}`, startNodeId);
 
   const n = graph.nodes.length;
-  const edges = graph.edges;
-  // Sorting edges allows for a predictable order during visualization
-  const sortedEdges = [...edges].sort((a, b) => {
-    if (a.source === b.source) return a.target.localeCompare(b.target);
-    return a.source.localeCompare(b.source);
-  });
+  const sortedNodes = [...graph.nodes].sort((a, b) => a.id.localeCompare(b.id));
 
-  // 5. Loop i = 1 to n-1
-  for (let i = 1; i < n; i++) {
-    pushStep(5, `Start Iteration i = ${i} (of ${n - 1})`, null, null, null);
+  // 2. Loop k = 1 to n-1
+  for (let k = 1; k < n; k++) {
+    pushStep(2, `Start Iteration k = ${k} (of ${n - 1})`);
 
-    // 6. Loop edges
-    for (const edge of sortedEdges) {
-      // Helper for relaxation
-      const relax = (u: string, v: string, w: number) => {
-        // Pass explicit source/target to pushStep so we know exactly which direction is being checked
-        pushStep(6, `Check edge ${graph.isDirected !== false ? `(${u}, ${v})` : `{${u}, ${v}}`}`, u, v, { source: u, target: v });
+    // 3. Loop v in V
+    for (const node of sortedNodes) {
+      const v = node.id;
+      pushStep(3, `Inspect node v = ${v}`, v);
 
-        // 7. Relaxation check
-        const du = distances[u];
-        const dv = distances[v];
-
-        // If d[u] is infinity, we can't relax.
-        if (du === Infinity) {
-          pushStep(7, `d[${u}] is ∞, cannot improve`, u, v, { source: u, target: v });
-          return;
+      // Find all incoming edges (u, v) in E
+      const incomingEdges: { u: string, weight: number }[] = [];
+      graph.edges.forEach(e => {
+        if (e.target === v) {
+          incomingEdges.push({ u: e.source, weight: e.weight });
+        } else if (graph.isDirected === false && e.source === v) {
+          incomingEdges.push({ u: e.target, weight: e.weight });
         }
+      });
+      incomingEdges.sort((a, b) => a.u.localeCompare(b.u));
 
-        if (du + w < dv) {
-          pushStep(7, `d[${u}] (${du}) + ${w} < d[${v}] (${dv === Infinity ? '∞' : dv}). True.`, u, v, { source: u, target: v });
+      if (incomingEdges.length === 0) {
+        pushStep(4, `No incoming edges for ${v}. T[${v}] remains ${distances[v] === Infinity ? '∞' : distances[v]}`, v);
+        continue;
+      }
 
-          distances[v] = du + w;
-          parents[v] = u;
-          pushStep(8, `Update d[${v}] = ${du + w}`, u, v, { source: u, target: v });
-          pushStep(9, `Update p[${v}] = ${u}`, u, v, { source: u, target: v });
-        } else {
-          pushStep(7, `d[${u}] + ${w} ≥ d[${v}]. No update.`, u, v, { source: u, target: v });
+      const activeEdgesList = incomingEdges.map(e => ({ source: e.u, target: v }));
+      const oldTv = distances[v];
+      let bestDist = oldTv;
+      let bestParent: string | null = parents[v];
+
+      for (const { u, weight: w } of incomingEdges) {
+        const tu = distances[u];
+        if (tu !== Infinity && tu + w < bestDist) {
+          bestDist = tu + w;
+          bestParent = u;
         }
-      };
+      }
 
-      // Forward Direction
-      relax(edge.source, edge.target, edge.weight);
-
-      // If Undirected, we must also relax the other way within the same loop iteration for this edge
-      if (graph.isDirected === false) {
-        relax(edge.target, edge.source, edge.weight);
+      const oldTvStr = oldTv === Infinity ? '∞' : `${oldTv}`;
+      if (bestDist < oldTv) {
+        distances[v] = bestDist;
+        parents[v] = bestParent;
+        pushStep(4, `Update T[${v}] ← ${bestDist} via (${bestParent}, ${v}) (was ${oldTvStr})`, v, bestParent, null, activeEdgesList);
+      } else {
+        pushStep(4, `Check incoming edges of ${v}: T[${v}] = ${oldTvStr} (no improvement)`, v, null, null, activeEdgesList);
       }
     }
   }
 
-  // Create final step with populated processedSet for visualization of Shortest Path Tree
+  // 5. Return T
   const finalizedNodes = Object.keys(distances).filter(id => distances[id] !== Infinity);
 
   steps.push({
     stepId: stepCounter++,
     lineNumber: 5,
-    description: "Algorithm Complete (Shortest Path Tree Finalized).",
+    description: "Algorithm Complete: Return T (Shortest Path Tree Finalized).",
     distances: { ...distances },
     parents: { ...parents },
     discoveryTimes: {},

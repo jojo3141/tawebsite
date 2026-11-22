@@ -359,9 +359,13 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
         return defaultNodeColor;
     }
 
-    // BELLMAN_FORD Override: Highlight both endpoints of active edge in Blue
-    if (algorithm === AlgorithmType.BELLMAN_FORD && currentStep.activeEdge) {
-        if (nodeId === currentStep.activeEdge.source || nodeId === currentStep.activeEdge.target) {
+    // BELLMAN_FORD Override: Highlight v in Yellow and incoming neighbors u in Blue
+    if (algorithm === AlgorithmType.BELLMAN_FORD) {
+        if (currentStep.currentNodeId === nodeId) return yellowColor;
+        if (currentStep.activeEdges?.some(e => e.source === nodeId || e.target === nodeId)) {
+            return blueColor;
+        }
+        if (currentStep.activeEdge && (nodeId === currentStep.activeEdge.source || nodeId === currentStep.activeEdge.target)) {
             return blueColor;
         }
     }
@@ -466,11 +470,17 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
     
     if (currentStep.activeEdge?.id) {
         isActive = (!!edgeId && currentStep.activeEdge.id === edgeId);
-    } else {
-        isActive = currentStep.activeEdge?.source === source && currentStep.activeEdge?.target === target;
+    } else if (currentStep.activeEdge) {
+        isActive = currentStep.activeEdge.source === source && currentStep.activeEdge.target === target;
         if (!isActive && graph.isDirected === false) {
-            isActive = currentStep.activeEdge?.source === target && currentStep.activeEdge?.target === source;
+            isActive = currentStep.activeEdge.source === target && currentStep.activeEdge.target === source;
         }
+    }
+    if (!isActive && currentStep.activeEdges && currentStep.activeEdges.length > 0) {
+        isActive = currentStep.activeEdges.some(e =>
+            (e.source === source && e.target === target) ||
+            (graph.isDirected === false && e.source === target && e.target === source)
+        );
     }
 
     const defaultEdgeColor = isLight ? '#94a3b8' : '#64748b';
@@ -660,6 +670,12 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ graph: initialGraph, currentS
     // Bidirectional check for stroke width
     if (!isActive && graph.isDirected === false) {
         isActive = currentStep.activeEdge?.source === target && currentStep.activeEdge?.target === source;
+    }
+    if (!isActive && currentStep.activeEdges && currentStep.activeEdges.length > 0) {
+        isActive = currentStep.activeEdges.some(e =>
+            (e.source === source && e.target === target) ||
+            (graph.isDirected === false && e.source === target && e.target === source)
+        );
     }
     
     // Only consider parents for stroke width if NOT MST algo

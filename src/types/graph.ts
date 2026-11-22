@@ -115,6 +115,7 @@ export interface AlgorithmStep {
   currentNodeId: string | null; // u
   currentNeighborId: string | null; // v
   activeEdge: { source: string, target: string, id?: string } | null;
+  activeEdges?: { source: string, target: string, id?: string }[];
   nodeColors?: Record<string, number>; // Maps nodeId to Color Index (1, 2, 3...)
 
   // Ford-Fulkerson Specific
@@ -376,28 +377,14 @@ export const PSEUDOCODE_DFS_TOPO = [
 ];
 
 export const PSEUDOCODE_BELLMAN_FORD = [
-  { line: 1, text: "for each v ≠ s:", indent: 0 },
-  { line: 2, text: "d[v] ← ∞", indent: 2 },
-  { line: 3, text: "p[v] ← null", indent: 2 },
-  { line: 4, text: "d[s] ← 0, p[s] ← null", indent: 0 },
-  { line: 5, text: "for i = 1, ..., n - 1 do", indent: 0 },
-  { line: 6, text: "for each (u, v) ∈ E do", indent: 2 },
-  { line: 7, text: "if d[u] + w(u, v) < d[v] then", indent: 4 },
-  { line: 8, text: "d[v] ← d[u] + w(u, v)", indent: 6 },
-  { line: 9, text: "p[v] ← u", indent: 6 },
+  { line: 1, text: "T[s] ← 0; T[v] ← ∞ für alle v ∈ V \\ {s}", indent: 0 },
+  { line: 2, text: "for k ← 1, ..., n - 1 do", indent: 0 },
+  { line: 3, text: "for v ∈ V do", indent: 2 },
+  { line: 4, text: "T[v] ← min { T[v], min_{(u,v)∈E} (T[u] + c(u, v)) }", indent: 4 },
+  { line: 5, text: "return T", indent: 0 },
 ];
 
-export const PSEUDOCODE_BELLMAN_FORD_UNDIRECTED = [
-  { line: 1, text: "for each v ≠ s:", indent: 0 },
-  { line: 2, text: "d[v] ← ∞", indent: 2 },
-  { line: 3, text: "p[v] ← null", indent: 2 },
-  { line: 4, text: "d[s] ← 0, p[s] ← null", indent: 0 },
-  { line: 5, text: "for i = 1, ..., n - 1 do", indent: 0 },
-  { line: 6, text: "for each {u, v} ∈ E do", indent: 2 },
-  { line: 7, text: "if d[u] + w({u, v}) < d[v] then", indent: 4 },
-  { line: 8, text: "d[v] ← d[u] + w({u, v})", indent: 6 },
-  { line: 9, text: "p[v] ← u", indent: 6 },
-];
+export const PSEUDOCODE_BELLMAN_FORD_UNDIRECTED = PSEUDOCODE_BELLMAN_FORD;
 
 export const PSEUDOCODE_PRIM = [
   { line: 1, text: "F ← Ø", indent: 0 },

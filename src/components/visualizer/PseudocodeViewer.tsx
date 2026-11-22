@@ -255,6 +255,11 @@ const PseudocodeViewer: React.FC<PseudocodeViewerProps> = ({ activeLine, algorit
                       if (part === 'vorne') return <em key={i} className="italic">vorne</em>;
                       return part;
                     })
+                  : algorithm === AlgorithmType.BELLMAN_FORD
+                  ? item.text.split(/(min_\{\(u,v\)∈E\})/g).map((part, i) => {
+                      if (part === 'min_{(u,v)∈E}') return <React.Fragment key={i}>min<sub className="text-[0.75em] leading-none">(u,v)∈E</sub></React.Fragment>;
+                      return part;
+                    })
                   : item.text}
               </div>
             );

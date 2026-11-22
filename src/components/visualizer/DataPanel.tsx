@@ -184,7 +184,6 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph, dfsMode =
   const { isLight } = useAlgorithmsTheme();
   const listRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<HTMLDivElement>(null);
-  const activeEdgeRef = useRef<HTMLDivElement>(null);
   const activeComponentRef = useRef<HTMLDivElement>(null);
   
   // Refs for Kruskal's sorted list
@@ -199,19 +198,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph, dfsMode =
         listRef.current.scrollTop = 0;
     }
 
-    // 2. Bellman Ford Edge List Scrolling (Keep this as it highlights active item)
-    if (algorithm === AlgorithmType.BELLMAN_FORD && listRef.current) {
-        setTimeout(() => {
-            if (activeEdgeRef.current && listRef.current) {
-                const container = listRef.current;
-                const element = activeEdgeRef.current;
-                const topPos = element.offsetTop - 4; 
-                container.scrollTo({ top: topPos, behavior: 'smooth' });
-            }
-        }, 50);
-    }
-
-    // 3. Kruskal Sorted Edge List Scrolling
+    // 2. Kruskal Sorted Edge List Scrolling
     if (algorithm === AlgorithmType.KRUSKAL && sortedListRef.current) {
         setTimeout(() => {
             if (activeSortedEdgeRef.current && sortedListRef.current) {
@@ -271,24 +258,6 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph, dfsMode =
           if (!componentSets[root]) componentSets[root] = [];
           componentSets[root].push(node);
       });
-  }
-
-  // Sort edges for Bellman-Ford display
-  let bfSortedEdges: {source: string, target: string, weight: number}[] = [];
-  if (algorithm === AlgorithmType.BELLMAN_FORD) {
-      const baseEdges = [...graph.edges].sort((a, b) => {
-        if (a.source === b.source) return a.target.localeCompare(b.target);
-        return a.source.localeCompare(b.source);
-      });
-
-      if (graph.isDirected !== false) {
-        bfSortedEdges = baseEdges;
-      } else {
-          baseEdges.forEach(edge => {
-             bfSortedEdges.push({ source: edge.source, target: edge.target, weight: edge.weight });
-             bfSortedEdges.push({ source: edge.target, target: edge.source, weight: edge.weight });
-          });
-      }
   }
 
   // Sort edges for Kruskal display (Must match solver sort)
@@ -396,7 +365,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph, dfsMode =
     <div className="flex flex-col gap-4">
       
       {/* --- TOP SECTION: STRUCTURES --- */}
-      <div className={`${algorithm === AlgorithmType.TARJAN ? 'hidden' : (isHopcroftKarp || isFordFulkerson || isLongPath || isHamiltonPath || isMinEdgeCut ? 'h-auto' : 'h-64')} ${topSectionClass}`}>
+      <div className={`${(algorithm === AlgorithmType.TARJAN || isBellman) ? 'hidden' : (isHopcroftKarp || isFordFulkerson || isLongPath || isHamiltonPath || isMinEdgeCut ? 'h-auto' : 'h-64')} ${topSectionClass}`}>
         
         {/* GRAPH COLORING: NODE ORDER PANEL (Replaces standard Queue/Visited panels) */}
         {(algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING) ? (
@@ -808,35 +777,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph, dfsMode =
         ) : (
         /* STANDARD PANELS FOR OTHER ALGORITHMS */
         <>
-            {isBellman ? (
-           <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden w-full">
-             <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-indigo-300 uppercase tracking-wider">
-               Edge Order
-             </div>
-             <div 
-               ref={listRef}
-               className="p-2 overflow-auto flex-1 relative"
-             >
-               {bfSortedEdges.map((edge, idx) => {
-                 const isActive = step.activeEdge?.source === edge.source && step.activeEdge?.target === edge.target;
-                 return (
-                   <div 
-                     key={`${edge.source}-${edge.target}-${idx}`} 
-                     ref={isActive ? activeEdgeRef : null}
-                     className={`flex justify-between items-center px-3 py-2 mb-1 rounded text-sm font-mono transition-colors ${
-                       isActive 
-                         ? 'bg-indigo-600/40 border border-indigo-500 text-white' 
-                         : 'bg-slate-700/20 text-slate-500 border border-transparent'
-                     }`}
-                   >
-                     <span>({edge.source} → {edge.target})</span>
-                     <span className="text-xs">w: {edge.weight}</span>
-                   </div>
-                 );
-               })}
-             </div>
-           </div>
-        ) : isEuler ? (
+            {isEuler ? (
            // EULER VIEWS
            <>
               <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden w-full">
@@ -1176,7 +1117,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph, dfsMode =
                )}
            </>
 
-         ) : (algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algorithm !== AlgorithmType.JARVIS_WRAP && algorithm !== AlgorithmType.LOCAL_REPAIR && algorithm !== AlgorithmType.FINDING_DUPLICATES_HASH && algorithm !== AlgorithmType.BLOOM_FILTER && algorithm !== AlgorithmType.FINDING_DUPLICATES_FLOYD && algorithm !== AlgorithmType.METRIC_TSP && algorithm !== AlgorithmType.METRIC_TSP_15) && (
+         ) : (algorithm !== AlgorithmType.BELLMAN_FORD && algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algorithm !== AlgorithmType.JARVIS_WRAP && algorithm !== AlgorithmType.LOCAL_REPAIR && algorithm !== AlgorithmType.FINDING_DUPLICATES_HASH && algorithm !== AlgorithmType.BLOOM_FILTER && algorithm !== AlgorithmType.FINDING_DUPLICATES_FLOYD && algorithm !== AlgorithmType.METRIC_TSP && algorithm !== AlgorithmType.METRIC_TSP_15) && (
            <>
              {/* PANEL 1: Queue / Stack / Set F */}
              <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden">
@@ -1461,7 +1402,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph, dfsMode =
                 <tr>
                   <th className="px-4 py-2">Node</th>
                   <th className={`px-4 py-2 ${(algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BELLMAN_FORD) ? 'normal-case' : ''}`}>
-                    {algorithm === AlgorithmType.DFS ? 'Pre / Post' : (algorithm === AlgorithmType.BFS ? 'Distance' : (algorithm === AlgorithmType.PRIM ? 'In Set S?' : (algorithm === AlgorithmType.KRUSKAL ? 'rep[v]' : 'd[v]')))}
+                    {algorithm === AlgorithmType.DFS ? 'Pre / Post' : (algorithm === AlgorithmType.BFS ? 'Distance' : (algorithm === AlgorithmType.PRIM ? 'In Set S?' : (algorithm === AlgorithmType.KRUSKAL ? 'rep[v]' : (algorithm === AlgorithmType.BELLMAN_FORD ? 'T[v]' : 'd[v]'))))}
                   </th>
                   {algorithm === AlgorithmType.BFS && (
                     <th className="px-4 py-2">Enter / Leave</th>
