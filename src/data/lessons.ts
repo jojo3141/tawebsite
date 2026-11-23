@@ -65,6 +65,12 @@ export const lessonsAD: Lesson[] = [
     title: "DFS & BFS",
     description: "DAGs, DFS, Topologische Sortierung, Kantenklassifizierung, BFS",
     pdf: "/lessons/AuD_HS26/week-9.pdf",
+  },
+  {
+    week: 10,
+    title: "Shortest Paths",
+    description: "Shortest Paths in DAGs, Bellman-Ford, negative cycle detection",
+    pdf: "/lessons/AuD_HS26/week-10.pdf",
   }
 ];
 
