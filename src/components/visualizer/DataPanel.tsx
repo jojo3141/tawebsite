@@ -272,7 +272,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph, dfsMode =
 
   const getLeftPanelTitle = () => {
     if (algorithm === AlgorithmType.DFS) return 'Recursion Stack';
-    if (algorithm === AlgorithmType.DIJKSTRA) return 'Priority Queue (Q)';
+    if (algorithm === AlgorithmType.DIJKSTRA) return 'Priority Queue (Q) / Min-Heap';
     if (algorithm === AlgorithmType.PRIM || algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA) return 'MST EDGES (F)';
     if (algorithm === AlgorithmType.EULER || algorithm === AlgorithmType.EULER_AD) return 'Current Tour (W)';
     return 'Queue (Q)';
@@ -331,7 +331,8 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph, dfsMode =
   const isMinEdgeCut = algorithm === AlgorithmType.MINIMUM_EDGE_CUT;
   const isColoringAlgorithm = isGreedyColoring || isSmallestLastColoring;
   
-  const topSectionClass = isBellman ? 'flex' : (isKruskal ? 'grid grid-cols-3 gap-4' : (isEuler || isGreedyMatching || isHopcroftKarp || isColoringAlgorithm || isFordFulkerson || isLongPath || isHamiltonPath || isMinEdgeCut ? 'flex flex-col gap-4' : 'grid grid-cols-2 gap-4'));
+  const isDijkstra = algorithm === AlgorithmType.DIJKSTRA;
+  const topSectionClass = isBellman ? 'flex' : (isKruskal ? 'grid grid-cols-3 gap-4' : (isEuler || isGreedyMatching || isHopcroftKarp || isColoringAlgorithm || isFordFulkerson || isLongPath || isHamiltonPath || isMinEdgeCut ? 'flex flex-col gap-4' : (isDijkstra ? 'grid grid-cols-[1.45fr_0.55fr] gap-4' : 'grid grid-cols-2 gap-4')));
 
   // --- BORUVKA SCROLL TARGET LOGIC ---
   let boruvkaScrollTargetRoot: string | null = null;
@@ -365,7 +366,7 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph, dfsMode =
     <div className="flex flex-col gap-4">
       
       {/* --- TOP SECTION: STRUCTURES --- */}
-      <div className={`${(algorithm === AlgorithmType.TARJAN || isBellman) ? 'hidden' : (isHopcroftKarp || isFordFulkerson || isLongPath || isHamiltonPath || isMinEdgeCut ? 'h-auto' : 'h-64')} ${topSectionClass}`}>
+      <div className={`${(algorithm === AlgorithmType.TARJAN || isBellman) ? 'hidden' : (isHopcroftKarp || isFordFulkerson || isLongPath || isHamiltonPath || isMinEdgeCut ? 'h-auto' : (isDijkstra ? 'h-72' : 'h-64'))} ${topSectionClass}`}>
         
         {/* GRAPH COLORING: NODE ORDER PANEL (Replaces standard Queue/Visited panels) */}
         {(algorithm === AlgorithmType.GREEDY_COLORING || algorithm === AlgorithmType.SMALLEST_LAST_COLORING) ? (
@@ -1119,69 +1120,266 @@ const DataPanel: React.FC<DataPanelProps> = ({ step, algorithm, graph, dfsMode =
 
          ) : (algorithm !== AlgorithmType.BELLMAN_FORD && algorithm !== AlgorithmType.TARJAN && algorithm !== AlgorithmType.SMALLEST_ENCLOSING_DISK && algorithm !== AlgorithmType.JARVIS_WRAP && algorithm !== AlgorithmType.LOCAL_REPAIR && algorithm !== AlgorithmType.FINDING_DUPLICATES_HASH && algorithm !== AlgorithmType.BLOOM_FILTER && algorithm !== AlgorithmType.FINDING_DUPLICATES_FLOYD && algorithm !== AlgorithmType.METRIC_TSP && algorithm !== AlgorithmType.METRIC_TSP_15) && (
            <>
-             {/* PANEL 1: Queue / Stack / Set F */}
-             <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden">
-               <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-purple-400 uppercase tracking-wider">
-                 {getLeftPanelTitle()}
-               </div>
-               <div 
-                 ref={listRef}
-                 className={`p-2 overflow-auto flex-1 gap-1 flex flex-col`}
-               >
-                 <AnimatePresence initial={false}>
-                   {/* DFS Stack View */}
-                   {algorithm === AlgorithmType.DFS && (
-                     step.stack.length === 0 ? <div className="text-slate-600 text-center text-xs py-4 italic">Empty</div> :
-                     [...step.stack].reverse().map((nodeId, idx) => (
-                       <motion.div
-                         key={`${nodeId}-${step.stack.length - 1 - idx}`}
-                         initial={{ opacity: 0, y: -10 }}
-                         animate={{ opacity: 1, y: 0 }}
-                         exit={{ opacity: 0, y: -10 }}
-                         className={isLight ? "bg-purple-100 border-l-4 border-purple-600 px-3 py-2 rounded text-sm text-purple-950 font-bold font-mono shrink-0 shadow-sm" : "bg-purple-900/30 border-l-2 border-purple-500 px-3 py-2 rounded text-sm text-purple-200 font-mono shrink-0"}
-                       >
-                         {dfsMode === 'TOPOLOGICAL_SORT' ? `VISIT(${nodeId})` : `DFS-VISIT(${nodeId})`}
-                       </motion.div>
-                     ))
-                   )}
+              {/* PANEL 1: Queue / Stack / Set F */}
+              <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col overflow-hidden">
+                <div className="px-3 py-2 bg-slate-900 border-b border-slate-700 text-xs font-bold text-purple-400 uppercase tracking-wider">
+                  {getLeftPanelTitle()}
+                </div>
+                {algorithm === AlgorithmType.DIJKSTRA ? (
+                  <div className="flex-1 flex flex-col overflow-hidden">
+                    {step.queue.length === 0 ? (
+                      <div className="text-slate-600 text-center text-xs py-4 italic flex-1 flex items-center justify-center">
+                        Empty
+                      </div>
+                    ) : (
+                      (() => {
+                        const maxLevel = Math.floor(Math.log2(step.queue.length));
+                        const PADDING_PCT = 7;
+                        const usableWidth = 100 - 2 * PADDING_PCT;
+                        const topY = maxLevel >= 3 ? 22 : 28;
+                        const levelGap = maxLevel >= 3 ? 42 : maxLevel === 2 ? 52 : 58;
 
-                   {/* Prim / Kruskal / Boruvka MST View */}
-                   {(algorithm === AlgorithmType.PRIM || algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA) && (
-                     step.mstEdges.length === 0 ? <div className="text-slate-600 text-center text-xs py-4 italic">Empty</div> :
-                     step.mstEdges.map((edge, idx) => (
-                       <motion.div
-                         key={`${edge.source}-${edge.target}-${idx}`}
-                         initial={{ opacity: 0, x: -10 }}
-                         animate={{ opacity: 1, x: 0 }}
-                         className={isLight ? "flex items-center justify-between bg-amber-100 border-2 border-amber-500 px-3 py-2 rounded text-sm text-amber-950 font-bold font-mono shrink-0 shadow-sm" : "flex items-center justify-between bg-amber-900/30 border border-amber-700/50 px-3 py-2 rounded text-sm text-amber-200 font-mono shrink-0"}
-                       >
-                         <span>&#123;{edge.source}, {edge.target}&#125;</span>
-                       </motion.div>
-                     ))
-                   )}
+                        const getHighlightStyle = (nodeId: string) => {
+                          const isHighlighted = step.heapHighlights?.nodeIds.includes(nodeId);
+                          const hType = isHighlighted ? step.heapHighlights?.type : undefined;
 
-                   {/* BFS/Dijkstra Queue View */}
-                   {(algorithm === AlgorithmType.DIJKSTRA || algorithm === AlgorithmType.BFS) && (
-                     step.queue.length === 0 ? <div className="text-slate-600 text-center text-xs py-4 italic">Empty</div> :
-                     step.queue.map((item, idx) => (
-                       <motion.div
-                         key={`${item.nodeId}-${item.distance}-${idx}`} 
-                         layout
-                         initial={{ opacity: 0, scale: 0.8 }}
-                         animate={{ opacity: 1, scale: 1 }}
-                         exit={{ opacity: 0, scale: 0.8 }}
-                         className={isLight ? "flex justify-between items-center bg-slate-100 border border-slate-300 px-3 py-2 rounded text-sm shrink-0 shadow-sm" : "flex justify-between items-center bg-slate-700/50 px-3 py-2 rounded text-sm shrink-0"}
-                       >
-                         <span className={isLight ? "font-extrabold text-slate-900" : "font-bold text-slate-200"}>{item.nodeId}</span>
-                         <span className={isLight ? "bg-blue-100 border border-blue-400 text-blue-950 px-2 py-0.5 rounded text-xs font-mono font-bold" : "bg-slate-900 text-slate-400 px-2 py-0.5 rounded text-xs font-mono"}>
-                             {item.distance === Infinity ? '∞' : item.distance}
-                         </span>
-                       </motion.div>
-                     ))
-                   )}
-                 </AnimatePresence>
-               </div>
-             </div>
+                          if (hType === 'insert' || hType === 'update') {
+                            return {
+                              isHighlighted: true,
+                              bgClass: isLight ? 'bg-blue-100' : 'bg-blue-600/40',
+                              borderClass: isLight ? 'border-blue-600 ring-2 ring-blue-400/50' : 'border-blue-400 ring-2 ring-blue-400/50',
+                              textClass: isLight ? 'text-blue-950' : 'text-white',
+                              distTextClass: isLight ? 'text-blue-800' : 'text-blue-200',
+                            };
+                          }
+                          if (hType === 'compare') {
+                            return {
+                              isHighlighted: true,
+                              bgClass: isLight ? 'bg-amber-100' : 'bg-amber-500/35',
+                              borderClass: isLight ? 'border-amber-500 ring-2 ring-amber-400/50' : 'border-amber-400 ring-2 ring-amber-400/50',
+                              textClass: isLight ? 'text-amber-950' : 'text-amber-100',
+                              distTextClass: isLight ? 'text-amber-800' : 'text-amber-200',
+                            };
+                          }
+                          if (hType === 'swap') {
+                            return {
+                              isHighlighted: true,
+                              bgClass: isLight ? 'bg-orange-100' : 'bg-orange-500/40',
+                              borderClass: isLight ? 'border-orange-500 ring-2 ring-orange-400/60' : 'border-orange-400 ring-2 ring-orange-400/60',
+                              textClass: isLight ? 'text-orange-950' : 'text-orange-100',
+                              distTextClass: isLight ? 'text-orange-800' : 'text-orange-200',
+                            };
+                          }
+                          if (hType === 'extract' || hType === 'settled') {
+                            return {
+                              isHighlighted: true,
+                              bgClass: isLight ? 'bg-emerald-100' : 'bg-emerald-500/35',
+                              borderClass: isLight ? 'border-emerald-600 ring-2 ring-emerald-400/50' : 'border-emerald-400 ring-2 ring-emerald-400/50',
+                              textClass: isLight ? 'text-emerald-950' : 'text-emerald-100',
+                              distTextClass: isLight ? 'text-emerald-800' : 'text-emerald-200',
+                            };
+                          }
+                          return {
+                            isHighlighted: false,
+                            bgClass: isLight ? 'bg-white' : 'bg-slate-700',
+                            borderClass: isLight ? 'border-purple-500' : 'border-purple-500/70',
+                            textClass: isLight ? 'text-slate-900' : 'text-slate-100',
+                            distTextClass: isLight ? 'text-purple-700' : 'text-purple-300',
+                          };
+                        };
+
+                        const nodes = step.queue.map((item, idx) => {
+                          const level = Math.floor(Math.log2(idx + 1));
+                          const levelWidth = Math.pow(2, level);
+                          const positionInLevel = idx + 1 - levelWidth;
+                          const x = PADDING_PCT + (positionInLevel + 0.5) * (usableWidth / levelWidth);
+                          const y = topY + level * levelGap;
+                          return {
+                            ...item,
+                            idx,
+                            x,
+                            y,
+                            ...getHighlightStyle(item.nodeId),
+                          };
+                        });
+
+                        return (
+                          <>
+                            <div className="relative flex-1 w-full overflow-hidden">
+                              <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                                {nodes.map(node => {
+                                  const leftChildIdx = 2 * node.idx + 1;
+                                  const rightChildIdx = 2 * node.idx + 2;
+                                  const lines = [];
+
+                                  const getEdgeStyle = (childNodeId: string) => {
+                                    const hIds = step.heapHighlights?.nodeIds || [];
+                                    const isActiveEdge = hIds.includes(node.nodeId) && hIds.includes(childNodeId);
+                                    if (!isActiveEdge) {
+                                      return { stroke: isLight ? '#94a3b8' : '#475569', strokeWidth: 2 };
+                                    }
+                                    const hType = step.heapHighlights?.type;
+                                    if (hType === 'swap') return { stroke: '#f97316', strokeWidth: 3 };
+                                    if (hType === 'compare') return { stroke: '#f59e0b', strokeWidth: 3 };
+                                    return { stroke: '#10b981', strokeWidth: 2.5 };
+                                  };
+
+                                  if (leftChildIdx < nodes.length) {
+                                    const child = nodes[leftChildIdx];
+                                    const style = getEdgeStyle(child.nodeId);
+                                    lines.push(
+                                      <line
+                                        key={`l-${node.nodeId}-${child.nodeId}`}
+                                        x1={`${node.x}%`}
+                                        y1={node.y}
+                                        x2={`${child.x}%`}
+                                        y2={child.y}
+                                        stroke={style.stroke}
+                                        strokeWidth={style.strokeWidth}
+                                      />
+                                    );
+                                  }
+                                  if (rightChildIdx < nodes.length) {
+                                    const child = nodes[rightChildIdx];
+                                    const style = getEdgeStyle(child.nodeId);
+                                    lines.push(
+                                      <line
+                                        key={`r-${node.nodeId}-${child.nodeId}`}
+                                        x1={`${node.x}%`}
+                                        y1={node.y}
+                                        x2={`${child.x}%`}
+                                        y2={child.y}
+                                        stroke={style.stroke}
+                                        strokeWidth={style.strokeWidth}
+                                      />
+                                    );
+                                  }
+                                  return lines;
+                                })}
+                              </svg>
+
+                              {[...nodes]
+                                .sort((a, b) => a.nodeId.localeCompare(b.nodeId))
+                                .map(node => (
+                                  <div
+                                    key={node.nodeId}
+                                    style={{
+                                      left: `${node.x}%`,
+                                      top: `${node.y}px`,
+                                      transform: `translate(-50%, -50%) scale(${node.isHighlighted ? 1.12 : 1})`,
+                                    }}
+                                    className={clsx(
+                                      'absolute w-9 h-9 rounded-full flex flex-col items-center justify-center border-2 shadow-sm select-none z-10 transition-all duration-300 ease-in-out',
+                                      node.bgClass,
+                                      node.borderClass,
+                                      node.textClass
+                                    )}
+                                  >
+                                    <span className="text-[11px] font-extrabold leading-none">{node.nodeId}</span>
+                                    <span className={clsx('text-[9px] font-mono font-bold leading-none mt-0.5', node.distTextClass)}>
+                                      {node.distance === Infinity ? '∞' : node.distance}
+                                    </span>
+                                  </div>
+                                ))}
+                            </div>
+
+                            {/* Compact Heap Array Representation */}
+                            <div
+                              className={clsx(
+                                'px-2.5 py-1.5 border-t flex items-center gap-1.5 overflow-x-auto shrink-0',
+                                isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/60 border-slate-700/70'
+                              )}
+                            >
+                              <span
+                                className={clsx(
+                                  'text-[10px] font-mono uppercase tracking-wider shrink-0 mr-0.5',
+                                  isLight ? 'text-slate-600 font-bold' : 'text-slate-500'
+                                )}
+                              >
+                                Array-Representation:
+                              </span>
+                              {nodes.map(node => (
+                                <div
+                                  key={`arr-${node.nodeId}`}
+                                  className={clsx(
+                                    'flex items-center gap-1 px-1.5 py-0.5 rounded border text-[11px] font-mono shrink-0 transition-colors duration-200',
+                                    node.bgClass,
+                                    node.borderClass,
+                                    node.textClass
+                                  )}
+                                >
+                                  <span className="font-extrabold">{node.nodeId}</span>
+                                  <span className={clsx('text-[10px]', node.distTextClass)}>
+                                    ({node.distance === Infinity ? '∞' : node.distance})
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        );
+                      })()
+                    )}
+                  </div>
+                ) : (
+                <div 
+                  ref={listRef}
+                  className={`p-2 overflow-auto flex-1 gap-1 flex flex-col`}
+                >
+                  <AnimatePresence initial={false}>
+                    {/* DFS Stack View */}
+                    {algorithm === AlgorithmType.DFS && (
+                      step.stack.length === 0 ? <div className="text-slate-600 text-center text-xs py-4 italic">Empty</div> :
+                      [...step.stack].reverse().map((nodeId, idx) => (
+                        <motion.div
+                          key={`${nodeId}-${step.stack.length - 1 - idx}`}
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className={isLight ? "bg-purple-100 border-l-4 border-purple-600 px-3 py-2 rounded text-sm text-purple-950 font-bold font-mono shrink-0 shadow-sm" : "bg-purple-900/30 border-l-2 border-purple-500 px-3 py-2 rounded text-sm text-purple-200 font-mono shrink-0"}
+                        >
+                          {dfsMode === 'TOPOLOGICAL_SORT' ? `VISIT(${nodeId})` : `DFS-VISIT(${nodeId})`}
+                        </motion.div>
+                      ))
+                    )}
+
+                    {/* Prim / Kruskal / Boruvka MST View */}
+                    {(algorithm === AlgorithmType.PRIM || algorithm === AlgorithmType.KRUSKAL || algorithm === AlgorithmType.BORUVKA) && (
+                      step.mstEdges.length === 0 ? <div className="text-slate-600 text-center text-xs py-4 italic">Empty</div> :
+                      step.mstEdges.map((edge, idx) => (
+                        <motion.div
+                          key={`${edge.source}-${edge.target}-${idx}`}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className={isLight ? "flex items-center justify-between bg-amber-100 border-2 border-amber-500 px-3 py-2 rounded text-sm text-amber-950 font-bold font-mono shrink-0 shadow-sm" : "flex items-center justify-between bg-amber-900/30 border border-amber-700/50 px-3 py-2 rounded text-sm text-amber-200 font-mono shrink-0"}
+                        >
+                          <span>&#123;{edge.source}, {edge.target}&#125;</span>
+                        </motion.div>
+                      ))
+                    )}
+
+                    {/* BFS Queue View */}
+                    {algorithm === AlgorithmType.BFS && (
+                      step.queue.length === 0 ? <div className="text-slate-600 text-center text-xs py-4 italic">Empty</div> :
+                      step.queue.map((item, idx) => (
+                        <motion.div
+                          key={`${item.nodeId}-${item.distance}-${idx}`} 
+                          layout
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className={isLight ? "flex justify-between items-center bg-slate-100 border border-slate-300 px-3 py-2 rounded text-sm shrink-0 shadow-sm" : "flex justify-between items-center bg-slate-700/50 px-3 py-2 rounded text-sm shrink-0"}
+                        >
+                          <span className={isLight ? "font-extrabold text-slate-900" : "font-bold text-slate-200"}>{item.nodeId}</span>
+                          <span className={isLight ? "bg-blue-100 border border-blue-400 text-blue-950 px-2 py-0.5 rounded text-xs font-mono font-bold" : "bg-slate-900 text-slate-400 px-2 py-0.5 rounded text-xs font-mono"}>
+                              {item.distance === Infinity ? '∞' : item.distance}
+                          </span>
+                        </motion.div>
+                      ))
+                    )}
+                  </AnimatePresence>
+                </div>
+                )}
+              </div>
              
              {/* PANEL 2 (New for Kruskal): Sorted Edges */}
              {isKruskal && (

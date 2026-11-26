@@ -209,11 +209,19 @@ export const calculateDijkstraSteps = (graph: Graph, startNodeId: string): Algor
 
   const distances: Record<string, number> = {};
   const parents: Record<string, string | null> = {};
-  const queue: PriorityQueueItem[] = []; // Represents Priority Queue
+  const visited: Record<string, boolean> = {};
+  const queue: PriorityQueueItem[] = []; // Binary Min-Heap array
   const processedSet: string[] = [];
 
   let stepCounter = 0;
-  const pushStep = (line: number, desc: string, u: string | null = null, v: string | null = null, edge: { source: string, target: string } | null = null) => {
+  const pushStep = (
+    line: number | number[],
+    desc: string,
+    u: string | null = null,
+    v: string | null = null,
+    edge: { source: string, target: string } | null = null,
+    heapHighlights?: AlgorithmStep['heapHighlights']
+  ) => {
     steps.push({
       stepId: stepCounter++,
       lineNumber: line,
@@ -225,39 +233,189 @@ export const calculateDijkstraSteps = (graph: Graph, startNodeId: string): Algor
       edgeClassifications: {},
       mstEdges: [],
       boruvkaMinEdges: [],
-      // DEEP COPY items to prevent reference mutation issues in history
-      queue: queue.map(i => ({ ...i })).sort((a, b) => a.distance - b.distance),
+      // Deep copy in exact binary min-heap order (do not sort!)
+      queue: queue.map(i => ({ ...i })),
       stack: [], // Not used
       processedSet: [...processedSet],
       currentNodeId: u,
       currentNeighborId: v,
-      activeEdge: edge
+      activeEdge: edge,
+      heapHighlights: heapHighlights ? { nodeIds: [...heapHighlights.nodeIds], type: heapHighlights.type } : undefined
     });
+  };
+
+  // Bubble-up helper for ENQUEUE and DECREASE-KEY (multi-step animation)
+  const bubbleUp = (
+    startIdx: number,
+    line: number,
+    u: string | null,
+    v: string | null,
+    edge: { source: string, target: string } | null
+  ) => {
+    let idx = startIdx;
+    if (idx === 0) {
+      pushStep(
+        line,
+        `Min-Heap: ${queue[0].nodeId} (${queue[0].distance}) is at root, heap property holds`,
+        u,
+        v,
+        edge,
+        { nodeIds: [queue[0].nodeId], type: 'settled' }
+      );
+      return;
+    }
+
+    while (idx > 0) {
+      const parentIdx = Math.floor((idx - 1) / 2);
+      const currentItem = queue[idx];
+      const parentItem = queue[parentIdx];
+
+      if (currentItem.distance < parentItem.distance) {
+        pushStep(
+          line,
+          `Min-Heap Bubble-Up: Compare ${currentItem.nodeId} (${currentItem.distance}) < parent ${parentItem.nodeId} (${parentItem.distance})`,
+          u,
+          v,
+          edge,
+          { nodeIds: [currentItem.nodeId, parentItem.nodeId], type: 'compare' }
+        );
+
+        queue[idx] = parentItem;
+        queue[parentIdx] = currentItem;
+
+        pushStep(
+          line,
+          `Min-Heap Bubble-Up: Swap ${currentItem.nodeId} (${currentItem.distance}) with parent ${parentItem.nodeId} (${parentItem.distance})`,
+          u,
+          v,
+          edge,
+          { nodeIds: [currentItem.nodeId, parentItem.nodeId], type: 'swap' }
+        );
+
+        idx = parentIdx;
+      } else {
+        pushStep(
+          line,
+          `Min-Heap Bubble-Up: ${currentItem.nodeId} (${currentItem.distance}) ≥ parent ${parentItem.nodeId} (${parentItem.distance}), heap property holds`,
+          u,
+          v,
+          edge,
+          { nodeIds: [currentItem.nodeId, parentItem.nodeId], type: 'settled' }
+        );
+        break;
+      }
+    }
+  };
+
+  // Sift-down helper for EXTRACT-MIN (multi-step animation)
+  const siftDown = (startIdx: number, line: number, extractedNodeId: string) => {
+    let idx = startIdx;
+    while (true) {
+      const leftIdx = 2 * idx + 1;
+      const rightIdx = 2 * idx + 2;
+      if (leftIdx >= queue.length) break;
+
+      let smallestIdx = leftIdx;
+      if (rightIdx < queue.length && queue[rightIdx].distance < queue[leftIdx].distance) {
+        smallestIdx = rightIdx;
+      }
+
+      const currentItem = queue[idx];
+      const childItem = queue[smallestIdx];
+
+      if (childItem.distance < currentItem.distance) {
+        pushStep(
+          line,
+          `Min-Heap Sift-Down: Compare ${currentItem.nodeId} (${currentItem.distance}) > child ${childItem.nodeId} (${childItem.distance})`,
+          extractedNodeId,
+          null,
+          null,
+          { nodeIds: [currentItem.nodeId, childItem.nodeId], type: 'compare' }
+        );
+
+        queue[idx] = childItem;
+        queue[smallestIdx] = currentItem;
+
+        pushStep(
+          line,
+          `Min-Heap Sift-Down: Swap ${currentItem.nodeId} (${currentItem.distance}) with child ${childItem.nodeId} (${childItem.distance})`,
+          extractedNodeId,
+          null,
+          null,
+          { nodeIds: [currentItem.nodeId, childItem.nodeId], type: 'swap' }
+        );
+
+        idx = smallestIdx;
+      } else {
+        pushStep(
+          line,
+          `Min-Heap Sift-Down: ${currentItem.nodeId} (${currentItem.distance}) ≤ child ${childItem.nodeId} (${childItem.distance}), heap property holds`,
+          extractedNodeId,
+          null,
+          null,
+          { nodeIds: [currentItem.nodeId, childItem.nodeId], type: 'settled' }
+        );
+        break;
+      }
+    }
   };
 
   graph.nodes.forEach(n => {
     if (n.id !== startNodeId) {
       distances[n.id] = Infinity;
       parents[n.id] = null;
+      visited[n.id] = false;
     }
   });
-  pushStep(1, "Initialize all v ≠ s: d[v] = ∞, p[v] = null");
+  pushStep([1, 2], "Initialize all v ≠ s: d[v] = ∞, visited[v] = false");
 
   distances[startNodeId] = 0;
   parents[startNodeId] = null;
+  visited[startNodeId] = true;
   // Use startNodeId as 'u' here so it highlights in Orange/Yellow
-  pushStep(3, `Initialize start node ${startNodeId}: d[${startNodeId}] = 0`, startNodeId);
+  pushStep(3, `Initialize start node ${startNodeId}: d[${startNodeId}] = 0, visited[${startNodeId}] = true`, startNodeId);
+
+  pushStep(4, "Initialize empty Min-Heap Q ← Ø", startNodeId);
 
   queue.push({ nodeId: startNodeId, distance: 0 });
-  pushStep(5, `Insert start node ${startNodeId} into Priority Queue`, startNodeId);
+  pushStep(5, `Insert start node ${startNodeId} (dist: 0) into Min-Heap Q`, startNodeId, null, null, {
+    nodeIds: [startNodeId],
+    type: 'insert'
+  });
 
   while (queue.length > 0) {
-    queue.sort((a, b) => a.distance - b.distance);
     pushStep(6, "Check if Q is not empty");
 
-    const u = queue.shift()!;
-    processedSet.push(u.nodeId);
-    pushStep(7, `Extract Min: Node ${u.nodeId} (Dist: ${u.distance})`, u.nodeId);
+    const minItem = queue[0];
+    let u: PriorityQueueItem;
+
+    if (queue.length === 1) {
+      pushStep(7, `Extract-Min: Identify minimum at root ${minItem.nodeId} (Dist: ${minItem.distance})`, minItem.nodeId, null, null, {
+        nodeIds: [minItem.nodeId],
+        type: 'extract'
+      });
+      u = queue.pop()!;
+      processedSet.push(u.nodeId);
+      pushStep(7, `Extract-Min: Remove ${u.nodeId} (Dist: ${u.distance}) from Min-Heap`, u.nodeId);
+    } else {
+      pushStep(7, `Extract-Min: Identify minimum at root ${minItem.nodeId} (Dist: ${minItem.distance})`, minItem.nodeId, null, null, {
+        nodeIds: [minItem.nodeId],
+        type: 'extract'
+      });
+      const lastItem = queue.pop()!;
+      u = minItem;
+      queue[0] = lastItem;
+      processedSet.push(u.nodeId);
+      pushStep(
+        7,
+        `Extract-Min: Remove ${u.nodeId} (Dist: ${u.distance}), move last leaf ${lastItem.nodeId} (${lastItem.distance}) to root`,
+        u.nodeId,
+        null,
+        null,
+        { nodeIds: [lastItem.nodeId], type: 'swap' }
+      );
+      siftDown(0, 7, u.nodeId);
+    }
 
     // --- NEIGHBOR EXTRACTION (Directed vs Undirected Logic) ---
     const neighbors: { id: string, weight: number, edge: Edge }[] = [];
@@ -276,39 +434,51 @@ export const calculateDijkstraSteps = (graph: Graph, startNodeId: string): Algor
     for (const { id: vId, weight, edge } of neighbors) {
       pushStep(8, `Inspect neighbor ${vId} of ${u.nodeId} (Weight: ${weight})`, u.nodeId, vId, edge);
 
-      const isUndiscovered = parents[vId] === null && distances[vId] === Infinity;
-
-      if (isUndiscovered) {
-        pushStep(9, `Node ${vId} has not been visited yet`, u.nodeId, vId, edge);
+      if (!visited[vId]) {
+        pushStep(9, `visited[${vId}] = false (${vId} has not been visited yet)`, u.nodeId, vId, edge);
 
         const newDist = distances[u.nodeId] + weight;
         distances[vId] = newDist;
-        pushStep(10, `Calculate distance: ${distances[u.nodeId]} + ${weight} = ${newDist}`, u.nodeId, vId, edge);
-
         parents[vId] = u.nodeId;
-        pushStep(11, `Set parent of ${vId} to ${u.nodeId}`, u.nodeId, vId, edge);
+        pushStep(10, `Calculate distance: d[${vId}] = ${distances[u.nodeId]} + ${weight} = ${newDist}`, u.nodeId, vId, edge);
+
+        visited[vId] = true;
+        pushStep(11, `Mark ${vId} as visited: visited[${vId}] = true`, u.nodeId, vId, edge);
 
         queue.push({ nodeId: vId, distance: newDist });
-        pushStep(12, `Enqueue ${vId} with distance ${newDist}`, u.nodeId, vId, edge);
+        pushStep(12, `Enqueue(${vId}, ${newDist}, Q): Insert ${vId} at end of Min-Heap`, u.nodeId, vId, edge, {
+          nodeIds: [vId],
+          type: 'insert'
+        });
+        if (queue.length > 1) {
+          bubbleUp(queue.length - 1, 12, u.nodeId, vId, edge);
+        }
 
       } else {
         const currentDist = distances[vId];
         const newDist = distances[u.nodeId] + weight;
 
-        pushStep(13, `Check if new path (${newDist}) < current distance (${currentDist})`, u.nodeId, vId, edge);
+        pushStep(13, `visited[${vId}] = true: Check if ${newDist} < d[${vId}] (${currentDist})`, u.nodeId, vId, edge);
 
         if (newDist < currentDist) {
+          const oldDist = distances[vId];
           distances[vId] = newDist;
-          pushStep(14, `Found shorter path! Update d[${vId}] to ${newDist}`, u.nodeId, vId, edge);
-
           parents[vId] = u.nodeId;
-          pushStep(15, `Update parent of ${vId} to ${u.nodeId}`, u.nodeId, vId, edge);
+          pushStep(14, `Found shorter path! Update d[${vId}] = ${newDist}`, u.nodeId, vId, edge);
 
           const qIdx = queue.findIndex(item => item.nodeId === vId);
           if (qIdx >= 0) {
             queue[qIdx].distance = newDist;
+            pushStep(
+              15,
+              `Decrease-Key(${vId}, ${newDist}, Q): Update key of ${vId} from ${oldDist} to ${newDist}`,
+              u.nodeId,
+              vId,
+              edge,
+              { nodeIds: [vId], type: 'update' }
+            );
+            bubbleUp(qIdx, 15, u.nodeId, vId, edge);
           }
-          pushStep(16, `Decrease Key for ${vId} in Q`, u.nodeId, vId, edge);
         }
       }
     }

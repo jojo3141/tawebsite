@@ -193,6 +193,12 @@ export interface AlgorithmStep {
 
   // Metric TSP Specific
   metricTspGraphState?: { nodes: Node[], edges: Edge[], isDirected?: boolean };
+
+  // Dijkstra Min-Heap Specific
+  heapHighlights?: {
+    nodeIds: string[];
+    type: 'insert' | 'update' | 'compare' | 'swap' | 'extract' | 'settled';
+  };
 }
 
 export const PSEUDOCODE_MIN_EDGE_CUT = [
@@ -265,40 +271,38 @@ export const PSEUDOCODE_HAMILTON_PATH = [
 
 export const PSEUDOCODE_DIJKSTRA = [
   { line: 1, text: "for each v ∈ V\\{s} do", indent: 0 },
-  { line: 2, text: "d[v] ← ∞; p[v] ← null", indent: 2 },
-  { line: 3, text: "d[s] ← 0; p[s] ← null", indent: 0 },
+  { line: 2, text: "d[v] ← ∞; visited[v] ← false", indent: 2 },
+  { line: 3, text: "d[s] ← 0; visited[s] ← true", indent: 0 },
   { line: 4, text: "Q ← Ø", indent: 0 },
   { line: 5, text: "INSERT(s, 0, Q)", indent: 0 },
   { line: 6, text: "while Q ≠ Ø do", indent: 0 },
   { line: 7, text: "u ← EXTRACT-MIN(Q)", indent: 2 },
   { line: 8, text: "for each (u, v) ∈ E do", indent: 2 },
-  { line: 9, text: "if p[v] = null then", indent: 4 },
+  { line: 9, text: "if visited[v] = false then", indent: 4 },
   { line: 10, text: "d[v] ← d[u] + w((u, v))", indent: 6 },
-  { line: 11, text: "p[v] ← u", indent: 6 },
+  { line: 11, text: "visited[v] ← true", indent: 6 },
   { line: 12, text: "ENQUEUE(v, d[v], Q)", indent: 6 },
   { line: 13, text: "else if d[u] + w((u, v)) < d[v] then", indent: 4 },
   { line: 14, text: "d[v] ← d[u] + w((u, v))", indent: 6 },
-  { line: 15, text: "p[v] ← u", indent: 6 },
-  { line: 16, text: "DECREASE-KEY(v, d[v], Q)", indent: 6 },
+  { line: 15, text: "DECREASE-KEY(v, d[v], Q)", indent: 6 },
 ];
 
 export const PSEUDOCODE_DIJKSTRA_UNDIRECTED = [
   { line: 1, text: "for each v ∈ V\\{s} do", indent: 0 },
-  { line: 2, text: "d[v] ← ∞; p[v] ← null", indent: 2 },
-  { line: 3, text: "d[s] ← 0; p[s] ← null", indent: 0 },
+  { line: 2, text: "d[v] ← ∞; visited[v] ← false", indent: 2 },
+  { line: 3, text: "d[s] ← 0; visited[s] ← true", indent: 0 },
   { line: 4, text: "Q ← Ø", indent: 0 },
   { line: 5, text: "INSERT(s, 0, Q)", indent: 0 },
   { line: 6, text: "while Q ≠ Ø do", indent: 0 },
   { line: 7, text: "u ← EXTRACT-MIN(Q)", indent: 2 },
   { line: 8, text: "for each {u, v} ∈ E do", indent: 2 },
-  { line: 9, text: "if p[v] = null then", indent: 4 },
+  { line: 9, text: "if visited[v] = false then", indent: 4 },
   { line: 10, text: "d[v] ← d[u] + w({u, v})", indent: 6 },
-  { line: 11, text: "p[v] ← u", indent: 6 },
+  { line: 11, text: "visited[v] ← true", indent: 6 },
   { line: 12, text: "ENQUEUE(v, d[v], Q)", indent: 6 },
   { line: 13, text: "else if d[u] + w({u, v}) < d[v] then", indent: 4 },
   { line: 14, text: "d[v] ← d[u] + w({u, v})", indent: 6 },
-  { line: 15, text: "p[v] ← u", indent: 6 },
-  { line: 16, text: "DECREASE-KEY(v, d[v], Q)", indent: 6 },
+  { line: 15, text: "DECREASE-KEY(v, d[v], Q)", indent: 6 },
 ];
 
 export const PSEUDOCODE_BFS = [
